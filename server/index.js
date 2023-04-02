@@ -11,10 +11,7 @@ const app = express()
 
 // SETUP THE MIDDLEWARE
 app.use(express.urlencoded({ extended: true }))
-app.use(cors({
-    origin: ["https://finaltest1-front.onrender.com"],
-    credentials: true
-}))
+app.use(cors())
 app.use(express.json())
 app.use(cookieParser())
 
