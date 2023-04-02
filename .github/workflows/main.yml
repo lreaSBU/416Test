@@ -8,9 +8,7 @@ jobs:
        uses: actions/checkout@v2
  
      - name: Run Cypress Test
-       runs:
-         using: 'node16'
-       uses: cypress-io/github-action@v4
+       uses: cypress-io/github-action@v5
        with:
          command: npx cypress run
          browser: chrome
