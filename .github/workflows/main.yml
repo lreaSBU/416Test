@@ -6,14 +6,10 @@ jobs:
    steps:
      - name: Checkout GitCode
        uses: actions/checkout@v2
- 
-     - name: Change Directory
-       uses: actions/checkout@v2
-       with:
-         command: cd client
 
      - name: Run Cypress Test
        uses: cypress-io/github-action@v5
        with:
          command: npx cypress run
          browser: chrome
+         working-directory: client
