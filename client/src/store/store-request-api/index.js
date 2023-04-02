@@ -12,8 +12,9 @@
 
 import axios from 'axios'
 axios.defaults.withCredentials = true;
+const apiMain = process.env.BACK_URI + '/api';
 const api = axios.create({
-    baseURL: '${process.env.BACK_URI}/api',
+    baseURL: apiMain,
 })
 
 // THESE ARE ALL THE REQUESTS WE`LL BE MAKING, ALL REQUESTS HAVE A
