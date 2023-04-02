@@ -12,7 +12,7 @@
 
 import axios from 'axios'
 axios.defaults.withCredentials = true;
-const apiMain = process.env.BACK_URI + '/api';
+const apiMain = process.env.REACT_APP_BACK_URI + '/api';
 const api = axios.create({
     baseURL: apiMain,
 })
