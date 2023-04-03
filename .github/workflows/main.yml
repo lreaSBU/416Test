@@ -19,7 +19,7 @@ jobs:
    steps:
      - name: Checkout GitCode
        uses: actions/checkout@v2
-     - run: cd server
-     - run: yarn install
-     - run: yarn compile
-     - run: yarn test
+     - name: Run Jest
+       uses: stefanoeb/jest-action@1.0.3
+       with:
+         jestArgs: server/__test__/index.test.js
