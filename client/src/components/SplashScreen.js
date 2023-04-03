@@ -15,7 +15,7 @@ export default function SplashScreen() {
             <Link to='/login/'>Get Started</Link>
             <Box sx={{my: '10%'}}></Box>
             <Box id='splashC'>
-                Site by Liam Rea
+                Site by Spring 2023 CSE 416 Green Team
             </Box>
         </div>
     )
