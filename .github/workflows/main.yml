@@ -20,5 +20,5 @@ jobs:
      - name: Checkout GitCode
        uses: actions/checkout@v2
      - run: cd server
-     - run: npm ci
-     - run: npm test
+     - run: cd server && npm ci
+     - run: cd server && npm test
