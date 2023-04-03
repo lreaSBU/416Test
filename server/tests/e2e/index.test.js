@@ -21,13 +21,13 @@ app.use(express.json())
 app.use(cookieParser())
 
 // SETUP OUR OWN ROUTERS AS MIDDLEWARE
-const authRouter = require('../routes/auth-router')
+const authRouter = require('../../routes/auth-router')
 app.use('/auth', authRouter)
-const playlistsRouter = require('../routes/playlists-router')
+const playlistsRouter = require('../../routes/playlists-router')
 app.use('/api', playlistsRouter)
 
 // INITIALIZE OUR DATABASE OBJECT
-const db = require('../db')
+const db = require('../../db')
 db.on('error', console.error.bind(console, 'MongoDB connection error:'))
 
 // PUT THE SERVER IN LISTENING MODE
