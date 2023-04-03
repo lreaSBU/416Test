@@ -19,9 +19,6 @@ jobs:
    steps:
      - name: Checkout GitCode
        uses: actions/checkout@v2
-     - name: Change Dir
-       run: cd server
-     - name: Install packages
-       run: npm install
-     - name: Run tests
-       run: npm test
+     - run: cd server
+     - run: yarn install
+     - run: npm test
