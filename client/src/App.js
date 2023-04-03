@@ -14,7 +14,7 @@ import {
     HomeScreen
 } from './components'
 /*
-    This is our application's top-level component.
+    This is our  application's top-level component.
     
     @author McKilla Gorilla
 */
