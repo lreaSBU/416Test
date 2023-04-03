@@ -5,11 +5,11 @@ export default function SplashScreen() {
     return (
         <div  id="splash-screen">
             <Box>
-                Playlister
+                Map Central
             </Box>
             <Box sx={{my: '10%'}}></Box>
             <Box id='splashD'>
-                Playlister is an online service for easily building, watching, and sharing your favorite songs and music videos
+                Welcome to Map Central: an online service for creating, editing, and sharing all your favorite maps
             </Box>
             <Box sx={{my: '5%'}}></Box>
             <Link to='/login/'>Get Started</Link>
