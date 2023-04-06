@@ -1,43 +1,28 @@
-import AppBanner from './AppBanner'
-import EditToolbar from './EditToolbar'
-import HomeScreen from './HomeScreen'
-import HomeWrapper from './HomeWrapper'
-import ListCard from './ListCard'
-import LoginScreen from './LoginScreen'
-import MUIDeleteModal from './MUIDeleteModal'
-import MUIEditSongModal from './MUIEditSongModal'
-import MUIRemoveSongModal from './MUIRemoveSongModal'
-import RegisterScreen from './RegisterScreen'
-import SongCard from './SongCard'
-import SplashScreen from './SplashScreen'
-import Statusbar from './Statusbar'
-import WorkspaceScreen from './WorkspaceScreen'
-import AllWrapper from './AllWrapper'
-import UserWrapper from './UserWrapper'
-import Searchbar from './Searchbar'
-import Sortbar from './Sortbar'
 /*
-    This serves as a module so that we can import
+    Serves as a module so that we can import
     all the other components as we wish.
-    
-    @author McKilla Gorilla
 */
-export { 
-    AllWrapper,
-    AppBanner,  
-    EditToolbar, 
+
+import AppBanner from './AppBanner'
+import HomeScreen from './HomeScreen'
+import BrowseScreen from './BrowseScreen'
+import BrowseWrapper from './BrowseWrapper'
+import ChatScreen from './ChatScreen'
+import EditScreen from './EditScreen'
+import ProfileScreen from './ProfileScreen'
+import WelcomeScreen from './WelcomeScreen'
+import NavBar from './NavBar'
+import BrowseMapScreen from './BrowseMapScreen'
+
+export {
+    AppBanner,
     HomeScreen,
-    HomeWrapper,
-    ListCard, 
-    LoginScreen,
-    MUIDeleteModal,
-    MUIEditSongModal,
-    MUIRemoveSongModal,
-    SongCard,
-    RegisterScreen,
-    Searchbar,
-    SplashScreen,
-    Statusbar, 
-    Sortbar,
-    UserWrapper,
-    WorkspaceScreen }
+    BrowseScreen,
+    BrowseWrapper,
+    ChatScreen,
+    EditScreen,
+    ProfileScreen,
+    WelcomeScreen,
+    NavBar,
+    BrowseMapScreen,
+}

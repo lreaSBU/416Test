@@ -8,10 +8,7 @@ import RemoveSong_Transaction from '../transactions/RemoveSong_Transaction'
 import UpdateSong_Transaction from '../transactions/UpdateSong_Transaction'
 import AuthContext from '../auth'
 /*
-    This is our global data store. Note that it uses the Flux design pattern,
-    which makes use of things like actions and reducers.
-    
-    @author McKilla Gorilla
+    Global data store
 */
 
 // THIS IS THE CONTEXT WE'LL USE TO SHARE OUR STORE
