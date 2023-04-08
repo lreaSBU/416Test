@@ -11,7 +11,10 @@ import {
     RegisterScreen,
     Statusbar,
     UserWrapper,
-    HomeScreen
+    MessageScreen,
+    BrowseScreen,
+    MessageWrapper,
+    EditScreen
 } from './components'
 /*
     This is our application's top-level component.
@@ -32,11 +35,11 @@ const App = () => {
                     <AppBanner />
                     <Switch>
                         <Route path="/" exact component={HomeWrapper} />
-                        <Route path="/all/" exact component={AllWrapper} />
-                        <Route path="/user/" exact component={UserWrapper} />
+                        <Route path="/message/" exact component={MessageScreen} />
+                        <Route path="/edit/" exact component={EditScreen} />
                         <Route path="/login/" exact component={LoginScreen} />
                         <Route path="/register/" exact component={RegisterScreen} />
-                        <Route path="/playlist/:id" exact component={HomeScreen} />
+                        <Route path="/playlist/:id" exact component={BrowseScreen} />
                     </Switch>
                     
                 </GlobalStoreContextProvider>

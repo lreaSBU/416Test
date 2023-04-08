@@ -23,68 +23,43 @@ const api = axios.create({
 // WORK, AND SOME REQUIRE DATA, WHICH WE WE WILL FORMAT HERE, FOR WHEN
 // WE NEED TO PUT THINGS INTO THE DATABASE OR IF WE HAVE SOME
 // CUSTOM FILTERS FOR QUERIES
-export const createPlaylist = (newListName, newSongs, userEmail, userName) => {
-    return api.post(`/playlist/`, {
-        // SPECIFY THE PAYLOAD
-        name: newListName,
-        age: undefined,
-        ownerName: userName,
-        ownerEmail: userEmail,
-        published: false,
-        likes: 0,
-        dislikes: 0,
-        comments: [],
-        songs: newSongs
+export const createMap = (newName, user) => {
+    return api.post(`/map/`, {
+        name: newName,
+        owner: user
     })
 }
-export const deletePlaylistById = (id) => api.delete(`/playlist/${id}`)
-export const getPlaylistById = (id) => api.get(`/playlist/${id}`)
-export const getPlaylistPairs = (type) => {
-    console.log("TYPE: " + type);
+export const getMapById = (id) => api.get(`/map/${id}`)
+export const updateMapById = (id, map) => {
+    return api.put(`/map/${id}/`, {
+        id: id,
+        map: map
+    })
+}
+export const deleteMapById = (id) => api.delete(`/map/${id}`)
+export const getMapPairs = (filter, searchMode, sortMode, page) => {
+    console.log("TYPE: " + searchMode);
     //if(type == null || type == undefined) return {data: {success: false}};
-    return api.get(`/playlistpairs/${type}`);
+    return api.put(`/mappairs/`, {
+        filter: filter,
+        searchMode: searchMode,
+        sortMode: sortMode,
+        page: page
+    });
 }
-export const updatePlaylistById = (id, playlist) => {
-    return api.put(`/playlist/${id}`, {
-        // SPECIFY THE PAYLOAD
-        playlist : playlist
-    })
-}
-export const getSearchPairs = (term, type) => {
-    return api.put(`/search`, {
-        // SPECIFY THE PAYLOAD
-        term : term,
-        type : type
-    })
-}
-
-export const likePlaylistById = (id, lt, email) => {
-    return api.put(`/like`, {
-        // SPECIFY THE PAYLOAD
-        id : id,
-        lt : lt,
-        email: email
-    })
-}
-
-export const addCommentById = (msg, name, id) => {
-    return api.put(`/comment`, {
-        // SPECIFY THE PAYLOAD
-        id : id,
-        name : name,
-        msg : msg
-    })
+export const getConvoPairs = (page) => {
+    return api.put(`/convopairs/`, {
+        page: page
+    });
 }
 
 const apis = {
-    createPlaylist,
-    deletePlaylistById,
-    getPlaylistById,
-    getPlaylistPairs,
-    updatePlaylistById,
-    getSearchPairs,
-    likePlaylistById,
-    addCommentById
+    createMap,
+    getMapById,
+    updateMapById,
+    deleteMapById,
+    getMapPairs,
+    getConvoPairs
 }
 
 export default apis

@@ -126,10 +126,11 @@ function AuthContextProvider(props) {
                         user: response.data.user
                     }
                 });
-                store.signalView(1);
+                store.goHome();
                 history.push("/");
             }
         }catch(errorMsg){ 
+            console.log(errorMsg);
             authReducer({
                 type: AuthActionType.REPORT_ERROR,
                 payload: {

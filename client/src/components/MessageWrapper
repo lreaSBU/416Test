@@ -1,16 +1,16 @@
 import { useContext } from 'react'
-import BrowseScreen from './BrowseScreen'
+import MessageScreen from './MessageScreen'
 import SplashScreen from './SplashScreen'
 import AuthContext from '../auth'
 import { GlobalStoreContext } from '../store'
 
-export default function HomeWrapper() {
+export default function MessageWrapper() {
     const { auth } = useContext(AuthContext);
     const { store } = useContext(GlobalStoreContext);
-    console.log("HomeWrapper auth.loggedIn: " + auth.loggedIn);
+    console.log("MessageWrapper auth.loggedIn: " + auth.loggedIn);
     
     if (!auth.loggedIn)
         return <SplashScreen />    
     else
-        return <BrowseScreen />
+        return <MessageScreen />
 }

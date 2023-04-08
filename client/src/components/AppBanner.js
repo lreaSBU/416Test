@@ -3,9 +3,7 @@ import { Link } from 'react-router-dom'
 import AuthContext from '../auth';
 import { GlobalStoreContext } from '../store'
 
-import EditToolbar from './EditToolbar'
 import SearchBar from './Searchbar'
-import Sortbar from './Sortbar'
 
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import AppBar from '@mui/material/AppBar';
@@ -34,22 +32,30 @@ export default function AppBanner() {
     function handleSort(type){
         console.log("MENU_EVENT: " + type);
         handleMenuClose();
-        store.changeSort(type);
+        store.changeSortMode(type);
     }
 
-    function handleCreateNewList() {
-        store.createNewList();
+    function handleCreateNewMap() {
+        store.createNewMap();
     }
     const handleHome = (e) => {
-        store.signalView(1);
+        store.goHome();
     }
 
     const handleAll = (e) => {
-        store.signalView(2);
+        store.goSearchByName();
     }
 
     const handleUser = (e) => {
-        store.signalView(3);
+        store.goSearchByUser();
+    }
+    
+    const handleDM = (e) => {
+        store.goMessages();
+    }
+
+    const handleHelp = (e) => {
+        //store.goHelp(); //probably dont have to to anything
     }
 
     const handleProfileMenuOpen = (event) => {
@@ -106,14 +112,8 @@ export default function AppBanner() {
             <MenuItem href='/' onClick={handleLogout}>Logout</MenuItem>
         </Menu>        
 
-    let editToolbar = "";
     let menu = loggedOutMenu;
-    if (auth.loggedIn) {
-        menu = loggedInMenu;
-        if (store.currentList) {
-            editToolbar = <EditToolbar />;
-        }
-    }
+    if (auth.loggedIn) menu = loggedInMenu;
     const sMen = <Menu
         anchorEl={banchor}
         anchorOrigin={{
@@ -129,13 +129,11 @@ export default function AppBanner() {
         open={isSortOpen}
         onClose={handleMenuClose}
     >
-        <MenuItem onClick={(event) => {handleSort(1)}}>By Creation Date (Old-New)</MenuItem>
-        <MenuItem onClick={(event) => {handleSort(2)}}>By Last Edit Date (New-Old)</MenuItem>
-        <MenuItem onClick={(event) => {handleSort(3)}}>By Name (A-Z)</MenuItem>
+        <MenuItem onClick={(event) => {handleSort(0)}}>By Creation Date (Old-New)</MenuItem>
+        <MenuItem onClick={(event) => {handleSort(1)}}>By Creation Date (New-Old)</MenuItem>
+        <MenuItem onClick={(event) => {handleSort(2)}}>By Name (A-Z)</MenuItem>
     </Menu>
-    let sortMenu = '';
-    if(store.currentView){
-        sortMenu =
+    let sortMenu =
         <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
             <IconButton
                 size="large"
@@ -147,26 +145,19 @@ export default function AppBanner() {
                 color="inherit"
             ><SortIcon /></IconButton>
         </Box>
-    }
     let addButt = "";
-    if(!store.currentList){
-        if(store.currentView == 1 && auth.loggedIn){ //add list button
+    if(!store.currentMap && auth.loggedIn){
+        if((store.browseMode == 0 || store.browseMode == 3) && auth.loggedIn){ //add list button
             addButt = <Fab 
-                    color="primary" 
-                    aria-label="add"
-                    id="add-list-button"
-                    onClick={handleCreateNewList}
-                    > <AddIcon /> </Fab>
-        }else if(store.currentView > 1){ //search bar
+                color="primary" 
+                aria-label="add"
+                id="add-list-button"
+                onClick={handleCreateNewMap}
+                > <AddIcon /> </Fab>
+        }else if(store.browseMode > 0){ //search bar
             addButt = <SearchBar />
         }
     }
-
-    /*let searchBar = ""
-    if(store.currentView > 1){ //on either "playlists" or "users" screens
-        searchBar = <Searchbar />;
-    }*/
-
     
     function getAccountMenu(loggedIn) {
         let userInitials = auth.getUserInitials();
@@ -190,12 +181,14 @@ export default function AppBanner() {
                         <Link style={{ textDecoration: 'none', color: 'white' }} onClick={handleHome} to="/">🏠</Link>
                         <Link style={{ textDecoration: 'none', color: 'white' }} onClick={handleAll} to="/">👥</Link>
                         <Link style={{ textDecoration: 'none', color: 'white' }} onClick={handleUser} to="/">👤</Link>
+                        <Link style={{ textDecoration: 'none', color: 'white' }} onClick={handleDM} to="/message/">🗨</Link>
+                        <Link style={{ textDecoration: 'none', color: 'white' }} onClick={handleHelp} to="/help/">?</Link>
                     </Typography>
                     <Box sx={{ width: '5%' }}></Box>
-                    <Box id='bannerStatus' sx={{ fontSize: '32px' }}>{!auth.loggedIn ? '|' : (store.currentView == 1 ? 'Home' : (store.currentView == 2 ? 'Playlist Search: ' : 'User Search: '))}</Box>
+                    <Box id='bannerStatus' sx={{ fontSize: '32px' }}>{!auth.loggedIn ? '|' : (store.browseMode == 0 ? 'Home' : (store.browseMode == 2 ? 'Map Name Search: ' : (store.browseMode == 3 ? 'Messages' : 'Username Search: ')))}</Box>
                     <Box sx={{ width: '5%' }}></Box>
                     {addButt}
-                    <Box sx={{ flexGrow: 1 }}>{editToolbar}</Box>
+                    <Box sx={{ flexGrow: 1 }}></Box>
                     {sortMenu}
                     <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
                         <IconButton
