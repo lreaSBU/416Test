@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import App from './App';
-import "@fontsource/work-sans";
+//import "@fontsource/work-sans";
 import reportWebVitals from './reportWebVitals';
 /*
   Entry-point for our application.
