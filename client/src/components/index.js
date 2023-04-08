@@ -22,10 +22,8 @@ import Searchbar from './Searchbar'
 import Sortbar from './Sortbar'
 import EditScreen from './EditScreen'
 /*
-    This serves as a module so that we can import
+    Serves as a module so that we can import
     all the other components as we wish.
-    
-    @author McKilla Gorilla
 */
 export { 
     AllWrapper,

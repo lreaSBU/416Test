@@ -1,22 +1,18 @@
 :root {
   /* 
-        FIRST WE'LL DEFINE OUR SWATCHES, i.e. THE COMPLEMENTARY
-        COLORS THAT WE'LL USE TOGETHER IN MULTIPLE PLACES THAT
-        TOGETHER WILL MAKE UP A GIVEN THEME
-    
-        @author McKilla Gorilla
+          COLOR SWATCHES
     */
-  --swatch-foundation: #eeeedd;
-  --swatch-primary: #e6e6e6;
-  --swatch-complement: #e1e4cb;
-  --swatch-contrast: #111111;
-  --swatch-accent: #669966;
-  --swatch-status: #123456;
-  --my-font-family: "Roboto";
-  --bounceEasing: cubic-bezier(0.51, 0.92, 0.24, 1.15);
+  --swatch-foundation: #ffffff;
+  --swatch-primary: #5EB120;
+  --swatch-complement: #D9D9D9;
+  --swatch-contrast: #000000;
+  --swatch-accent: #569F1D;
+  --swatch-status: #FF0000;
+  /* --bounceEasing: cubic-bezier(0.51, 0.92, 0.24, 1.15); */
 }
 
 body {
+  font-family: "Work Sans";
   background-color: var(--swatch-foundation);
 }
 
@@ -61,8 +57,7 @@ body {
   font-family: var(--my-font-family)
 }
 
-#root {
-  background-color: var(--swatch-primary);
+#root {  background-color: var(--swatch-primary);
   font-family: "Lexend Exa";
   position: absolute;
   width: 99%;
@@ -322,11 +317,12 @@ input {
 
 .disabled:hover {
   color: var(--swatch-neutral);
+
 }
 
 /* THIS STYLE SHEET MANAGES STYLE FOR OUR MODAL, i.e. DIALOG BOX */
 
-.modal {
+/* .modal {
   position: fixed;
   top: 0;
   left: 0;
@@ -402,11 +398,11 @@ input {
 
 #confirm-cancel-container {
   text-align: center;
-}
+} */
 
 /* ANIMATIONS
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
-[data-animation] .modal-dialog {
+/* [data-animation] .modal-dialog {
   opacity: 0;
   transition: all 0.5s var(--bounceEasing);
 }
@@ -498,4 +494,4 @@ input {
   100% {
     transform: rotate(0deg);
   }
-}
+} */
