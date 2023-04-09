@@ -17,6 +17,8 @@ import Typography from '@mui/material/Typography';
 import AddIcon from '@mui/icons-material/Add';
 import Fab from '@mui/material/Fab'
 
+import HomeIcon from '@mui/icons-material/Home'
+
 export default function AppBanner() {
     const { auth } = useContext(AuthContext);
     const { store } = useContext(GlobalStoreContext);
@@ -29,7 +31,7 @@ export default function AppBanner() {
         setBanchor(event.currentTarget);
     };
 
-    function handleSort(type){
+    function handleSort(type) {
         console.log("MENU_EVENT: " + type);
         handleMenuClose();
         store.changeSortMode(type);
@@ -49,7 +51,7 @@ export default function AppBanner() {
     const handleUser = (e) => {
         store.goSearchByUser();
     }
-    
+
     const handleDM = (e) => {
         store.goMessages();
     }
@@ -93,7 +95,7 @@ export default function AppBanner() {
             <MenuItem onClick={handleMenuClose}><Link to='/register/'>Create New Account</Link></MenuItem>
         </Menu>
     );
-    const loggedInMenu = 
+    const loggedInMenu =
         <Menu
             anchorEl={anchorEl}
             anchorOrigin={{
@@ -110,7 +112,7 @@ export default function AppBanner() {
             onClose={handleMenuClose}
         >
             <MenuItem href='/' onClick={handleLogout}>Logout</MenuItem>
-        </Menu>        
+        </Menu>
 
     let menu = loggedOutMenu;
     if (auth.loggedIn) menu = loggedInMenu;
@@ -129,40 +131,28 @@ export default function AppBanner() {
         open={isSortOpen}
         onClose={handleMenuClose}
     >
-        <MenuItem onClick={(event) => {handleSort(0)}}>By Creation Date (Old-New)</MenuItem>
-        <MenuItem onClick={(event) => {handleSort(1)}}>By Creation Date (New-Old)</MenuItem>
-        <MenuItem onClick={(event) => {handleSort(2)}}>By Name (A-Z)</MenuItem>
+        <MenuItem onClick={(event) => { handleSort(0) }}>By Creation Date (Old-New)</MenuItem>
+        <MenuItem onClick={(event) => { handleSort(1) }}>By Creation Date (New-Old)</MenuItem>
+        <MenuItem onClick={(event) => { handleSort(2) }}>By Name (A-Z)</MenuItem>
     </Menu>
-    let sortMenu =
-        <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-            <IconButton
-                size="large"
-                edge="end"
-                aria-label="sort mode"
-                aria-controls={'primary-search-account-menu'}
-                aria-haspopup="true"
-                onClick={handleSortMenuOpen}
-                color="inherit"
-            ><SortIcon /></IconButton>
-        </Box>
     let addButt = "";
-    if(!store.currentMap && auth.loggedIn){
-        if((store.browseMode == 0 || store.browseMode == 3) && auth.loggedIn){ //add list button
-            addButt = <Fab 
-                color="primary" 
+    if (!store.currentMap && auth.loggedIn) {
+        if ((store.browseMode == 0 || store.browseMode == 3) && auth.loggedIn) { //add list button
+            addButt = <Fab
+                color='primary'
                 aria-label="add"
                 id="add-list-button"
                 onClick={handleCreateNewMap}
-                > <AddIcon /> </Fab>
-        }else if(store.browseMode > 0){ //search bar
+            > <AddIcon /> </Fab>
+        } else if (store.browseMode > 0) { //search bar
             addButt = <SearchBar />
         }
     }
-    
+
     function getAccountMenu(loggedIn) {
         let userInitials = auth.getUserInitials();
         console.log("userInitials: " + userInitials);
-        if (loggedIn) 
+        if (loggedIn)
             return <div>{userInitials}</div>;
         else
             return <AccountCircle />;
@@ -170,26 +160,33 @@ export default function AppBanner() {
 
     return (
         <Box sx={{ flexGrow: 1 }}>
-            <AppBar position="static">
-                <Toolbar>
-                    <Typography                        
-                        variant="h4"
-                        noWrap
-                        component="div"
-                        sx={{ display: { xs: 'none', sm: 'block' } }}                        
-                    >
-                        <Link style={{ textDecoration: 'none', color: 'white' }} onClick={handleHome} to="/">🏠</Link>
-                        <Link style={{ textDecoration: 'none', color: 'white' }} onClick={handleAll} to="/">👥</Link>
-                        <Link style={{ textDecoration: 'none', color: 'white' }} onClick={handleUser} to="/">👤</Link>
-                        <Link style={{ textDecoration: 'none', color: 'white' }} onClick={handleDM} to="/message/">🗨</Link>
-                        <Link style={{ textDecoration: 'none', color: 'white' }} onClick={handleHelp} to="/help/">?</Link>
-                    </Typography>
+            <AppBar position="static" sx={{ bgcolor: 'primary.complement' }}>
+
+                {(auth.loggedIn) ? <Toolbar>
+                    <Box>MAP CENTRAL</Box>
+                    <Link onClick={handleHome} to="/"><HomeIcon></HomeIcon></Link>
+                    <Link style={{ color: 'white' }} onClick={handleAll} to="/">Browse</Link>
+                    <Link style={{ color: 'white' }} onClick={handleUser} to="/">Users</Link>
+                    <Link style={{ color: 'white' }} onClick={handleDM} to="/message/">Chat</Link>
+                    <Link style={{ color: 'white' }} onClick={handleHelp} to="/help/">?</Link>
                     <Box sx={{ width: '5%' }}></Box>
-                    <Box id='bannerStatus' sx={{ fontSize: '32px' }}>{!auth.loggedIn ? '|' : (store.browseMode == 0 ? 'Home' : (store.browseMode == 2 ? 'Map Name Search: ' : (store.browseMode == 3 ? 'Messages' : 'Username Search: ')))}</Box>
+                    <Box id='bannerStatus' sx={{ fontSize: '32px' }}>{!auth.loggedIn ? '' : (store.browseMode == 0 ? 'Home' : (store.browseMode == 2 ? 'Map Name Search: ' : (store.browseMode == 3 ? 'Messages' : 'Username Search: ')))}</Box>
                     <Box sx={{ width: '5%' }}></Box>
                     {addButt}
                     <Box sx={{ flexGrow: 1 }}></Box>
-                    {sortMenu}
+
+                    <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
+                        <IconButton
+                            size="large"
+                            edge="end"
+                            aria-label="sort mode"
+                            aria-controls={'primary-search-account-menu'}
+                            aria-haspopup="true"
+                            onClick={handleSortMenuOpen}
+                            color="inherit"
+                        ><SortIcon /></IconButton>
+                    </Box>
+
                     <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
                         <IconButton
                             size="large"
@@ -200,13 +197,14 @@ export default function AppBanner() {
                             onClick={handleProfileMenuOpen}
                             color="inherit"
                         >
-                            { getAccountMenu(auth.loggedIn) }
+                            {getAccountMenu(auth.loggedIn)}
                         </IconButton>
                     </Box>
                 </Toolbar>
+                    : <></>}
             </AppBar>
             {sMen}
             {menu}
-        </Box>
+        </Box >
     );
 }

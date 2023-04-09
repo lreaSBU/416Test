@@ -16,27 +16,45 @@ import {
     MessageWrapper,
     EditScreen
 } from './components'
+import { ThemeProvider, createTheme } from '@mui/material/styles'
+// --swatch - foundation: #ffffff;
+// --swatch - primary: #5EB120;
+// --swatch - complement: #D9D9D9;
+// --swatch - contrast: #000000;
+// --swatch - accent: #569F1D;
+// --swatch - status: #FF0000;
+const customTheme = createTheme({
+    palette: {
+        primary: {
+            main: '#5EB120',
+            accent: '#569F1D',
+            complement: '#D9D9D9',
+            status: '#FF0000',
+        }
+    }
+})
 /*
     Application's top-level component.
 */
 const App = () => {
     return (
-        <BrowserRouter>
-            <AuthContextProvider>
-                <GlobalStoreContextProvider>
-                    <AppBanner />
-                    <Switch>
-                        <Route path="/" exact component={HomeWrapper} />
-                        <Route path="/message/" exact component={MessageScreen} />
-                        <Route path="/edit/" exact component={EditScreen} />
-                        <Route path="/login/" exact component={LoginScreen} />
-                        <Route path="/register/" exact component={RegisterScreen} />
-                        <Route path="/playlist/:id" exact component={BrowseScreen} />
-                    </Switch>
-
-                </GlobalStoreContextProvider>
-            </AuthContextProvider>
-        </BrowserRouter>
+        <ThemeProvider theme={customTheme}>
+            <BrowserRouter>
+                <AuthContextProvider>
+                    <GlobalStoreContextProvider>
+                        <AppBanner />
+                        <Switch>
+                            <Route path="/" exact component={HomeWrapper} />
+                            <Route path="/message/" exact component={MessageScreen} />
+                            <Route path="/edit/" exact component={EditScreen} />
+                            <Route path="/login/" exact component={LoginScreen} />
+                            <Route path="/register/" exact component={RegisterScreen} />
+                            <Route path="/playlist/:id" exact component={BrowseScreen} />
+                        </Switch>
+                    </GlobalStoreContextProvider>
+                </AuthContextProvider>
+            </BrowserRouter>
+        </ThemeProvider>
     )
 }
 

@@ -23,6 +23,7 @@ function GlobalStoreContextProvider(props){
         browseMode: 0,
         modalMode: 0,
         tabMode: 0,
+        // Each Element Is One Map
         idNamePairs: [],
         currentMap: null,
         sortMode: 0,
