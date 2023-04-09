@@ -7,7 +7,6 @@ export default function SplashScreen() {
         <div  id="splash-screen">
             <Box sx={{m: '5%'}}></Box>
             <Box id='splashT'>
-                {/* <PublicIcon id='splashIcon'></PublicIcon> */}
                 <PublicIcon sx={{fontSize: '5vw'}}></PublicIcon>
                 Map Central
             </Box>
