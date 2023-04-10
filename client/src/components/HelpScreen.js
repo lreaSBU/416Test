@@ -19,7 +19,7 @@ export default function HelpScreen() {
                 - You can visit the Browse or Users screens to search for published maps my title or owner username
             </Box>
             <Box className='helpD'>
-                - If you are logged in you can also visit the Chat screen to directly message other users, otherwise you can alwasy reach out through map comments
+                - If you are logged in you can also visit the Chat screen to directly message other users, otherwise you can always reach out through map comments
             </Box>
             <Box className='helpD'>
                 - From the Home screen you can change the name of your maps, publish them, make them private or begin editing them
