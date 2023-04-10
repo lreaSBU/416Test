@@ -20,6 +20,7 @@ import Fab from '@mui/material/Fab'
 import HomeIcon from '@mui/icons-material/Home'
 import PublicIcon from '@mui/icons-material/Public'
 import QuestionMarkIcon from '@mui/icons-material/QuestionMark'
+import Button from '@mui/material/Button';
 
 export default function AppBanner() {
     const { auth } = useContext(AuthContext);
@@ -27,6 +28,21 @@ export default function AppBanner() {
     const [anchorEl, setAnchorEl] = useState(null);
     const [banchor, setBanchor] = useState(null);
     const isMenuOpen = Boolean(anchorEl);
+    const isSortOpen = Boolean(banchor);
+
+    const handleSortMenuOpen = (event) => {
+        setBanchor(event.currentTarget);
+    };
+
+    const handleEditTab = (e) => {
+        store.editTabSwitch();
+    }
+
+    function handleSort(type) {
+        console.log("MENU_EVENT: " + type);
+        handleMenuClose();
+        store.changeSortMode(type);
+    }
 
     function handleCreateNewMap() {
         store.createNewMap();
@@ -109,7 +125,7 @@ export default function AppBanner() {
     if (auth.loggedIn) menu = loggedInMenu;
     let addButt = "";
     if (!store.currentMap && auth.loggedIn) {
-        if ((store.browseMode == 0 || store.browseMode == 3) && auth.loggedIn) { //add list button
+        if ((store.browseMode == 0 || store.browseMode == 3) && store.tabMode < 2 && auth.loggedIn) { //add list button
             addButt = <Fab
                 size='medium'
                 color='primary'
@@ -120,6 +136,10 @@ export default function AppBanner() {
         } else if (store.browseMode > 0) {
             addButt = <SearchBar />
         }
+    }
+    let editTab = '';
+    if(auth.loggedIn && store.tabMode > 1){
+        editTab = <Button sx={{bgcolor: '#e1e4cb', fontSize: '16px', textAlign: "center", m: 1}} onClick={handleEditTab}>{(store.tabMode == 2 ? <>Graphics</> : <>Editing</>)}</Button>
     }
 
     function getAccountMenu(loggedIn) {
@@ -149,11 +169,11 @@ export default function AppBanner() {
                         <Box sx={{ width: '2%' }}></Box>
                         <Link className='hvr-grow' style={{ textDecoration: 'none', color: 'black' }} onClick={handleHelp} to="/help/"><QuestionMarkIcon></QuestionMarkIcon></Link>
                         <Box sx={{ width: '5%' }}></Box>
-                        <Box id='bannerStatus' sx={{ fontSize: 'x-large' }}>{(store.browseMode == 0) ? <>My Maps</> : <>Search:</>}</Box>
+                        <Box id='bannerStatus' sx={{ fontSize: 'xx-large' }}>{(store.browseMode == 0) ? (store.tabMode > 1 ? <>Editing</> : <>My Maps</>) : <>Search:</>}</Box>
                         <Box sx={{ width: '1%' }}></Box>
                         {addButt}
                         <Box sx={{ flexGrow: 1 }}></Box>
-
+                        {editTab}
                         <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
                             <IconButton
                                 size="large"

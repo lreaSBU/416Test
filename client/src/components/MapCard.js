@@ -13,6 +13,7 @@ import LikeIcon from '@mui/icons-material/ThumbUp';
 import DislikeIcon from '@mui/icons-material/ThumbDown';
 import LikeIconOff from '@mui/icons-material/ThumbUpOffAlt';
 import DislikeIconOff from '@mui/icons-material/ThumbDownOffAlt';
+import MenuIcon from '@mui/icons-material/Menu';
 
 import { Container } from '@mui/material';
 import Dialog from '@mui/material/Dialog';
@@ -139,9 +140,6 @@ function MapCard(props) {
             sx={{ marginTop: '15px', p: 1 }}
             style={{ width: '98%', height: '100%', fontSize: 'x-large', outline: 'solid', borderRadius: '5px', marginLeft: 'auto', marginRight: 'auto' }}
             button
-            onClick={(event) => {
-                handleLoadList(event, idNamePair._id)
-            }}
         >
 
             <Container sx={{ display: 'flex', alignItems: 'center' }}>

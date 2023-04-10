@@ -73,56 +73,59 @@ function GlobalStoreContextProvider(props){
         });
     }
     store.goHome = function(){
-        store.loadIdNamePairs({
+        console.log("1"); store.loadIdNamePairs({
             currentMap: null,
             browseMode: 0,
             filter: null,
             searchMode: 0,
             sortMode: 0,
+            tabMode: 0,
             page: 0
         });
     }
     store.goSearchByUser = function(){
-        store.loadIdNamePairs({
+        console.log("2"); store.loadIdNamePairs({
             currentMap: null,
             browseMode: 1,
             filter: "",
             searchMode: 0,
+            tabMode: 0,
             page: 0
         });
     }
     store.goSearchByName = function(){
-        store.loadIdNamePairs({
+        console.log("3"); store.loadIdNamePairs({
             currentMap: null,
             browseMode: 2,
             filter: "",
             searchMode: 1,
+            tabMode: 0,
             page: 0
         });
     }
 
     store.changeSortMode = function(type){
-        store.loadIdNamePairs({
+        console.log("4"); store.loadIdNamePairs({
             sortMode: type,
             page: 0
         });
     }
 
     store.startSearch = function(nf){
-        store.loadIdNamePairs({
+        console.log("5"); store.loadIdNamePairs({
             filter: nf,
             page: 0
         });
     }
 
     store.switchTab = function(newTab){
-        store.loadIdNamePairs({
+        console.log("6"); store.loadIdNamePairs({
             tabMode: newTab
         });
     }
 
     store.setEditingMapName = function(act){
-        store.loadIdNamePairs({
+        console.log("7"); store.loadIdNamePairs({
             editingName: act
         });
     }
@@ -134,19 +137,20 @@ function GlobalStoreContextProvider(props){
         async function asyncUpdate(){
             const response = await api.updateMapById(id, p);
             if(response.data.success){
-                store.loadIdNamePairs();
+                console.log("8"); store.loadIdNamePairs();
             }else console.log("FAILED TO UPDATE!?!?!?");
         }
         asyncUpdate();
     }
 
     // THIS FUNCTION LOADS ALL THE ID, NAME PAIRS SO WE CAN LIST ALL THE LISTS
-    store.loadIdNamePairs = function(p = {}){
-        async function asyncLoadIdNamePairs(){
+    store.loadIdNamePairs = function(pr = {}){
+        console.log("LOADING!!!!!!!");
+        async function asyncLoadIdNamePairs(p){
             try{
                 if(p.browseMode === undefined) p.browseMode = store.browseMode;
                 if(p.modalMode === undefined) p.modalMode = store.modalMode;
-                if(p.tabMode === undefined) p.tabMode = store.tabMode;
+                if(p.tabMode === undefined) p.tabMode = 0; //store.tabMode;
                 p.convoPairs = [];
                 p.edit = null;
                 if(p.currentMap === undefined) p.currentMap = store.currentMap;
@@ -156,7 +160,6 @@ function GlobalStoreContextProvider(props){
                 if(p.page === undefined) p.page = store.page;
                 if(p.editingName === undefined) p.editingName = store.editingName;
                 if(p.currentConvo === undefined) p.currentConvo = store.currentConvo;
-                console.log("SWAPPING TO FILTER: " + p.filter);
                 const response = p.filter === "" ? null : await api.getMapPairs(p.filter, p.searchMode, p.sortMode, p.page);
                 p.idNamePairs = (p.filter === "" ? [] : response.data.idNamePairs);
                 storeReducer(p);
@@ -165,7 +168,7 @@ function GlobalStoreContextProvider(props){
                 console.log("caught logout error");
             }
         }
-        asyncLoadIdNamePairs();
+        asyncLoadIdNamePairs(pr);
     }
 
     store.loadConvoPairs = function(p = {}){
@@ -228,16 +231,31 @@ function GlobalStoreContextProvider(props){
     }
 
     store.loadEditorData = function(id){
-        async function asyncLoadEditorData(){
+        /*async function asyncLoadEditorData(){
             //const newEdit = api.getEditorDataById(id);
             const newEdit = ({
 
             });
             storeReducer({
+                browseMode: 0,
+                tabMode: 2,
                 edit: newEdit
             });
         }
-        asyncLoadEditorData();
+        asyncLoadEditorData();*/
+        const newEdit = ({
+
+        });
+        storeReducer({
+            browseMode: 0,
+            tabMode: 2,
+            edit: newEdit
+        });
+    }
+    store.editTabSwitch = function(){
+        storeReducer({
+            tabMode: store.tabMode == 2 ? 3 : 2
+        });
     }
 
     store.setCurrentMap = function (id) {
@@ -246,7 +264,7 @@ function GlobalStoreContextProvider(props){
             if(response.data.success){
                 let map = response.data.map;
                 tps.clearAllTransactions();
-                store.loadIdNamePairs({
+                console.log("9"); store.loadIdNamePairs({
                     currentMap: map
                 });
                 //history.push("/playlist/" + playlist._id);
@@ -268,7 +286,7 @@ function GlobalStoreContextProvider(props){
         const response = await api.createMap(newName, auth.user);
         if(response.status === 201){
             tps.clearAllTransactions();
-            store.loadIdNamePairs({
+            console.log("10"); store.loadIdNamePairs({
                 currentMap: response.data.map
             });
             // IF IT'S A VALID LIST THEN LET'S START EDITING IT
