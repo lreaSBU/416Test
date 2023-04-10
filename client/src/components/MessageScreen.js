@@ -36,7 +36,7 @@ const MessageScreen = () => {
         console.log("AMOUNT::: " + store.convoPairs.length);
         console.log("CURRENT::: " + store.currentConvo);
         convoCards = 
-        <List sx={{ width: '100%', left: '0%', bgcolor: '#ff0000' }}>
+        <List sx={{ width: '100%', left: '0%', bgcolor: 'background.paper' }}>
         {
             store.convoPairs.map((pair) => (
                 <ContactCard
@@ -71,11 +71,11 @@ const MessageScreen = () => {
         <div id="playlist-selector">
             <div id="list-selector-heading">
             </div>
-            <div id="list-selector-list">
+            <div id="contact-selector-list">
                 {convoCards}
                 {modalJSX}
             </div>
-            <div id="list-inspector">
+            <div id="contact-inspector">
                 <Box sx={{p : 1, height: '90%', width: '100%', color: 'red', bgColor: 'red'}}>
                     {inspect}
                 </Box>

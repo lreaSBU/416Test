@@ -200,7 +200,8 @@ function GlobalStoreContextProvider(props){
                                     text: "Hey, how are you?",
                                     dir: true
                                 }
-                            ]
+                            ],
+                            unread: 0
                         }
                     },
                     {
@@ -217,7 +218,8 @@ function GlobalStoreContextProvider(props){
                                     text: "Not much",
                                     dir: true
                                 }
-                            ]
+                            ],
+                            unread: 1
                         }
                     }
                 ]);
