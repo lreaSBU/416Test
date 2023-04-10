@@ -21,6 +21,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle'
+import SearchIcon from '@mui/icons-material/Search';
 
 function MapCard(props) {
     const { store } = useContext(GlobalStoreContext);
@@ -131,6 +132,11 @@ function MapCard(props) {
             <Container sx={{ display: 'flex', alignItems: 'center', float: 'right' }}>
                 <Link onClick={(event) => { handleEditor(event, idNamePair._id) }} to="/edit/"><EditIcon sx={{ color: 'primary.main' }}></EditIcon></Link>
                 <IconButton onClick={(event) => { handleDeleteList(event, idNamePair._id) }} aria-label='delete'><DeleteIcon></DeleteIcon></IconButton>
+                <Box sx={{flexGrow: 1}}></Box>
+                {(idNamePair.copy.published ? '' : (<IconButton onClick={handleToggleEdit} aria-label='edit'>
+                        <EditIcon style={{ fontSize: '16pt' }} />
+                    </IconButton>))} 
+                <IconButton onClick={(event) => { handleLoadList(event, idNamePair._id) }} aria-label='open'><SearchIcon></SearchIcon></IconButton>
             </Container>
     }
     let cardElement =

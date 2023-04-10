@@ -101,7 +101,7 @@ const BrowseScreen = () => {
                 inspect = <div><Box sx={{ borderRadius: 2, bgColor: '#aaa' }}>Unpublished Maps will not have a comments section.</Box></div>;
             }
         } else { //player
-            inspect = <div>PREVIEW DATA</div>
+            inspect = <div>PREVIEW DATA: {store.currentMap.name}</div>
         }
     }
 

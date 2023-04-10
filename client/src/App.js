@@ -46,7 +46,7 @@ const App = () => {
                         <AppBanner />
                         <Switch>
                             <Route path="/" exact component={HomeWrapper} />
-                            <Route path="/message/" exact component={MessageScreen} />
+                            <Route path="/message/" exact component={MessageWrapper} />
                             <Route path="/edit/" exact component={EditScreen} />
                             <Route path="/login/" exact component={LoginScreen} />
                             <Route path="/register/" exact component={RegisterScreen} />
