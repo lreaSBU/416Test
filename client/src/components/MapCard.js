@@ -15,12 +15,18 @@ import LikeIconOff from '@mui/icons-material/ThumbUpOffAlt';
 import DislikeIconOff from '@mui/icons-material/ThumbDownOffAlt';
 
 import { Container } from '@mui/material';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle'
 
 function MapCard(props) {
     const { store } = useContext(GlobalStoreContext);
     const [editActive, setEditActive] = useState(false);
     const [text, setText] = useState("");
     const { idNamePair, selected } = props;
+    const [open, setOpen] = useState(false);
 
     function handleEditor(e, id) {
         store.goToEditor(id);
@@ -69,10 +75,11 @@ function MapCard(props) {
     }
 
     async function handleDeleteList(event, id) {
-        event.stopPropagation();
-        let _id = event.target.id;
-        _id = ("" + _id).substring("delete-list-".length);
-        store.markListForDeletion(id);
+        setOpen(true);
+        // event.stopPropagation();
+        // let _id = event.target.id;
+        // _id = ("" + _id).substring("delete-list-".length);
+        // store.markListForDeletion(id);
     }
 
     function handleKeyPress(event) {
@@ -84,6 +91,11 @@ function MapCard(props) {
     }
     function handleUpdateText(event) {
         setText(event.target.value);
+    }
+
+
+    function handleDialogClose() {
+        setOpen(false);
     }
 
     let selectClass = "unselected-list-card";
@@ -115,13 +127,9 @@ function MapCard(props) {
         //npl = <Box sx={{ p: 1, flexGrow: 1, fontSize: '16px'}}>{idNamePair.ownerName}</Box>
     } else {
         ldl =
-            <Container maxWidth='md' sx={{ display: 'flex', alignItems: 'center' }}>
+            <Container sx={{ display: 'flex', alignItems: 'center', float: 'right' }}>
                 <Link onClick={(event) => { handleEditor(event, idNamePair._id) }} to="/edit/"><EditIcon sx={{ color: 'primary.main' }}></EditIcon></Link>
-
-                <IconButton onClick={(event) => { handleDeleteList(event, idNamePair._id) }} aria-label='delete'>
-                    <DeleteIcon></DeleteIcon>
-                </IconButton>
-
+                <IconButton onClick={(event) => { handleDeleteList(event, idNamePair._id) }} aria-label='delete'><DeleteIcon></DeleteIcon></IconButton>
             </Container>
     }
     let cardElement =
@@ -136,7 +144,7 @@ function MapCard(props) {
             }}
         >
 
-            <Container maxWidth='md' sx={{ display: 'flex', alignItems: 'center' }}>
+            <Container sx={{ display: 'flex', alignItems: 'center' }}>
                 <Box>{idNamePair.name}</Box>
                 {/* <Box>
                     {(idNamePair.copy.published ? '' : (<IconButton onClick={handleToggleEdit} aria-label='edit'>
@@ -187,6 +195,26 @@ function MapCard(props) {
     return (
         <div>
             {cardElement}
+            <Dialog
+                open={open}
+                onClose={handleDialogClose}
+            >
+                <DialogTitle>
+                    {"Delete Map"}
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Do you want to delete this map?
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleDialogClose}>Delete</Button>
+                    <Button onClick={handleDialogClose} autoFocus>
+                        Cancel
+                    </Button>
+                </DialogActions>
+
+            </Dialog>
         </div>
     );
 }

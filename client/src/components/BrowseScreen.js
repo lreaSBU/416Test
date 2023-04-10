@@ -101,7 +101,7 @@ const BrowseScreen = () => {
                 inspect = <div><Box sx={{ borderRadius: 2, bgColor: '#aaa' }}>Unpublished Maps will not have a comments section.</Box></div>;
             }
         } else { //player
-            inspect = <div>PREVIEW!!!</div>
+            inspect = <div>PREVIEW DATA</div>
         }
     }
 
@@ -131,29 +131,28 @@ const BrowseScreen = () => {
                 <div id='browseScreenSortHeader'>
                     Sort
                     <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-                    <IconButton
-                        size="large"
-                        edge="end"
-                        aria-label="sort mode"
-                        aria-controls={'primary-search-account-menu'}
-                        aria-haspopup="true"
-                        onClick={handleSortMenuOpen}
-                        color="inherit"
-                    ><SortIcon /></IconButton>
-                </Box>
+                        <IconButton
+                            size="large"
+                            edge="end"
+                            aria-label="sort mode"
+                            aria-controls={'primary-search-account-menu'}
+                            aria-haspopup="true"
+                            onClick={handleSortMenuOpen}
+                            color="inherit"
+                        ><SortIcon /></IconButton>
+                    </Box>
                 </div>
-                
+
                 {sMen}
                 {mapCards}
                 {modalJSX}
             </div>
             <div id="list-inspector">
-                LIST INSPECTOR
-                <Box sx={{ p: 1, width: "100%", height: "10%", bgColor: '111111' }}>
-                    <Button sx={{ bgcolor: ((!store.currentMap || store.tabMode == 1) ? '#e1e4cb' : 'yellow'), fontSize: '16px', textAlign: "center", m: 1 }} onClick={handlePreviewTab}>Preview</Button>
-                    <Button sx={{ bgcolor: ((!store.currentMap || store.tabMode == 0) ? '#e1e4cb' : 'yellow'), fontSize: '16px', textAlign: "center", m: 1 }} onClick={handleCommentTab}>Comments</Button>
+                <Box sx={{ p: 1, width: "100%", height: "10%" }}>
+                    <Button sx={{ bgcolor: ((!store.currentMap || store.tabMode == 1) ? 'primary.complement' : ''), fontSize: '16px', textAlign: "center", m: 1 }} onClick={handlePreviewTab}>Preview</Button>
+                    <Button sx={{ bgcolor: ((!store.currentMap || store.tabMode == 0) ? 'primary.complement' : ''), fontSize: '16px', textAlign: "center", m: 1 }} onClick={handleCommentTab}>Comments</Button>
                 </Box>
-                <Box sx={{ p: 1, height: '90%', width: '100%', color: 'red', bgColor: 'red' }}>
+                <Box sx={{ p: 1, height: '90%', width: '100%', color: 'black' }}>
                     {inspect}
                 </Box>
             </div>
