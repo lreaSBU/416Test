@@ -224,6 +224,11 @@ body {
   float: left;
 }
 
+#browseScreenSortHeader{
+  display: flex;
+  align-items: center;
+}
+
 #list-selector-list {
   position: absolute;
   left: 0%;
@@ -233,6 +238,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow: scroll;
+  overflow-x: hidden;
 }
 
 #list-inspector {

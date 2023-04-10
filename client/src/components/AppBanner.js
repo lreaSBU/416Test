@@ -27,17 +27,6 @@ export default function AppBanner() {
     const [anchorEl, setAnchorEl] = useState(null);
     const [banchor, setBanchor] = useState(null);
     const isMenuOpen = Boolean(anchorEl);
-    const isSortOpen = Boolean(banchor);
-
-    const handleSortMenuOpen = (event) => {
-        setBanchor(event.currentTarget);
-    };
-
-    function handleSort(type) {
-        console.log("MENU_EVENT: " + type);
-        handleMenuClose();
-        store.changeSortMode(type);
-    }
 
     function handleCreateNewMap() {
         store.createNewMap();
@@ -118,25 +107,6 @@ export default function AppBanner() {
 
     let menu = loggedOutMenu;
     if (auth.loggedIn) menu = loggedInMenu;
-    const sMen = <Menu
-        anchorEl={banchor}
-        anchorOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
-        }}
-        id={'sort-menu'}
-        keepMounted
-        transformOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
-        }}
-        open={isSortOpen}
-        onClose={handleMenuClose}
-    >
-        <MenuItem onClick={(event) => { handleSort(0) }}>By Creation Date (Old-New)</MenuItem>
-        <MenuItem onClick={(event) => { handleSort(1) }}>By Creation Date (New-Old)</MenuItem>
-        <MenuItem onClick={(event) => { handleSort(2) }}>By Name (A-Z)</MenuItem>
-    </Menu>
     let addButt = "";
     if (!store.currentMap && auth.loggedIn) {
         if ((store.browseMode == 0 || store.browseMode == 3) && auth.loggedIn) { //add list button
@@ -179,22 +149,10 @@ export default function AppBanner() {
                         <Box sx={{ width: '2%' }}></Box>
                         <Link className='hvr-grow' style={{ textDecoration: 'none', color: 'black' }} onClick={handleHelp} to="/help/"><QuestionMarkIcon></QuestionMarkIcon></Link>
                         <Box sx={{ width: '5%' }}></Box>
-                        <Box id='bannerStatus' sx={{ fontSize: 'xx-large' }}>{(store.browseMode == 0) ? <>My Maps</> : <>Search:</>}</Box>
+                        <Box id='bannerStatus' sx={{ fontSize: 'x-large' }}>{(store.browseMode == 0) ? <>My Maps</> : <>Search:</>}</Box>
                         <Box sx={{ width: '1%' }}></Box>
                         {addButt}
                         <Box sx={{ flexGrow: 1 }}></Box>
-
-                        <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-                            <IconButton
-                                size="large"
-                                edge="end"
-                                aria-label="sort mode"
-                                aria-controls={'primary-search-account-menu'}
-                                aria-haspopup="true"
-                                onClick={handleSortMenuOpen}
-                                color="inherit"
-                            ><SortIcon /></IconButton>
-                        </Box>
 
                         <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
                             <IconButton
@@ -212,7 +170,6 @@ export default function AppBanner() {
                     </Toolbar>
                     : <></>}
             </AppBar>
-            {sMen}
             {menu}
         </Box >
     );

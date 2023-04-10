@@ -14,20 +14,15 @@ import DislikeIcon from '@mui/icons-material/ThumbDown';
 import LikeIconOff from '@mui/icons-material/ThumbUpOffAlt';
 import DislikeIconOff from '@mui/icons-material/ThumbDownOffAlt';
 
-/*
-    This is a card in our list of top 5 lists. It lets select
-    a list for editing and it has controls for changing its 
-    name or deleting it.
-    
-    @author McKilla Gorilla
-*/
+import { Container } from '@mui/material';
+
 function MapCard(props) {
     const { store } = useContext(GlobalStoreContext);
     const [editActive, setEditActive] = useState(false);
     const [text, setText] = useState("");
     const { idNamePair, selected } = props;
 
-    function handleEditor(e, id){
+    function handleEditor(e, id) {
         store.goToEditor(id);
     }
 
@@ -45,22 +40,22 @@ function MapCard(props) {
         }
     }
 
-    function handleLike(e){
+    function handleLike(e) {
         store.changeLikes(idNamePair._id, true);
     }
-    function handleDislike(e){
+    function handleDislike(e) {
         store.changeLikes(idNamePair._id, false); //Need to write in this function!!!
     }
-    
-    function handleDup(e){
+
+    function handleDup(e) {
         store.createNewList(idNamePair.name, idNamePair.copy.songs);
     }
 
-    function handlePub(e){
+    function handlePub(e) {
         store.publishList(store.currentList);
     }
 
-    function handleToggleEdit(event) {    
+    function handleToggleEdit(event) {
         event.stopPropagation();
         toggleEdit();
     }
@@ -101,55 +96,73 @@ function MapCard(props) {
     }
     let ldl = '';
     //let npl = '';
-    let npl = <Box sx={{ p: 1, flexGrow: 1, fontSize: '16px'}}>{(store.browseMode ? idNamePair.ownerName : (idNamePair.copy.published ? "*Published" : ""))}</Box>
-    if(store.browseMode){
+    let npl = <Box sx={{ p: 1, flexGrow: 1, fontSize: '16px' }}>{(store.browseMode ? idNamePair.ownerName : (idNamePair.copy.published ? "*Published" : ""))}</Box>
+    if (store.browseMode) {
         ldl = (<div>
             <Box sx={{ p: 1 }}>
                 <IconButton onClick={handleLike} aria-label='like'>
                     <Box sx={{ p: 1, flexGrow: 1, color: 'black' }}>{idNamePair.likes}</Box>
-                    <LikeIcon style={{fontSize:'32pt'}} />
+                    <LikeIcon style={{ fontSize: '32pt' }} />
                 </IconButton>
             </Box>
             <Box sx={{ p: 1 }}>
                 <IconButton onClick={handleDislike} aria-label='dislike'>
                     <Box sx={{ p: 1, flexGrow: 1, color: 'black' }}>{idNamePair.dislikes}</Box>
-                    <DislikeIcon style={{fontSize:'32pt'}} />
+                    <DislikeIcon style={{ fontSize: '32pt' }} />
                 </IconButton>
             </Box>
         </div>);
         //npl = <Box sx={{ p: 1, flexGrow: 1, fontSize: '16px'}}>{idNamePair.ownerName}</Box>
-    }else{
-        ldl = <div>
-            <Link style={{ textDecoration: 'none', color: '#00aa00' }} onClick={(event) => {handleEditor(event, idNamePair._id)}} to="/edit/">🡆</Link>
-            <Box>
-                <IconButton onClick={(event) => {handleDeleteList(event, idNamePair._id)}} aria-label='delete'>
-                    <DeleteIcon style={{fontSize:'32pt'}} />
+    } else {
+        ldl =
+            <Container maxWidth='md' sx={{ display: 'flex', alignItems: 'center' }}>
+                <Link onClick={(event) => { handleEditor(event, idNamePair._id) }} to="/edit/"><EditIcon sx={{ color: 'primary.main' }}></EditIcon></Link>
+
+                <IconButton onClick={(event) => { handleDeleteList(event, idNamePair._id) }} aria-label='delete'>
+                    <DeleteIcon></DeleteIcon>
                 </IconButton>
-            </Box>
-        </div>
+
+            </Container>
     }
     let cardElement =
         <ListItem
             id={idNamePair._id}
             key={idNamePair._id}
-            sx={{ marginTop: '15px', display: 'flex', p: 1}}
-            style={{ width: '100%', fontSize: '48pt' }}
+            sx={{ marginTop: '15px', p: 1 }}
+            style={{ width: '98%', height: '100%', fontSize: 'x-large', outline: 'solid', borderRadius: '5px', marginLeft: 'auto', marginRight: 'auto' }}
             button
             onClick={(event) => {
                 handleLoadList(event, idNamePair._id)
             }}
         >
-            <div>
+
+            <Container maxWidth='md' sx={{ display: 'flex', alignItems: 'center' }}>
+                <Box>{idNamePair.name}</Box>
+                {/* <Box>
+                    {(idNamePair.copy.published ? '' : (<IconButton onClick={handleToggleEdit} aria-label='edit'>
+                        <EditIcon style={{ fontSize: '32pt' }} />
+                    </IconButton>))}
+                </Box> */}
+                {/* {npl} */}
+                {/* <Box sx={{ flexGrow: 1 }}></Box> */}
+                {ldl}
+            </Container>
+            {/* <div display='flex' alignItems='center'>
+                
+
+                <Box sx={{ p: 1, flexGrow: 1 }}>{idNamePair.name}</Box>
                 <Box>
                     {(idNamePair.copy.published ? '' : (<IconButton onClick={handleToggleEdit} aria-label='edit'>
-                        <EditIcon style={{fontSize:'32pt'}} />
+                        <EditIcon style={{ fontSize: '32pt' }} />
                     </IconButton>))}
                 </Box>
-                <Box sx={{ p: 1, flexGrow: 1 }}>{idNamePair.name}</Box>
+
                 {npl}
-            </div>
-            <Box sx={{flexGrow: 1 }}></Box>
-            {ldl}
+                <Box sx={{ flexGrow: 1 }}></Box>
+                {ldl}
+            </div> */}
+            {/* <Box sx={{ flexGrow: 1 }}></Box>
+            {ldl} */}
         </ListItem>
 
     if (editActive) {
@@ -159,15 +172,15 @@ function MapCard(props) {
                 required
                 fullWidth
                 id={"list-" + idNamePair._id}
-                label="Playlist Name"
+                label=""
                 name="name"
-                autoComplete="Playlist Name"
+                autoComplete=""
                 className='list-card'
                 onKeyPress={handleKeyPress}
                 onChange={handleUpdateText}
                 defaultValue={idNamePair.name}
-                inputProps={{style: {fontSize: 48}}}
-                InputLabelProps={{style: {fontSize: 24}}}
+                inputProps={{ style: { fontSize: 48 } }}
+                InputLabelProps={{ style: { fontSize: 24 } }}
                 autoFocus
             />
     }
