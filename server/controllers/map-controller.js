@@ -58,7 +58,7 @@ createMap = (req, res) => {
                         })
                     })
             });
-    })
+    }).catch(err => console.log(err));
 }
 deleteMap = async (req, res) => {
     console.log("delete Playlist with id: " + JSON.stringify(req.params.id));
@@ -88,7 +88,7 @@ deleteMap = async (req, res) => {
                         errorMessage: "authentication error" 
                     });
                 }
-            });
+            }).catch(err => console.log(err));
         }
         asyncFindUser(playlist);
     })
@@ -287,7 +287,7 @@ likePlaylist = async (req, res) => {
                 message: 'Playlist not updated!',
             })
         })
-    })
+    }).catch(err => console.log(err));
 }
 
 updateMap = async (req, res) => {
@@ -350,10 +350,10 @@ updateMap = async (req, res) => {
                     console.log("UPDATING WITH incorrect user!");
                     return res.status(200).json({ success: true, description: "authentication error", recovery: list });
                 }
-            });
+            }).catch(err => console.log(err));
         }
         asyncFindUser(map);
-    })
+    }).catch(err => console.log(err));
 }
 module.exports = {
     createMap,
