@@ -15,6 +15,7 @@ import Checkbox from '@mui/material/Checkbox';
 import Button from '@mui/material/Button';
 import SplashScreen from './SplashScreen'
 import logo from './Capture.png'
+import colors from './colors.png'
 import IconButton from '@mui/material/IconButton';
 import MouseIcon from '@mui/icons-material/Mouse';
 import AddIcon from '@mui/icons-material/Add';
@@ -39,12 +40,13 @@ import Typography from '@mui/material/Typography'
     @author McKilla Gorilla
 */
 const EditScreen = () => {
+    const { store } = useContext(GlobalStoreContext);
     const { auth } = useContext(AuthContext);
     if(!auth.loggedIn) return <SplashScreen />;
     return (
         <div id='editParent'>
             <div id = "leftPar" className='editShelf'>
-                <Box id='toolTray' className='traySect' sx={{bgcolor: '#999', borderRadius: 5}}>
+                <Box id='toolTray' className='traySect' sx={{bgcolor: '#999', borderRadius: 3}}>
                     <IconButton aria-label='select'>
                         <MouseIcon style={{fontSize:'32pt', color: '#000'}} />
                     </IconButton>
@@ -160,14 +162,23 @@ const EditScreen = () => {
                     </FormGroup>
                 </Box>
                 <Box sx={{height:'5%'}}></Box>
-                <Box id='inspector2' className='traySect' sx={{bgcolor: '#999', borderRadius: 1}}>
-                    <FormGroup sx={{padding: '5%', width: '80%'}}>
-                        <FormControlLabel control={<TextField disabled sx={{width:'60%'}} variant="filled" value="Subregion"/>} label="Type" />
-                        <FormControlLabel control={<TextField disabled sx={{width:'60%'}} variant="filled" value="1"/>} label="Layer" />
-                        <FormControlLabel control={<TextField disabled sx={{width:'60%'}} variant="filled" value="2"/>} label="Group" />
-                        <FormControlLabel control={<TextField disabled sx={{width:'60%'}} variant="filled" value="75"/>} label="Children" />
-                    </FormGroup>
-                </Box>
+                {store.tabMode == 3 ? <></> :
+                    <Box id='inspector2' className='traySect' sx={{bgcolor: '#999', borderRadius: 1}}>
+                        <FormGroup sx={{padding: '5%', width: '80%'}}>
+                            <FormControlLabel control={<TextField disabled sx={{width:'60%'}} variant="filled" value="Subregion"/>} label="Type" />
+                            <FormControlLabel control={<TextField disabled sx={{width:'60%'}} variant="filled" value="1"/>} label="Layer" />
+                            <FormControlLabel control={<TextField disabled sx={{width:'60%'}} variant="filled" value="2"/>} label="Group" />
+                            <FormControlLabel control={<TextField disabled sx={{width:'60%'}} variant="filled" value="75"/>} label="Children" />
+                        </FormGroup>
+                    </Box>
+                }
+                {store.tabMode == 2 ? <></> : 
+                    <Box id='inspector3' className='traySect' sx={{bgcolor: '#999', borderRadius: 1}}>
+                        <img id='exampleCols'
+                            src={colors}
+                        />
+                    </Box>
+                }
             </div>
         </div>
     );

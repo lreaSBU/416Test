@@ -57,6 +57,10 @@ body {
   width: 100%;
   height: 100%;
 }
+#exampleCols {
+  width: 100%;
+  height: 100%;
+}
 
 #bannerStatus {
   font-family: var(--my-font-family)
@@ -120,13 +124,35 @@ body {
   justify-content: center;
 }
 
+#helpT {
+  display: flex;
+  color: var(--swatch-primary);
+  font-size: 5vw;
+  font-weight: bolder;
+  text-shadow: 1px 1px 2px black;
+  align-items: left;
+  justify-content: left;
+}
+
 #splashL {
   font-size: 3vw;
+}
+#helpL {
+  font-size: 2vw;
 }
 
 #splashD {
   font-size: 3vw;
   color: var(--swatch-primary);
+}
+
+.helpD {
+  float: left;
+  left: 0;
+  font-size: 2vw;
+  color: var(--swatch-contrast);
+  align-items: left;
+  justify-content: left;
 }
 
 #splashC {

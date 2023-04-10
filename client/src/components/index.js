@@ -21,6 +21,7 @@ import UserWrapper from './UserWrapper'
 import Searchbar from './Searchbar'
 import Sortbar from './Sortbar'
 import EditScreen from './EditScreen'
+import HelpScreen from './HelpScreen'
 /*
     Serves as a module so that we can import
     all the other components as we wish.
@@ -47,5 +48,6 @@ export {
     MessageWrapper,
     MessageCard,
     UserWrapper,
+    HelpScreen,
     WorkspaceScreen,
     MessageScreen}

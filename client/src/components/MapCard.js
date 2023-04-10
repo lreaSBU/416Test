@@ -13,6 +13,7 @@ import LikeIcon from '@mui/icons-material/ThumbUp';
 import DislikeIcon from '@mui/icons-material/ThumbDown';
 import LikeIconOff from '@mui/icons-material/ThumbUpOffAlt';
 import DislikeIconOff from '@mui/icons-material/ThumbDownOffAlt';
+import MenuIcon from '@mui/icons-material/Menu';
 
 /*
     This is a card in our list of top 5 lists. It lets select
@@ -135,9 +136,6 @@ function MapCard(props) {
             sx={{ marginTop: '15px', display: 'flex', p: 1}}
             style={{ width: '100%', fontSize: '48pt' }}
             button
-            onClick={(event) => {
-                handleLoadList(event, idNamePair._id)
-            }}
         >
             <div>
                 <Box>
@@ -147,6 +145,9 @@ function MapCard(props) {
                 </Box>
                 <Box sx={{ p: 1, flexGrow: 1 }}>{idNamePair.name}</Box>
                 {npl}
+                {(idNamePair.copy.published ? '' : (<IconButton onClick={(event) => {handleLoadList(event, idNamePair._id)}} aria-label='edit'>
+                    <MenuIcon style={{fontSize:'32pt'}} />
+                </IconButton>))}
             </div>
             <Box sx={{flexGrow: 1 }}></Box>
             {ldl}
