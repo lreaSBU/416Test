@@ -33,9 +33,9 @@ const MessageScreen = () => {
 
     let convoCards = "";
     if(store){
-        console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!RENDERING FOR CONVOS NOW");
-        console.log("AMOUNT::: " + store.convoPairs.length);
-        console.log("CURRENT::: " + store.currentConvo);
+        console.log("!!!!!!!!!!!RENDERING FOR CONVOS NOW -- !!GOOD...");
+        console.log("AMOUNT:: " + store.convoPairs.length);
+        console.log("CURRENT:: " + store.currentConvo);
         convoCards = 
         <List sx={{ width: '100%', left: '0%', bgcolor: 'background.paper' }}>
         {
