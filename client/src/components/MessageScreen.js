@@ -8,6 +8,7 @@ import MessageCard from './MessageCard.js'
 //import MUIDeleteModal from './MUIDeleteModal'
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
 
 import List from '@mui/material/List';
 import Typography from '@mui/material/Typography'
@@ -79,6 +80,7 @@ const MessageScreen = () => {
                 <Box sx={{p : 1, height: '90%', width: '100%', color: 'red', bgColor: 'red'}}>
                     {inspect}
                 </Box>
+                {store.currentConvo ? <TextField sx={{width:'100%'}} label="Message"/> : <></>}
             </div>
         </div>)
 }

@@ -25,19 +25,15 @@ function MessageCard(props) {
     
     let cardElement =
         <ListItem
-            sx={{ marginTop: '15px', display: 'flex', p: 1}}
-            style={{ width: '100%', fontSize: '48pt' }}
+            sx={{ flexGrow: 1, marginTop: '15px', display: 'flex', p: 0}}
+            style={{ fontSize: '32pt', color: '#000'}}
         >
-            <div>
-                <Box sx={{ p: 1, flexGrow: 1, bgcolor: (dir ? '#ff00ff' : '#fff')}}>{text}</Box>
-            </div>
-            <Box sx={{flexGrow: 1 }}></Box>
+            {dir ? <></> : <Box sx={{flexGrow: 1}}></Box>}
+            <Box sx={{ borderRadius: 1, p: 1, flexGrow: 0, bgcolor: (dir ? '#5EB120' : '#D9D9D9')}}>{text}</Box>
         </ListItem>
 
     return (
-        <div>
-            {cardElement}
-        </div>
+        cardElement
     );
 }
 
