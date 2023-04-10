@@ -12,11 +12,11 @@ export default function SplashScreen() {
             </Box>
             <Box sx={{my: '10%'}}></Box>
             <Box id='splashD'>
-                Welcome to Map Central: an online service for creating, editing, and sharing all your favorite maps
+                Welcome to Map Central: This is an online service for creating, editing, and sharing all your favorite maps
             </Box>
             <Link id='splashL' to='/login/'>Get Started</Link>
             <Box id='splashC'>
-                Site by Spring 2023 CSE 416 Green Team
+                Site created by Spring 2023 CSE 416 Green Team
             </Box>
         </div>
     )
