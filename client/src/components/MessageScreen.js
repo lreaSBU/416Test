@@ -33,7 +33,7 @@ const MessageScreen = () => {
 
     let convoCards = "";
     if(store){
-        console.log("!!!!!!!!!!!!!RENDERING FOR CONVOS NOW -- !!GOOD");
+        console.log("!!!!!!!!!!!RENDERING FOR CONVOS NOW -- !!GOOD...");
         console.log("AMOUNT:: " + store.convoPairs.length);
         console.log("CURRENT:: " + store.currentConvo);
         convoCards = 
