@@ -8,6 +8,7 @@ axios.defaults.withCredentials = true;
 const apiMain = process.env.REACT_APP_BACK_URI + '/api';
 const api = axios.create({
     baseURL: apiMain,
+    withCredentials: true
 })
 
 // THESE ARE ALL THE REQUESTS WE`LL BE MAKING, ALL REQUESTS HAVE A
