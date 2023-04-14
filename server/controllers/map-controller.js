@@ -61,19 +61,19 @@ createMap = (req, res) => {
     }).catch(err => console.log(err));
 }
 deleteMap = async (req, res) => {
-    console.log("delete Playlist with id: " + JSON.stringify(req.params.id));
+    console.log("delete map with id: " + JSON.stringify(req.params.id));
     console.log("delete " + req.params.id);
-    Playlist.findById({ _id: req.params.id }, (err, playlist) => {
-        console.log("playlist found: " + JSON.stringify(playlist));
+    Map.findById({ _id: req.params.id }, (err, map) => {
+        console.log("Map found: " + JSON.stringify(map));
         if (err) {
             return res.status(404).json({
-                errorMessage: 'Playlist not found!',
+                errorMessage: 'Map not found!',
             })
         }
 
-        // DOES THIS LIST BELONG TO THIS USER?
-        async function asyncFindUser(list) {
-            User.findOne({ email: list.ownerEmail }, (err, user) => {
+        // DOES THIS MAP BELONG TO THIS USER?
+        async function asyncFindUser(m) {
+            User.findOne({ email: m.ownerEmail }, (err, user) => {
                 console.log("user._id: " + user._id);
                 console.log("req.userId: " + req.userId);
                 if (user._id == req.userId) {
@@ -90,7 +90,7 @@ deleteMap = async (req, res) => {
                 }
             }).catch(err => console.log(err));
         }
-        asyncFindUser(playlist);
+        asyncFindUser(map);
     })
 }
 getMapById = async (req, res) => {
