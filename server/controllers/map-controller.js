@@ -183,17 +183,17 @@ getMapPairs = async (req, res) => {
     }).catch(err => console.log(err))
 }
 getMaps = async (req, res) => {
-    await Playlist.find({}, (err, playlists) => {
+    await Map.find({}, (err, maps) => {
         if (err) {
             console.log("FAIL 16");
             return res.status(400).json({ success: false, error: err })
         }
-        if (!playlists.length) {
+        if (!maps.length) {
             return res
                 .status(404)
-                .json({ success: false, error: `Playlists not found` })
+                .json({ success: false, error: `Maps not found` })
         }
-        return res.status(200).json({ success: true, data: playlists })
+        return res.status(200).json({ success: true, data: maps })
     }).catch(err => console.log(err))
 }
 
