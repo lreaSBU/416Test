@@ -165,7 +165,7 @@ function GlobalStoreContextProvider(props){
                 storeReducer(p);
                 if(p.filter !== "" && !response.data.success) console.log("API FAILED TO GET THE LIST PAIRS");
             }catch(err){
-                console.log("caught logout error");
+                console.log("caught logout error: " + err);
             }
         }
         asyncLoadIdNamePairs(pr);
