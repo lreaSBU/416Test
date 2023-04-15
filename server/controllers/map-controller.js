@@ -60,6 +60,7 @@ createMap = (req, res) => {
             });
     }).catch(err => console.log(err));
 }
+// Deletes the map that the user selected
 deleteMap = async (req, res) => {
     console.log("delete map with id: " + JSON.stringify(req.params.id));
     console.log("delete " + req.params.id);
@@ -182,6 +183,7 @@ getMapPairs = async (req, res) => {
         asyncFindList(user);
     }).catch(err => console.log(err))
 }
+
 getMaps = async (req, res) => {
     await Map.find({}, (err, maps) => {
         if (err) {
