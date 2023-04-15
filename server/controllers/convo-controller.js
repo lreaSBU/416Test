@@ -42,7 +42,7 @@ getConvoPairs = async (req, res) => {
     }).catch(err => console.log(err))
 }
 
-
+// Blocks the conversation with another user in the chat
 blockConvo = async (req, res) => {
     console.log("calling getConvoPairs!");
     await User.findOne({_id : req.userId}, (err, user) => {
@@ -74,6 +74,7 @@ blockConvo = async (req, res) => {
         return res.status(200).json({ success: true, convoPairs: pairs })
     }).catch(err => console.log(err))
 }
+
 
 submitMessage = async (req, res) => {
     console.log("calling getConvoPairs!");
