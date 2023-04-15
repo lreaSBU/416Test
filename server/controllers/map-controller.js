@@ -183,7 +183,7 @@ getMapPairs = async (req, res) => {
         asyncFindList(user);
     }).catch(err => console.log(err))
 }
-
+// Displays the maps that the user requested
 getMaps = async (req, res) => {
     await Map.find({}, (err, maps) => {
         if (err) {
