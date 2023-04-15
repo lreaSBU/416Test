@@ -75,7 +75,7 @@ blockConvo = async (req, res) => {
     }).catch(err => console.log(err))
 }
 
-
+// Sends a message to another user in the chat
 submitMessage = async (req, res) => {
     console.log("calling getConvoPairs!");
     await User.findOne({_id : req.userId}, (err, user) => {
