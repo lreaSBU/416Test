@@ -109,4 +109,6 @@ submitMessage = async (req, res) => {
 
 module.exports = {
     getConvoPairs
+    blockConvo
+    submitMessage
 }
