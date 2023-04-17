@@ -13,4 +13,8 @@ describe('App Component', () => {
     it('sanity check that the splashscreen credits are as they should be', () => {
         cy.get('#splashC').should('have.text', 'Site by Spring 2023 CSE 416 Green Team')
     })
+
+    it('sanity check that the login button text is as it should be', () => {
+        cy.get('#splashB').should('have.text', 'Get Started')
+    })
 })
