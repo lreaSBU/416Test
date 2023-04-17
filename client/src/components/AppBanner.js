@@ -186,6 +186,7 @@ export default function AppBanner() {
                     </Toolbar>
                     : <></>}
 */
+    if(store.tabMode > 1) return <></>; //no more appbanner on editing screen!!!
     return (
         <Box sx={{ flexGrow: 1 }}>
             <AppBar position="static" sx={{ bgcolor: 'primary.complement' }}>

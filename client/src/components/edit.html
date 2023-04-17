@@ -15,7 +15,7 @@
       var canv = document.getElementById("map"), ctx = canv.getContext("2d"),
       fileIn = document.getElementById("fileIn");
 
-      const CW = canv.width, CH = canv.height;
+      var CW = canv.width, CH = canv.height;
       var fi, bytes, camZ = 1, camX = 100, camY = 100;
 
       var CWS, CHS;
@@ -116,7 +116,7 @@
       }
 
       var px, py, mp = new Point(), sel, ser;
-      const CLC = CW/10;
+      var CLC = CW/10;
 
       canv.addEventListener("mousedown", function(e){
           mp.set(e.x, e.y);
