@@ -21,6 +21,7 @@ import UserWrapper from './UserWrapper'
 import Searchbar from './Searchbar'
 import Sortbar from './Sortbar'
 import EditScreen from './EditScreen'
+import EditorCanvas from './EditorCanvas'
 import HelpScreen from './HelpScreen'
 /*
     Serves as a module so that we can import
@@ -44,6 +45,7 @@ export {
     SplashScreen,
     Statusbar, 
     Sortbar,
+    EditorCanvas,
     EditScreen,
     MessageWrapper,
     MessageCard,

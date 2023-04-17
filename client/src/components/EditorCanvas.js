@@ -1,64 +1,15 @@
 import { useContext, useState } from 'react'
 import React, { useEffect, useRef } from "react";
-import AuthContext from '../auth';
 import { Link } from 'react-router-dom'
-
-import api from './edit-request-api'
 import { GlobalStoreContext } from '../store'
-import ListCard from './ListCard.js'
-import YouTube from './YouTubePlayerExample.js'
-import CommentCard from './CommentCard.js'
-import MUIDeleteModal from './MUIDeleteModal'
-import MUIEditSongModal from './MUIEditSongModal'
-import MUIRemoveSongModal from './MUIRemoveSongModal'
-import Box from '@mui/material/Box';
-import FormGroup from '@mui/material/FormGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import Button from '@mui/material/Button';
-import SplashScreen from './SplashScreen';
-import logo from './Capture.png'
-import colors from './colors.png'
-import IconButton from '@mui/material/IconButton';
-import MouseIcon from '@mui/icons-material/Mouse';
-import AddIcon from '@mui/icons-material/Add';
-import ClearIcon from '@mui/icons-material/Clear';
-import PanToolIcon from '@mui/icons-material/PanTool';
-import HighlightAltIcon from '@mui/icons-material/HighlightAlt';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import CopyAllIcon from '@mui/icons-material/CopyAll';
-import MenuIcon from '@mui/icons-material/Menu';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
-import FileUploadIcon from '@mui/icons-material/FileUpload';
-import Slider from '@mui/material/Slider';
-import TextField from '@mui/material/TextField';
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import HomeIcon from '@mui/icons-material/Home'
-import PublicIcon from '@mui/icons-material/Public'
 
-import List from '@mui/material/List';
-import Typography from '@mui/material/Typography'
-/*
-    This React component lists all the top5 lists in the UI.
-    
-    @author McKilla Gorilla
-*/
-const EditScreen = () => {
+function EditorCanvas(props){
     const { store } = useContext(GlobalStoreContext);
-    const { auth } = useContext(AuthContext);
     const myContainer = useRef(null);
     const fileContainer = useRef(null);
 
-    const handleHome = (e) => {
-        store.goHome();
-    }
-
-    useEffect(() => {if(store.edit){
+    useEffect(() => {
         var canv = myContainer.current;
-        canv.width = canv.height * (canv.clientWidth / canv.clientHeight);
         //console.log("canv:::", canv);
         var ctx = canv.getContext('2d');
         //console.log("CTX:::", ctx);
@@ -128,15 +79,15 @@ const EditScreen = () => {
         var selDot = null;
 
         canv.addEventListener("mousemove", function(e){
-            smx = e.offsetX;
-            smy = e.offsetY;
+            smx = e.clientX;
+            smy = e.clientY;
             if(e.buttons == 1){
-                camX += (e.offsetX - mx)/camZ;
-                camY += (e.offsetY - my)/camZ;
+                camX += (e.clientX - mx)/camZ;
+                camY += (e.clientY - my)/camZ;
                 selDot = null;
                 Poly.Draw();
             }else if(e.buttons == 0 && sels.length == 1){
-                var d, md = 1/camZ, mp = null, ref = new Point(e.offsetX, e.offsetX);
+                var d, md = 1/camZ, mp = null, ref = new Point(e.clientX, e.clientX);
                 ref.makeGlobal();
                 for(var e of sels[0].elems) for(var p of e.points) if((d = ref.fastDist(p)) < md){
                     md = d;
@@ -152,7 +103,7 @@ const EditScreen = () => {
         window.addEventListener("keydown", function(e){
             //console.log(e.key);
             switch(e.key){
-                case 'p': console.log(store.edit.l); console.log("!!!AND!!!"); console.log(store.edit.d); break;
+                case 'p': console.log(Poly.l); console.log("!!!AND!!!"); console.log(Poly.d); break;
                 case 'f': Poly.Draw(true); break;
                 case 'm': mergeRegions(); break;
                 case 'x': if(selDot != null) remPoint(); break;
@@ -173,20 +124,20 @@ const EditScreen = () => {
         var CLC = CW/10;
 
         canv.addEventListener("mousedown", function(e){
-            mp.set(e.offsetX, e.offsetY);
+            mp.set(e.x, e.y);
         });
         var sels = [];
         canv.addEventListener("mouseup", function(e){
-            if(mp.x != e.offsetX || mp.y != e.offsetY) return;
-            if(store.edit.l[viewLevel] == undefined) return;
-            px = e.offsetX/camZ-camX;
-            py = e.offsetY/camZ-camY;
+            if(mp.x != e.x || mp.y != e.y) return;
+            if(Poly.l[viewLevel] == undefined) return;
+            px = e.x/camZ-camX;
+            py = e.y/camZ-camY;
             mp.set(px, py);
             sel = null;
             ser = 1000000000;
             //console.log("(" + px + ", " + py + ")");
             var gen;
-            for(var g of store.edit.l[viewLevel]) for(var p of g.elems){
+            for(var g of Poly.l[viewLevel]) for(var p of g.elems){
                 if((gen = p._mean.dist(mp)) < CLC*camZ && gen < ser && p.minX < px && px < p.maxX && p.minY < py && py < p.maxY){
                     sel = g;
                     ser = gen;
@@ -302,7 +253,7 @@ const EditScreen = () => {
                 cp = read(4); //cp = current part
                 sp = null;
                 let ret = new Poly(cp, fileLevel, count);
-                store.edit.l[fileLevel][count].elems.push(ret);
+                Poly.l[fileLevel][count].elems.push(ret);
                 while(true){
                     pp = pointRead(); //pp = current point
                     if(!pp.eq(sp)){
@@ -310,10 +261,10 @@ const EditScreen = () => {
                         if(sp == null) sp = pp;
                     }else break;
                 }
-                store.edit.l[fileLevel][count].mean.addLocal(ret.mean());
+                Poly.l[fileLevel][count].mean.addLocal(ret.mean());
                 ret.finalize(); //finalize
             }
-            store.edit.l[fileLevel][count].mean.divideLocal(store.edit.l[fileLevel][count].elems.length);
+            Poly.l[fileLevel][count].mean.divideLocal(Poly.l[fileLevel][count].elems.length);
             console.log("DONE!");
             fi = fiSave + rs*2; //position set after this record
         }
@@ -351,7 +302,7 @@ const EditScreen = () => {
             fi = 100;
             var count = 0;
             while(true){
-                store.edit.l[fileLevel].push({
+                Poly.l[fileLevel].push({
                     level: fileLevel,
                     group: count,
                     mean: new Point(0, 0),
@@ -366,7 +317,7 @@ const EditScreen = () => {
             }
             Poly.Draw();
             console.log("FINAL COUNT: " + count);
-            console.log(store.edit.l[fileLevel]);
+            console.log(Poly.l[fileLevel]);
             //reconcileData(fileLevel);
         }
         async function readDBaseFile(file){
@@ -408,7 +359,7 @@ const EditScreen = () => {
                 fi++;
             }
             console.log(cols);
-            store.edit.d[fileLevel] = cols;
+            Poly.d[fileLevel] = cols;
             Poly.Draw();
             //reconcileData(fileLevel);
         }
@@ -430,7 +381,7 @@ const EditScreen = () => {
                     });
                 }
                 for(var f of data.features){
-                    store.edit.l[fileLevel].push({
+                    Poly.l[fileLevel].push({
                         level: fileLevel,
                         group: GN,
                         mean: new Point(0, 0),
@@ -440,11 +391,11 @@ const EditScreen = () => {
                     for(var c of f.geometry.coordinates){
                         var np = new Poly(-1, fileLevel, GN);
                         for(var p of c[0]) np.add(new Point(p[0], -p[1]));
-                        store.edit.l[fileLevel][GN].elems.push(np);
-                        store.edit.l[fileLevel][GN].mean.addLocal(np.mean());
+                        Poly.l[fileLevel][GN].elems.push(np);
+                        Poly.l[fileLevel][GN].mean.addLocal(np.mean());
                         np.finalize();
                     }
-                    store.edit.l[fileLevel][GN].mean.divideLocal(store.edit.l[fileLevel][GN].elems.length);
+                    Poly.l[fileLevel][GN].mean.divideLocal(Poly.l[fileLevel][GN].elems.length);
                     var i = 0;
                     for(var a in f.properties){
                         cols[i].elems.push(f.properties[a]);
@@ -453,8 +404,8 @@ const EditScreen = () => {
                     GN++;
                 }
                 console.log(cols);
-                console.log(store.edit.l);
-                store.edit.d[fileLevel] = cols;
+                console.log(Poly.l);
+                Poly.d[fileLevel] = cols;
                 Poly.Draw();
             };
             reader.readAsText(file); 
@@ -492,26 +443,26 @@ const EditScreen = () => {
                 for(var d of dots) drawDot(d);
                 var p = 0, l, g;
                 //if(af) autoFrame();
-                if(store.edit.l[viewLevel] == undefined) return;
+                if(Poly.l[viewLevel] == undefined) return;
                 Acc = af;
                 defCol = "#aba99f";
-                for(p = 0; p < store.edit.l.length; p++){
+                for(p = 0; p < Poly.l.length; p++){
                     if(viewLevel == p) continue;
-                    if(Poly.vis[p]) for(l of store.edit.l[p]){
-                        if(store.edit.d[l.level].length > 0 && store.edit.d[l.level][4].elems.length > l.group){ //has data
+                    if(Poly.vis[p]) for(l of Poly.l[p]){
+                        if(Poly.d[l.level].length > 0 && Poly.d[l.level][4].elems.length > l.group){ //has data
                             l.mean.getLocal();
                             ctx.fillStyle = l.h ? "#fbbd0c" : defCol;
-                            ctx.fillText(store.edit.d[l.level][4].elems[l.group], Point.Gen.x, Point.Gen.y);
+                            ctx.fillText(Poly.d[l.level][4].elems[l.group], Point.Gen.x, Point.Gen.y);
                         }
                         for(g of l.elems) g.draw(l.h);
                     }
                 }
                 defCol = "#000";
-                for(l of store.edit.l[viewLevel]){
-                    if(store.edit.d[l.level].length > 0 && store.edit.d[l.level][4].elems.length > l.group){ //has data
+                for(l of Poly.l[viewLevel]){
+                    if(Poly.d[l.level].length > 0 && Poly.d[l.level][4].elems.length > l.group){ //has data
                         l.mean.getLocal();
                         ctx.fillStyle = l.h ? "#fbbd0c" : defCol;
-                        ctx.fillText(store.edit.d[l.level][4].elems[l.group], Point.Gen.x, Point.Gen.y);
+                        ctx.fillText(Poly.d[l.level][4].elems[l.group], Point.Gen.x, Point.Gen.y);
                     }
                     for(g of l.elems) g.draw(l.h);
                 }
@@ -529,8 +480,8 @@ const EditScreen = () => {
                 //this.minY = 0;
                 this.maxX = this.maxY = -100000000;
                 //this.maxY = 0;
-                //store.edit.l[fl][gn].push(this);
-                //store.edit.l[fl][gn].elems.push(this);
+                //Poly.l[fl][gn].push(this);
+                //Poly.l[fl][gn].elems.push(this);
             }
             add(p){
                 this.minX = Math.min(p.x, this.minX);
@@ -617,7 +568,7 @@ const EditScreen = () => {
         }
 
         function remPoint(){
-            for(var l of store.edit.l) for(var g of l) for(var e of g.elems)
+            for(var l of Poly.l) for(var g of l) for(var e of g.elems)
                 if(e.minX <= selDot.x && e.maxX >= selDot.x && e.minY <= selDot.y && e.maxY >= selDot.y)
                     for(var i = 0; i < e.points.length; i++) if(selDot.eq(e.points[i])){
                         e.points.splice(i, 1);
@@ -693,9 +644,9 @@ const EditScreen = () => {
                 if(pass) break;
             }
             for(var e of sels[1].elems) sels[0].elems.push(e); //make sure to save the islands
-            store.edit.l[rx].splice(ry, 1);
-            if(store.edit.d[rx][4] != undefined) store.edit.d[rx][4].elems[sels[0].group] += "/" + store.edit.d[rx][4].elems[ry]; //merge names
-            //for(var i of store.edit.d[rx]) i.elems.splice(ry, 1);
+            Poly.l[rx].splice(ry, 1);
+            if(Poly.d[rx][4] != undefined) Poly.d[rx][4].elems[sels[0].group] += "/" + Poly.d[rx][4].elems[ry]; //merge names
+            //for(var i of Poly.d[rx]) i.elems.splice(ry, 1);
             sels.splice(1, 1);
             Poly.Draw();
         }
@@ -709,161 +660,14 @@ const EditScreen = () => {
         }
 
         start();
-    }});
-    //if(!auth.loggedIn) return <SplashScreen />;
-    //if(store.edit == null) return <></>;
+    });
     return (
         <div>
-        <Box sx={{ flexGrow: 1 }}>
-            <AppBar position="static" sx={{ bgcolor: 'primary.complement' }}>
-                    <Toolbar>
-                        <Box id='appBannerLogo' color={'primary.main'}><PublicIcon></PublicIcon>Map Central</Box>
-                        <Box sx={{ width: '2%' }}></Box>
-                        <Link onClick={handleHome} to="/" ><HomeIcon className='hvr-grow' sx={{ color: 'primary.main' }}></HomeIcon></Link>
-                        <Box sx={{ width: '2%' }}></Box>
-                        <Box id='bannerStatus' sx={{ fontSize: 'xx-large' }}>{(store.browseMode == 0) ? (store.tabMode > 1 ? <>Editing</> : <>My Maps</>) : <>Search:</>}</Box>
-                        <Box sx={{ flexGrow: 1 }}></Box>
-                    </Toolbar>
-            </AppBar>
-        </Box >
-        <div id='editParent'>
-            <div id = "leftPar" className='editShelf'>
-                <Box id='toolTray' className='traySect' sx={{bgcolor: '#999', borderRadius: 3}}>
-                    <IconButton aria-label='select'>
-                        <MouseIcon style={{fontSize:'32pt', color: '#000'}} />
-                    </IconButton>
-                    <IconButton aria-label='add'>
-                        <AddIcon style={{fontSize:'32pt'}} />
-                    </IconButton>
-                    <IconButton aria-label='remove'>
-                        <ClearIcon style={{fontSize:'32pt'}} />
-                    </IconButton>
-                    <IconButton aria-label='move'>
-                        <PanToolIcon style={{fontSize:'32pt'}} />
-                    </IconButton>
-                    <IconButton aria-label='box select'>
-                        <HighlightAltIcon style={{fontSize:'32pt'}} />
-                    </IconButton>
-                    <IconButton aria-label='duplicate'>
-                        <ContentCopyIcon style={{fontSize:'32pt'}} />
-                    </IconButton>
-                    <IconButton aria-label='merge'>
-                        <CopyAllIcon  style={{fontSize:'32pt'}} />
-                    </IconButton>
-                    <IconButton aria-label='properties'>
-                        <MenuIcon  style={{fontSize:'32pt'}} />
-                    </IconButton>
-                    <IconButton aria-label='traverse up layer'>
-                        <ArrowUpwardIcon  style={{fontSize:'32pt'}} />
-                    </IconButton>
-                    <IconButton aria-label='traverse down layer'>
-                        <ArrowDownwardIcon  style={{fontSize:'32pt'}} />
-                    </IconButton>
-                    <IconButton aria-label='scale'>
-                        <ZoomOutMapIcon  style={{fontSize:'32pt'}} />
-                    </IconButton>
-                    <IconButton variant="contained" component="label" aria-label='upload'>
-                        <input ref={fileContainer} type="file" id="fileIn" name="ShapeUpload" hidden multiple></input>
-                        <FileUploadIcon  style={{fontSize:'32pt'}} />
-                    </IconButton>
-                </Box>
-                <Box id='displayMenu' className='traySect' sx={{borderTop: 2, borderBottom: 2, borderColor: '#00ff00'}}>
-                    <FormGroup>
-                        <FormControlLabel control={<Checkbox />} label="Name" />
-                        <FormControlLabel control={<Checkbox />} label="Population" />
-                        <FormControlLabel control={<Checkbox />} label="Abbreviation" />
-                        <FormControlLabel control={<Checkbox />} label="GDP" />
-                        <FormControlLabel control={<Checkbox />} label="..." />
-                    </FormGroup>
-                </Box>
-                <Box id='optSliders' className='traySect'>
-                    <Box className='sliderLabel'>
-                        <Box>LOD Bias:</Box>
-                        <Slider
-                            aria-label="LOD Bias"
-                            defaultValue={0}
-                            max={100}
-                            min={-100}
-                            step={1}
-                            valueLabelDisplay="auto"
-                            sx={{width: '80%', left: '5%'}}
-                        />
-                    </Box>
-                    <Box className='sliderLabel'>
-                        <Box>Text Size:</Box>
-                        <Slider
-                            aria-label="Text Size"
-                            defaultValue={0}
-                            max={100}
-                            min={-100}
-                            step={1}
-                            valueLabelDisplay="auto"
-                            sx={{width: '80%', left: '5%'}}
-                        />
-                        
-                    </Box>
-                    <Box className='sliderLabel'>
-                    <Box>Scrub Size:</Box>
-                        <Slider
-                            aria-label="Scrub Size"
-                            defaultValue={1}
-                            max={100}
-                            min={1}
-                            step={1}
-                            valueLabelDisplay="auto"
-                            sx={{width: '80%', left: '5%'}}
-                        />
-
-                    </Box>
-                    <Box className='sliderLabel' sx={{left: '5%'}}>
-                    <Box>Scroll Speed:</Box>
-                        <Slider
-                            aria-label="Scroll Speed"
-                            defaultValue={1}
-                            max={10}
-                            min={1}
-                            step={1}
-                            valueLabelDisplay="auto"
-                            sx={{width: '80%', left: '5%'}}
-                        />
-                        
-                    </Box>
-                </Box>
-            </div>
-            <Box id="midPar">
-                <canvas ref={myContainer} id="editView" width="1000" height="850" style={{border: "1px solid #5EB120"}}></canvas>
-            </Box>
-            <div id = "rightPar" className='editShelf'>
-                <Box sx={{height:'5%'}}></Box>
-                <Box id='inspector' className='traySect' sx={{bgcolor: '#999', borderRadius: 1}}>
-                    <FormGroup sx={{padding: '5%', width: '80%'}}>
-                        <FormControlLabel control={<TextField sx={{width:'60%'}} variant="filled" value="234.65"/>} label="X" />
-                        <FormControlLabel control={<TextField sx={{width:'60%'}} variant="filled" value="643.12"/>} label="Y" />
-                        <FormControlLabel control={<TextField sx={{width:'60%'}} variant="filled" value="1"/>} label="Scale" />
-                    </FormGroup>
-                </Box>
-                <Box sx={{height:'5%'}}></Box>
-                {store.tabMode == 3 ? <></> :
-                    <Box id='inspector2' className='traySect' sx={{bgcolor: '#999', borderRadius: 1}}>
-                        <FormGroup sx={{padding: '5%', width: '80%'}}>
-                            <FormControlLabel control={<TextField disabled sx={{width:'60%'}} variant="filled" value="Subregion"/>} label="Type" />
-                            <FormControlLabel control={<TextField disabled sx={{width:'60%'}} variant="filled" value="1"/>} label="Layer" />
-                            <FormControlLabel control={<TextField disabled sx={{width:'60%'}} variant="filled" value="2"/>} label="Group" />
-                            <FormControlLabel control={<TextField disabled sx={{width:'60%'}} variant="filled" value="75"/>} label="Children" />
-                        </FormGroup>
-                    </Box>
-                }
-                {store.tabMode == 2 ? <></> : 
-                    <Box id='inspector3' className='traySect' sx={{bgcolor: '#999', borderRadius: 1}}>
-                        <img id='exampleCols'
-                            src={colors}
-                        />
-                    </Box>
-                }
-            </div>
-        </div>
+            <canvas ref={myContainer} id="map" width="800" height="500" style={{border: "1px solid #ff00ff"}}></canvas>
+            <label htmlFor="fileIn">Select a file:</label>
+            <input ref={fileContainer} type="file" id="fileIn" name="ShapeUpload" multiple></input>
         </div>
     );
 }
 
-export default EditScreen;
+export default EditorCanvas;

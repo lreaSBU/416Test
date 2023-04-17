@@ -8,6 +8,7 @@ const express = require('express')
 //const PlaylistController = require('../controllers/playlist-controller')
 const MapController = require('../controllers/map-controller')
 const ConvoController = require('../controllers/convo-controller')
+const EditController = require('../controllers/edit-controller')
 const router = express.Router()
 const auth = require('../auth')
 
@@ -18,5 +19,8 @@ router.put('/mappairs/', auth.verify, MapController.getMapPairs)
 router.get('/maps', auth.verify, MapController.getMaps)
 router.put('/map/:id', auth.verify, MapController.updateMap)
 router.put('/convopairs/', auth.verify, ConvoController.getConvoPairs)
+router.put('/block/', auth.verify, ConvoController.blockConvo)
+router.put('/message/', auth.verify, ConvoController.submitMessage)
+router.put('/start/', auth.verify, EditController.startData)
 
 module.exports = router

@@ -233,26 +233,33 @@ function GlobalStoreContextProvider(props){
     }
 
     store.loadEditorData = function(id){
-        /*async function asyncLoadEditorData(){
-            //const newEdit = api.getEditorDataById(id);
-            const newEdit = ({
-
-            });
-            storeReducer({
-                browseMode: 0,
-                tabMode: 2,
-                edit: newEdit
-            });
+        /*const newEdit = ({
+            gd: [],
+            d: [[], [], [], [], []],
+            l: [[], [], [], [], []],
+            camX: 100,
+            camY: 100,
+            camZ: 1
+        });*/ //response.data.ed
+        async function asyncStartEditing(){
+            let response = await api.getStartData(id); //store.currentMap._id
+            if(response.data.success){
+                storeReducer({
+                    browseMode: 0,
+                    tabMode: 2,
+                    edit: response.data.ed
+                });
+                console.log("NEW_EDIT:::", response.data.ed);
+            }else console.log("EDIT STARTING ERROR: ", response);
         }
-        asyncLoadEditorData();*/
-        const newEdit = ({
-
-        });
+        asyncStartEditing();
+        /*
         storeReducer({
             browseMode: 0,
             tabMode: 2,
             edit: newEdit
         });
+        */
     }
     store.editTabSwitch = function(){
         storeReducer({

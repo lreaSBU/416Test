@@ -41,10 +41,29 @@ export const getMapPairs = (filter, searchMode, sortMode, page) => {
         page: page
     });
 }
+
 export const getConvoPairs = (page) => {
     return api.put(`/convopairs/`, {
         page: page
     });
+}
+export const requestBlock = (id, flag) => {
+    return api.put(`/block/`, {
+        id: id,
+        flag: flag
+    });
+}
+export const sendMessage = (id, txt) => {
+    return api.put(`/message/`, {
+        id: id,
+        txt: txt
+    });
+}
+
+export const getStartData = (id) => {
+    return api.put(`/start/`, {
+        id: id
+    })
 }
 
 const apis = {
@@ -53,7 +72,10 @@ const apis = {
     updateMapById,
     deleteMapById,
     getMapPairs,
-    getConvoPairs
+    getConvoPairs,
+    requestBlock,
+    sendMessage,
+    getStartData
 }
 
 export default apis
