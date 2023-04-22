@@ -43,11 +43,11 @@ export default function LoginScreen() {
                 sm={4}
                 md={7}
                 sx={{
-                    backgroundImage: 'url(https://source.unsplash.com/random)',
+                    backgroundImage: 'url(https://static.vecteezy.com/system/resources/previews/021/437/150/non_2x/world-map-green-color-world-map-template-with-continents-north-and-south-america-europe-and-asia-africa-and-australia-free-png.png)',
                     backgroundRepeat: 'no-repeat',
                     backgroundColor: (t) =>
                         t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900],
-                    backgroundSize: 'cover',
+                    backgroundSize: '1040px',
                     backgroundPosition: 'center',
                 }}
             />
