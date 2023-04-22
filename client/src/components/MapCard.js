@@ -15,7 +15,9 @@ import LikeIconOff from '@mui/icons-material/ThumbUpOffAlt';
 import DislikeIconOff from '@mui/icons-material/ThumbDownOffAlt';
 import MenuIcon from '@mui/icons-material/Menu';
 
-import { Container } from '@mui/material';
+import placeholderimg from './Capture.png';
+
+import { Container, Typography, Grid, Card, CardActionArea, CardMedia, CardContent, CardActions } from '@mui/material';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -108,118 +110,171 @@ function MapCard(props) {
     if (store.isListNameEditActive) {
         cardStatus = true;
     }
-    let ldl = '';
-    //let npl = '';
-    let npl = <Box sx={{ p: 1, flexGrow: 1, fontSize: '16px' }}>{(store.browseMode ? idNamePair.ownerName : (idNamePair.copy.published ? "*Published" : ""))}</Box>
-    if (store.browseMode) {
-        ldl = (<div>
-            <Box sx={{ p: 1 }}>
-                <IconButton onClick={handleLike} aria-label='like'>
-                    <Box sx={{ p: 1, flexGrow: 1, color: 'black' }}>{idNamePair.likes}</Box>
-                    <LikeIcon style={{ fontSize: '32pt' }} />
-                </IconButton>
-            </Box>
-            <Box sx={{ p: 1 }}>
-                <IconButton onClick={handleDislike} aria-label='dislike'>
-                    <Box sx={{ p: 1, flexGrow: 1, color: 'black' }}>{idNamePair.dislikes}</Box>
-                    <DislikeIcon style={{ fontSize: '32pt' }} />
-                </IconButton>
-            </Box>
-        </div>);
-        //npl = <Box sx={{ p: 1, flexGrow: 1, fontSize: '16px'}}>{idNamePair.ownerName}</Box>
-    } else {
-        ldl =
-            <Container sx={{ display: 'flex', alignItems: 'center', float: 'right' }}>
-                <Link onClick={(event) => { handleEditor(event, idNamePair._id) }} to="/edit/"><EditIcon sx={{ color: 'primary.main' }}></EditIcon></Link>
-                <IconButton onClick={(event) => { handleDeleteList(event, idNamePair._id) }} aria-label='delete'><DeleteIcon></DeleteIcon></IconButton>
-                <Box sx={{flexGrow: 1}}></Box>
-                {(idNamePair.copy.published ? '' : (<IconButton onClick={handleToggleEdit} aria-label='edit'>
-                        <EditIcon style={{ fontSize: '16pt' }} />
-                    </IconButton>))} 
-                <IconButton onClick={(event) => { handleLoadList(event, idNamePair._id) }} aria-label='open'><SearchIcon></SearchIcon></IconButton>
-            </Container>
-    }
-    let cardElement =
-        <ListItem
-            id={idNamePair._id}
-            key={idNamePair._id}
-            sx={{ marginTop: '15px', p: 1 }}
-            style={{ width: '98%', height: '100%', fontSize: 'x-large', outline: 'solid', borderRadius: '5px', marginLeft: 'auto', marginRight: 'auto' }}
-            button
-        >
+    // let ldl = '';
+    // let npl = <Box sx={{ p: 1, flexGrow: 1, fontSize: '16px' }}>{(store.browseMode ? idNamePair.ownerName : (idNamePair.copy.published ? "*Published" : ""))}</Box>
 
-            <Container sx={{ display: 'flex', alignItems: 'center' }}>
-                <Box>{idNamePair.name}</Box>
-                {/* <Box>
-                    {(idNamePair.copy.published ? '' : (<IconButton onClick={handleToggleEdit} aria-label='edit'>
-                        <EditIcon style={{ fontSize: '32pt' }} />
-                    </IconButton>))}
-                </Box> */}
-                {/* {npl} */}
-                {/* <Box sx={{ flexGrow: 1 }}></Box> */}
-                {ldl}
-            </Container>
-            {/* <div display='flex' alignItems='center'>
-                
+    // let ldl =
+    //     <Container sx={{ display: 'flex', alignItems: 'center', float: 'right' }}>
+    //         <Link onClick={(event) => { handleEditor(event, idNamePair._id) }} to="/edit/"><EditIcon sx={{ color: 'primary.main' }}></EditIcon></Link>
+    //         <IconButton onClick={(event) => { handleDeleteList(event, idNamePair._id) }} aria-label='delete'><DeleteIcon></DeleteIcon></IconButton>
+    //         <Box sx={{ flexGrow: 1 }}></Box>
+    //         {(idNamePair.copy.published ? '' : (<IconButton onClick={handleToggleEdit} aria-label='edit'>
+    //             <EditIcon style={{ fontSize: '16pt' }} />
+    //         </IconButton>))}
+    //         <IconButton onClick={(event) => { handleLoadList(event, idNamePair._id) }} aria-label='open'><SearchIcon></SearchIcon></IconButton>
+    //     </Container>;
 
-                <Box sx={{ p: 1, flexGrow: 1 }}>{idNamePair.name}</Box>
-                <Box>
-                    {(idNamePair.copy.published ? '' : (<IconButton onClick={handleToggleEdit} aria-label='edit'>
-                        <EditIcon style={{ fontSize: '32pt' }} />
-                    </IconButton>))}
-                </Box>
 
-                {npl}
-                <Box sx={{ flexGrow: 1 }}></Box>
-                {ldl}
-            </div> */}
-            {/* <Box sx={{ flexGrow: 1 }}></Box>
-            {ldl} */}
-        </ListItem>
+    // let cardElement =
+    //     <ListItem
+    //         id={idNamePair._id}
+    //         key={idNamePair._id}
+    //         sx={{ marginTop: '15px', p: 1 }}
+    //         style={{ width: '98%', height: '100%', fontSize: 'x-large', outline: 'solid', borderRadius: '5px', marginLeft: 'auto', marginRight: 'auto' }}
+    //         button
+    //     >
 
+    //         <Container sx={{ display: 'flex', alignItems: 'center' }}>
+    //             <Box>{idNamePair.name}</Box>
+    //             {/* <Box>
+    //                 {(idNamePair.copy.published ? '' : (<IconButton onClick={handleToggleEdit} aria-label='edit'>
+    //                     <EditIcon style={{ fontSize: '32pt' }} />
+    //                 </IconButton>))}
+    //             </Box> */}
+    //             {/* {npl} */}
+    //             {/* <Box sx={{ flexGrow: 1 }}></Box> */}
+    //             {ldl}
+    //         </Container>
+    //         {/* <div display='flex' alignItems='center'>
+
+
+    //             <Box sx={{ p: 1, flexGrow: 1 }}>{idNamePair.name}</Box>
+    //             <Box>
+    //                 {(idNamePair.copy.published ? '' : (<IconButton onClick={handleToggleEdit} aria-label='edit'>
+    //                     <EditIcon style={{ fontSize: '32pt' }} />
+    //                 </IconButton>))}
+    //             </Box>
+
+    //             {npl}
+    //             <Box sx={{ flexGrow: 1 }}></Box>
+    //             {ldl}
+    //         </div> */}
+    //         {/* <Box sx={{ flexGrow: 1 }}></Box>
+    //         {ldl} */}
+    //     </ListItem>
+
+    // if (editActive) {
+    //     cardElement =
+    //         <TextField
+    //             margin="normal"
+    //             required
+    //             fullWidth
+    //             id={"list-" + idNamePair._id}
+    //             label=""
+    //             name="name"
+    //             autoComplete=""
+    //             className='list-card'
+    //             onKeyPress={handleKeyPress}
+    //             onChange={handleUpdateText}
+    //             defaultValue={idNamePair.name}
+    //             inputProps={{ style: { fontSize: 48 } }}
+    //             InputLabelProps={{ style: { fontSize: 24 } }}
+    //             autoFocus
+    //         />
+    // }
+
+    let mapTitleElement = <Box sx={{ maxWidth: '100%', height: 'fit-content' }} onClick={handleToggleEdit}>{idNamePair.name}</Box>;
     if (editActive) {
-        cardElement =
+        mapTitleElement =
             <TextField
                 margin="normal"
                 required
-                fullWidth
                 id={"list-" + idNamePair._id}
                 label=""
                 name="name"
                 autoComplete=""
-                className='list-card'
+                // className='list-card'
                 onKeyPress={handleKeyPress}
                 onChange={handleUpdateText}
                 defaultValue={idNamePair.name}
-                inputProps={{ style: { fontSize: 48 } }}
-                InputLabelProps={{ style: { fontSize: 24 } }}
+                // inputProps={{ style: { fontSize: 48 } }}
+                // InputLabelProps={{ style: { fontSize: 24 } }}
                 autoFocus
             />
     }
-    return (
-        <div>
-            {cardElement}
-            <Dialog
-                open={open}
-                onClose={handleDialogClose}
-            >
-                <DialogTitle>
-                    {"Delete Map"}
-                </DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
-                        Do you want to delete this map?
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleDialogClose}>Delete</Button>
-                    <Button onClick={handleDialogClose} autoFocus>
-                        Cancel
-                    </Button>
-                </DialogActions>
 
-            </Dialog>
-        </div>
+    return (
+        // <div>
+        //     {cardElement}
+        //     <Dialog
+        //         open={open}
+        //         onClose={handleDialogClose}
+        //     >
+        //         <DialogTitle>
+        //             {"Delete Map"}
+        //         </DialogTitle>
+        //         <DialogContent>
+        //             <DialogContentText>
+        //                 Do you want to delete this map?
+        //             </DialogContentText>
+        //         </DialogContent>
+        //         <DialogActions>
+        //             <Button onClick={handleDialogClose}>Delete</Button>
+        //             <Button onClick={handleDialogClose} autoFocus>
+        //                 Cancel
+        //             </Button>
+        //         </DialogActions>
+
+        //     </Dialog>
+        // </div>
+
+        <Card className='map-card' style={{ height: 'fit-content' }}>
+            <CardActionArea onClick={(event) => { handleLoadList(event, idNamePair._id) }}>
+                <CardMedia
+                    component='img'
+                    src={placeholderimg}
+                >
+
+                </CardMedia>
+
+
+            </CardActionArea>
+            <CardContent>
+                <Box >
+                    {mapTitleElement}
+                </Box>
+            </CardContent>
+
+
+            <CardActions>
+                <Button size='small' color='primary' variant='contained'><Link onClick={(event) => { handleEditor(event, idNamePair._id) }} to="/edit/">Edit</Link></Button>
+
+                <IconButton size='small' color='primary' onClick={(event) => { handleDeleteList(event, idNamePair._id) }} aria-label='delete'><DeleteIcon></DeleteIcon></IconButton>
+
+
+
+                <Dialog
+                    open={open}
+                    onClose={handleDialogClose}
+                >
+                    <DialogTitle>
+                        {"Delete Map"}
+                    </DialogTitle>
+                    <DialogContent>
+                        <DialogContentText>
+                            Do you want to delete this map?
+                        </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleDialogClose}>Delete</Button>
+                        <Button onClick={handleDialogClose} autoFocus>
+                            Cancel
+                        </Button>
+                    </DialogActions>
+
+                </Dialog>
+            </CardActions>
+        </Card>
     );
 }
 

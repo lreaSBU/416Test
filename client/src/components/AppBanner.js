@@ -138,8 +138,8 @@ export default function AppBanner() {
         }
     }
     let editTab = '';
-    if(auth.loggedIn && store.tabMode > 1){
-        editTab = <Button sx={{bgcolor: '#e1e4cb', fontSize: '16px', textAlign: "center", m: 1}} onClick={handleEditTab}>{(store.tabMode == 2 ? <>Graphics</> : <>Editing</>)}</Button>
+    if (auth.loggedIn && store.tabMode > 1) {
+        editTab = <Button sx={{ bgcolor: '#e1e4cb', fontSize: '16px', textAlign: "center", m: 1 }} onClick={handleEditTab}>{(store.tabMode == 2 ? <>Graphics</> : <>Editing</>)}</Button>
     }
 
     function getAccountMenu(loggedIn) {
@@ -150,47 +150,11 @@ export default function AppBanner() {
         else
             return <AccountCircle />;
     }
-/*
-{(auth.loggedIn) ?
-                    <Toolbar>
-                        <Box id='appBannerLogo' color={'primary.main'}><PublicIcon></PublicIcon>Map Central</Box>
-                        <Box sx={{ width: '2%' }}></Box>
-                        <Link onClick={handleHome} to="/" ><HomeIcon className='hvr-grow' sx={{ color: 'primary.main' }}></HomeIcon></Link>
-                        <Box sx={{ width: '2%' }}></Box>
-                        <Link className='hvr-grow' style={{ textDecoration: 'none', color: 'black' }} onClick={handleAll} to="/">Browse</Link>
-                        <Box sx={{ width: '2%' }}></Box>
-                        <Link className='hvr-grow' style={{ textDecoration: 'none', color: 'black' }} onClick={handleUser} to="/">Users</Link>
-                        <Box sx={{ width: '2%' }}></Box>
-                        <Link className='hvr-grow' style={{ textDecoration: 'none', color: 'black' }} onClick={handleDM} to="/message/">Chat</Link>
-                        <Box sx={{ width: '2%' }}></Box>
-                        <Link className='hvr-grow' style={{ textDecoration: 'none', color: 'black' }} onClick={handleHelp} to="/help/"><QuestionMarkIcon></QuestionMarkIcon></Link>
-                        <Box sx={{ width: '5%' }}></Box>
-                        <Box id='bannerStatus' sx={{ fontSize: 'xx-large' }}>{(store.browseMode == 0) ? (store.tabMode > 1 ? <>Editing</> : <>My Maps</>) : <>Search:</>}</Box>
-                        <Box sx={{ width: '1%' }}></Box>
-                        {addButt}
-                        <Box sx={{ flexGrow: 1 }}></Box>
-                        {editTab}
-                        <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-                            <IconButton
-                                size="large"
-                                edge="end"
-                                aria-label="account of current user"
-                                aria-controls={menuId}
-                                aria-haspopup="true"
-                                onClick={handleProfileMenuOpen}
-                                color="inherit"
-                            >
-                                {getAccountMenu(auth.loggedIn)}
-                            </IconButton>
-                        </Box>
-                    </Toolbar>
-                    : <></>}
-*/
-    if(store.tabMode > 1) return <></>; //no more appbanner on editing screen!!!
-    return (
-        <Box sx={{ flexGrow: 1 }}>
-            <AppBar position="static" sx={{ bgcolor: 'primary.complement' }}>
 
+    return (
+        (auth.loggedIn) && (store.tabMode < 1) ?
+            <Box sx={{ flexGrow: 1 }}>
+                <AppBar position="static" sx={{ bgcolor: 'primary.complement' }}>
                     <Toolbar>
                         <Box id='appBannerLogo' color={'primary.main'}><PublicIcon></PublicIcon>Map Central</Box>
                         <Box sx={{ width: '2%' }}></Box>
@@ -223,8 +187,8 @@ export default function AppBanner() {
                             </IconButton>
                         </Box>
                     </Toolbar>
-            </AppBar>
-            {menu}
-        </Box >
+                </AppBar >
+            </Box>
+            : <></>
     );
 }

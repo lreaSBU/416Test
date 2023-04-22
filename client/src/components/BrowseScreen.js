@@ -103,6 +103,15 @@ const BrowseScreen = () => {
         } else { //player
             inspect = <div>PREVIEW DATA: {store.currentMap.name}</div>
         }
+    } else {
+        if(store.idNamePairs[0]){
+            //display first map info
+            inspect =<div>{store.idNamePairs[0].name}</div>
+        }
+        else{
+            //display nothing
+            inspect=<></>
+        }
     }
 
     const sMen = <Menu
@@ -128,6 +137,14 @@ const BrowseScreen = () => {
     return (
         <div>
             <div id="list-selector-list">
+                <div id='browseScreenProfileHeader'>
+                    <Box>
+                        Profile
+                    </Box>
+                    <Box>
+                        Settings
+                    </Box>
+                </div>
                 <div id='browseScreenSortHeader'>
                     Sort
                     <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
