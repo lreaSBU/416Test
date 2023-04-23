@@ -14,7 +14,7 @@ const Message = require('../models/message-model');
     
     @author McKilla Gorilla
 */
-createMap = (req, res) => {
+createMap = async (req, res) => {
     const body = req.body;
     console.log("createPlaylist body: " + JSON.stringify(body));
 
@@ -33,9 +33,19 @@ createMap = (req, res) => {
         return res.status(400).json({ success: false, error: err })
     }
 
-    //fill in the age of the playlist creation:::
+    //fill in the age of the map creation:::
     map.age = Date.now();
     map.published = false;
+    map.l = []; //[[], [], [], [], []];
+    for(var i = 0; i < 5; i++){
+        let nl = new Layer();
+        nl.save().then(() => {
+            map.l.push(nl);
+        });
+    }
+    map.camX = 123;
+    map.camY = 456;
+    map.camZ = 789;
 
     User.findOne({ _id: req.userId }, (err, user) => {
         console.log("user found: " + JSON.stringify(user));

@@ -247,7 +247,8 @@ function GlobalStoreContextProvider(props){
                 storeReducer({
                     browseMode: 0,
                     tabMode: 2,
-                    edit: response.data.ed
+                    edit: response.data.ed,
+                    currentMap: {_id: id}
                 });
                 console.log("NEW_EDIT:::", response.data.ed);
             }else console.log("EDIT STARTING ERROR: ", response);

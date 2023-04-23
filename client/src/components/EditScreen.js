@@ -148,24 +148,35 @@ const EditScreen = () => {
             }
             mx = smx; my = smy;
         });
-
+        var keys = {}, mode = false;
+        function swapMode(){
+            if(mode) mode = false;
+            else mode = sels[sels.length-1];
+        }
         window.addEventListener("keydown", function(e){
             //console.log(e.key);
             switch(e.key){
-                case 'p': console.log(store.edit.l); console.log("!!!AND!!!"); console.log(store.edit.d); break;
+                case 'Space': swapMode(); break;
+                case 'p': console.log(store.edit); break;
                 case 'f': Poly.Draw(true); break;
                 case 'm': mergeRegions(); break;
                 case 'x': if(selDot != null) remPoint(); break;
                 case 'ArrowUp': viewChange(true); break; //change focus level
                 case 'ArrowDown': viewChange(false); break; //change focus level
             }
+            keys[e.key] = true;
+        });
+        window.addEventListener("keyup", function(e){
+            keys[e.key] = false;
         });
 
         function viewChange(dir){
             viewLevel += dir ? 1 : -1;
             if(viewLevel < 0) viewLevel = 0;
             else if(viewLevel > 4) viewLevel = 4;
-            //Level.innerHTML = viewLevel;
+            else{ //viewLevel actually changed
+                deSel();
+            }
             Poly.Draw();
         }
 
@@ -175,7 +186,10 @@ const EditScreen = () => {
         canv.addEventListener("mousedown", function(e){
             mp.set(e.offsetX, e.offsetY);
         });
-        var sels = [];
+        var sels = [], mels = [];
+        function deSel(){
+            while(sels.length) (sels.pop()).h = false;
+        }
         canv.addEventListener("mouseup", function(e){
             if(mp.x != e.offsetX || mp.y != e.offsetY) return;
             if(store.edit.l[viewLevel] == undefined) return;
@@ -193,9 +207,14 @@ const EditScreen = () => {
                 }
             }
             if(sel != null){
-                sel.h = !sel.h; Poly.Draw();
+                sel.h = !sel.h;
+                if(!keys.Shift){
+                    sel.h = sel.h || (sels.length > 0);
+                    deSel();
+                }
                 if(sel.h) sels.push(sel);
                 else sels.splice(sels.indexOf(sel), 1);
+                Poly.Draw();
             }
         })
 
@@ -275,43 +294,72 @@ const EditScreen = () => {
             return new Point(tx, -ty);
         }
 
-        var rs, rn, rb, numParts, numPoints, fiSave, fil, sp, cp, pp, wf = false;
+        var rs, rn, rb, numParts, numPoints, fiSave, fil, sp, cp, pp, wf = false,
+        npc, nppc, finsv, npl, npi;
 
-        var safeCount, fileLevel, viewLevel;
+        var safeCount, fileLevel, viewLevel = 0, transacNum = 0, syncWait = 0;
+
+        async function sendTransac(typ, fl, gn, pn, od, nd){
+            syncWait++;
+            const resp = await api.sendEdit(store.currentMap._id, transacNum++, typ, fl, gn, pn, od, nd);
+            //console.log('EDIT RESP:', resp);
+            syncWait--;
+        }
 
         function recordRead(count){
             var fiBase = fi;
             rn = read(4, true);
             rs = read(4, true);
-            console.log("(" + rn + ", " + rs + ")");
+            console.log(store.edit.l[fileLevel].length + ":: (" + rn + ", " + rs + ")");
             fiSave = fi; //bookmark fi
             //START READING CONTENT
             console.log("check type: " + read(4)); //type == 5
             rb = [];
             for(var i = 0; i < 4; i++){
                 rb.push(doubleRead());
-                console.log("bound " + i + ": " + rb[i]);
+                //console.log("bound " + i + ": " + rb[i]);
             }
-            console.log(fi-fiSave);
+            //console.log(fi-fiSave);
             numParts = read(4);
             numPoints = read(4);
-            console.log("parts: " + numParts + ", points: " + numPoints);
+            //console.log("parts: " + numParts + ", points: " + numPoints);
+            nppc = numParts;
+            finsv = fi;
+            npl = []; npc = 0; npi = 0;
+            while(nppc-- > 0) npl.push(read(4)); //these are the starting indices of the next polys
+            npl.push(numPoints-1);
             //START READING THE LISTS
+            fi = finsv;
             fil = fi + numParts*4;
             while(numParts-- > 0){
+                npi++; npc++;
                 cp = read(4); //cp = current part
-                sp = null;
+                sp = null; //npc = 0;
                 let ret = new Poly(cp, fileLevel, count);
                 store.edit.l[fileLevel][count].elems.push(ret);
+                //console.log(fileLevel, count);
+                /*while(true){
+                    if(npc < npl[npi]) ret.add(pointRead());
+                    else{
+                        console.log("END WITH: ", npc, npl[npi]);
+                        break;
+                    }
+                    npc++;
+                }
+                ret.add(new Point(ret.points[0].x, ret.points[0].y));*/
                 while(true){
                     pp = pointRead(); //pp = current point
                     if(!pp.eq(sp)){
                         ret.add(pp);
                         if(sp == null) sp = pp;
-                    }else break;
+                    }else if(npc >= npl[npi]){
+                        //console.log("END WITH: ", npc, npl[npi]);
+                        break;
+                    }
+                    npc++;
                 }
                 store.edit.l[fileLevel][count].mean.addLocal(ret.mean());
-                ret.finalize(); //finalize
+                ret.finalize(fileLevel, count); //finalize
             }
             store.edit.l[fileLevel][count].mean.divideLocal(store.edit.l[fileLevel][count].elems.length);
             console.log("DONE!");
@@ -356,7 +404,8 @@ const EditScreen = () => {
                     group: count,
                     mean: new Point(0, 0),
                     h: false,
-                    elems: []
+                    elems: [],
+                    props: {}
                 });
                 recordRead(count++);
                 console.log("EP: " + fi + " or " + fil);
@@ -408,7 +457,10 @@ const EditScreen = () => {
                 fi++;
             }
             console.log(cols);
-            store.edit.d[fileLevel] = cols;
+            for(var g = 0; g < store.edit.l[fileLevel].length; g++){
+                for(var c of cols) store.edit.l[fileLevel][g].props[c.name] = c.elems[g];
+                sendTransac(1, fileLevel, g, -1, null, store.edit.l[fileLevel][g].props);
+            }
             Poly.Draw();
             //reconcileData(fileLevel);
         }
@@ -421,40 +473,41 @@ const EditScreen = () => {
                 //console.log(data);
                 //for(var i of data.features) console.log(i);
                 var GN = 0;
-                for(var prop in data.features[0].properties){
+                /*for(var prop in data.features[0].properties){
                     cols.push({
                         name: prop,
                         type: '?',
                         size: 0,
                         elems: []
                     });
-                }
+                }*/
                 for(var f of data.features){
                     store.edit.l[fileLevel].push({
                         level: fileLevel,
                         group: GN,
                         mean: new Point(0, 0),
                         h: false,
-                        elems: []
+                        elems: [],
+                        props: f.properties
                     });
+                    sendTransac(1, fileLevel, GN, -1, null, f.properties); //send the data entry for this new subregion
                     for(var c of f.geometry.coordinates){
                         var np = new Poly(-1, fileLevel, GN);
                         for(var p of c[0]) np.add(new Point(p[0], -p[1]));
                         store.edit.l[fileLevel][GN].elems.push(np);
                         store.edit.l[fileLevel][GN].mean.addLocal(np.mean());
-                        np.finalize();
+                        np.finalize(fileLevel, GN);
                     }
                     store.edit.l[fileLevel][GN].mean.divideLocal(store.edit.l[fileLevel][GN].elems.length);
-                    var i = 0;
+                    /*var i = 0;
                     for(var a in f.properties){
                         cols[i].elems.push(f.properties[a]);
                         i++;
-                    }
+                    }*/
                     GN++;
                 }
                 console.log(cols);
                 console.log(store.edit.l);
-                store.edit.d[fileLevel] = cols;
                 Poly.Draw();
             };
             reader.readAsText(file); 
@@ -463,7 +516,6 @@ const EditScreen = () => {
             var fl = f.name.split(".");
             viewLevel = fileLevel = parseInt(fl[0].split("_adm")[1]);
             if(isNaN(fileLevel)) viewLevel = fileLevel = 0;
-            //Level.innerHTML = viewLevel;
             switch(fl[fl.length-1]){
                 case "shp": readShapeFile(f); break;
                 case "dbf": readDBaseFile(f); break;
@@ -483,41 +535,42 @@ const EditScreen = () => {
         var LOD_SKIP, LOD_STEP, LOD_REF, finSum, li, ni, ci;
         var defCol = "#000", mark, Acc = false;
         var dots = [];
+        const subColRefs = ['#aba99f', '#000', '#fbbd0c'];
         class Poly{
             static l = [[], [], [], [], []]; //poly struct
             static d = [[], [], [], [], []]; //data struct
             static vis = [true, true, true, true, true]; //vis array
+            static SubDraw(ind){
+                var p = 0, l, g;
+                defCol = subColRefs[ind];
+                for(p = 0; p < store.edit.l.length; p++){
+                    if((!ind) == (viewLevel == p)) continue;
+                    if(Poly.vis[p]) for(l of store.edit.l[p]){
+                        if(l.props != null && Object.keys(l.props).length){ //has data
+                            l.mean.getLocal();
+                            ctx.fillStyle = l.h ? "#fbbd0c" : '#000';
+                            if(l.props['name'] != undefined) ctx.fillText(l.props['name'], Point.Gen.x, Point.Gen.y);
+                            else ctx.fillText(l.props['NAME_'+p], Point.Gen.x, Point.Gen.y);
+                        }
+                        for(g of l.elems) if((ind == 2) == (l.h)) g.draw(l.h);
+                    }
+                }
+            }
             static Draw(af = false){
                 ctx.clearRect(0, 0, canv.width, canv.height);
                 for(var d of dots) drawDot(d);
-                var p = 0, l, g;
+                //var p = 0, l, g;
                 //if(af) autoFrame();
                 if(store.edit.l[viewLevel] == undefined) return;
                 Acc = af;
-                defCol = "#aba99f";
-                for(p = 0; p < store.edit.l.length; p++){
-                    if(viewLevel == p) continue;
-                    if(Poly.vis[p]) for(l of store.edit.l[p]){
-                        if(store.edit.d[l.level].length > 0 && store.edit.d[l.level][4].elems.length > l.group){ //has data
-                            l.mean.getLocal();
-                            ctx.fillStyle = l.h ? "#fbbd0c" : defCol;
-                            ctx.fillText(store.edit.d[l.level][4].elems[l.group], Point.Gen.x, Point.Gen.y);
-                        }
-                        for(g of l.elems) g.draw(l.h);
-                    }
-                }
-                defCol = "#000";
-                for(l of store.edit.l[viewLevel]){
-                    if(store.edit.d[l.level].length > 0 && store.edit.d[l.level][4].elems.length > l.group){ //has data
-                        l.mean.getLocal();
-                        ctx.fillStyle = l.h ? "#fbbd0c" : defCol;
-                        ctx.fillText(store.edit.d[l.level][4].elems[l.group], Point.Gen.x, Point.Gen.y);
-                    }
-                    for(g of l.elems) g.draw(l.h);
-                }
+                //Poly.SubDraw(0);
+                Poly.SubDraw(1);
+                Poly.SubDraw(2);
             }
             constructor(id, fl, gn){
-                this.id = id;
+                if(store.edit.l[fl][gn].elems == undefined) this.id = id;
+                else this.id = store.edit.l[fl][gn].elems.length; //this is the id of the poly in its group!!!!
+                //this.id = id;
                 //this.fl = fl; //file level
                 //this.gn = gn; //group number
                 this.lodRatio = 0.0005;
@@ -564,7 +617,7 @@ const EditScreen = () => {
             next(){
                 return{value: this.points[this.i], done: ++this.i >= this.points.length};
             }
-            finalize(){ //might not matter
+            finalize(fl, gn){
                 //console.log("xBounds: (" + this.minX + " to " + this.maxX + ")");
                 //console.log("yBounds: (" + this.minY + " to " + this.maxY + ")");
                 finSum = 0;
@@ -572,6 +625,10 @@ const EditScreen = () => {
                     finSum += (this.points[i+1].x-this.points[i].x) * (this.points[i].y+this.points[i+1].y);
                 }
                 this.clockWise = finSum < 0;
+                if(fl != null){
+                    console.log("SENDING WITH PID:", this.id);
+                    sendTransac(0, fl, gn, this.id, null, this.points); //type, fl, gn, pn, od, nd
+                }
             }
             mean(){
                 let m = new Point(0, 0);
@@ -666,7 +723,7 @@ const EditScreen = () => {
             }
             ret.add(first);
             ret.mean();
-            ret.finalize();
+            ret.finalize(null, null);
             return ret;
         }
 
@@ -694,8 +751,15 @@ const EditScreen = () => {
             }
             for(var e of sels[1].elems) sels[0].elems.push(e); //make sure to save the islands
             store.edit.l[rx].splice(ry, 1);
-            if(store.edit.d[rx][4] != undefined) store.edit.d[rx][4].elems[sels[0].group] += "/" + store.edit.d[rx][4].elems[ry]; //merge names
-            //for(var i of store.edit.d[rx]) i.elems.splice(ry, 1);
+            //if(store.edit.d[rx][4] != undefined) store.edit.d[rx][4].elems[sels[0].group] += "/" + store.edit.d[rx][4].elems[ry]; //merge names
+            for(var i of Object.keys(sels[1].props)){
+                if(sels[0].props[i] == undefined){
+                    sels[0].props[i] = sels[1].props[i];
+                }else{
+                    if(isNaN(sels[0].props[i])) sels[0].props[i] += "/" + sels[1].props[i];
+                    else sels[0].props[i] += sels[1].props[i];
+                }
+            }
             sels.splice(1, 1);
             Poly.Draw();
         }
@@ -704,11 +768,30 @@ const EditScreen = () => {
 
         }
 
-        function start(){
-
+        function start(){ //translate raw DB data into more robust editing structure
+            if(!store.edit.raw) return;
+            console.log('RAW:', store.edit.l);
+            for(let i = 0; i < store.edit.l.length; i++){
+                for(let n = 0; n < store.edit.l[i].length; n++){
+                    let temp = {level: i, group: n, h: false, mean: new Point(0, 0), elems: [], props: store.edit.l[i][n].props};
+                    for(let m = 0; m < store.edit.l[i][n].elems.length; m++){
+                        let np = new Poly(m, i, n);
+                        for(let p of store.edit.l[i][n].elems[m]) np.add(new Point(p.x, p.y));
+                        temp.mean.addLocal(np.mean());
+                        np.finalize(null, null);
+                        temp.elems.push(np);
+                    }
+                    temp.mean.divideLocal(temp.elems.length);
+                    //store.edit.l[i][n] = temp;
+                    store.edit.l[i].splice(n, 1, temp);
+                }
+            }
+            store.edit.raw = false;
+            console.log('CLEANED:', store.edit.l);
+            Poly.Draw();
         }
 
-        start();
+        fileIn.onLoad = start();
     }});
     //if(!auth.loggedIn) return <SplashScreen />;
     //if(store.edit == null) return <></>;
@@ -751,7 +834,7 @@ const EditScreen = () => {
                         <CopyAllIcon  style={{fontSize:'32pt'}} />
                     </IconButton>
                     <IconButton aria-label='properties'>
-                        <MenuIcon  style={{fontSize:'32pt'}} />
+                        <MenuIcon style={{fontSize:'32pt'}} />
                     </IconButton>
                     <IconButton aria-label='traverse up layer'>
                         <ArrowUpwardIcon  style={{fontSize:'32pt'}} />

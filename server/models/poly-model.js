@@ -4,7 +4,7 @@ const ObjectId = Schema.Types.ObjectId
 
 const PolySchema = new Schema(
     {
-        points: [{type: ObjectId, ref: 'Point'}]
+        points: [] //points: [{type: ObjectId, ref: 'Point'}]
     }
 )
 

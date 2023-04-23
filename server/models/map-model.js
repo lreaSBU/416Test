@@ -8,9 +8,23 @@ const MapSchema = new Schema(
         age: {type: Number, required: true},
         owner: {type: ObjectId, ref: 'User'},
         published: {type: Boolean, required: true},
-        layers: [{type: ObjectId, ref: 'Layer'}]
+        gd: Object,
+        l: [{type: ObjectId, ref: 'Layer'}],
+        camX: {type: Number, required: true},
+        camY: {type: Number, required: true},
+        camZ: {type: Number, required: true}
     },
     { timestamps: true },
 )
 
 module.exports = mongoose.model('Map', MapSchema)
+/*
+var ret = ({
+            gd: [],
+            d: [[], [], [], [], []],
+            l: [[], [], [], [], []],
+            camX: 100,
+            camY: 102,
+            camZ: 1.69
+        });
+*/

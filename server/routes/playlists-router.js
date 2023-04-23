@@ -22,5 +22,6 @@ router.put('/convopairs/', auth.verify, ConvoController.getConvoPairs)
 router.put('/block/', auth.verify, ConvoController.blockConvo)
 router.put('/message/', auth.verify, ConvoController.submitMessage)
 router.put('/start/', auth.verify, EditController.startData)
+router.put('/edit/', auth.verify, EditController.edit)
 
 module.exports = router
