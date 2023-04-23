@@ -83,6 +83,8 @@ function MapCard(props) {
         // event.stopPropagation();
         // let _id = event.target.id;
         // _id = ("" + _id).substring("delete-list-".length);
+
+        console.log(id);
         // store.markListForDeletion(id);
     }
 
@@ -97,6 +99,9 @@ function MapCard(props) {
         setText(event.target.value);
     }
 
+    function handleDialogOpen(event) {
+        setOpen(true);
+    }
 
     function handleDialogClose() {
         setOpen(false);
@@ -183,7 +188,7 @@ function MapCard(props) {
     //         />
     // }
 
-    let mapTitleElement = <Box sx={{ maxWidth: '100%', height: 'fit-content' }} onClick={handleToggleEdit}>{idNamePair.name}</Box>;
+    let mapTitleElement = <Box sx={{ width: 'fit-content' }} onClick={handleToggleEdit}>{idNamePair.name}</Box>;
     if (editActive) {
         mapTitleElement =
             <TextField
@@ -249,7 +254,7 @@ function MapCard(props) {
             <CardActions>
                 <Button size='small' color='primary' variant='contained'><Link onClick={(event) => { handleEditor(event, idNamePair._id) }} to="/edit/">Edit</Link></Button>
 
-                <IconButton size='small' color='primary' onClick={(event) => { handleDeleteList(event, idNamePair._id) }} aria-label='delete'><DeleteIcon></DeleteIcon></IconButton>
+                <IconButton size='small' color='primary' onClick={(event) => { handleDialogOpen(event) }} aria-label='delete'><DeleteIcon></DeleteIcon></IconButton>
 
 
 
@@ -258,15 +263,15 @@ function MapCard(props) {
                     onClose={handleDialogClose}
                 >
                     <DialogTitle>
-                        {"Delete Map"}
+                        Delete {idNamePair.name}
                     </DialogTitle>
                     <DialogContent>
                         <DialogContentText>
-                            Do you want to delete this map?
+                            Do you want to delete the map {idNamePair.name}?
                         </DialogContentText>
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={handleDialogClose}>Delete</Button>
+                        <Button onClick={(event) => handleDeleteList(event, idNamePair._id)}>Delete</Button>
                         <Button onClick={handleDialogClose} autoFocus>
                             Cancel
                         </Button>

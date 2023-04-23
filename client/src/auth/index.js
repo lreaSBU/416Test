@@ -162,6 +162,10 @@ function AuthContextProvider(props) {
         return initials;
     }
 
+    auth.getAccountDetails = function() {
+        return auth.user;
+    }
+
     auth.closeError = function () {
         authReducer({
             type: AuthActionType.CLOSE_ERROR,

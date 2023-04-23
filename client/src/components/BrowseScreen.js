@@ -15,6 +15,7 @@ import List from '@mui/material/List';
 import Typography from '@mui/material/Typography'
 import IconButton from '@mui/material/IconButton';
 import SortIcon from '@mui/icons-material/Menu';
+import { Avatar, ListItem, ListItemText } from '@mui/material';
 
 const BrowseScreen = () => {
     const { store } = useContext(GlobalStoreContext);
@@ -49,12 +50,6 @@ const BrowseScreen = () => {
     function handleCommentTab(e) {
         store.switchTab(1);
     }
-
-    let modalJSX = "";
-    /*switch(store.modalMode){
-        case 1: modalJSX = <MUIDeleteModal />; break;
-        case 2: modalJSX = <MUIPublishModal />; break;
-    }*/
 
     let mapCards = "";
     if (store) {
@@ -104,28 +99,28 @@ const BrowseScreen = () => {
             inspect = <div>PREVIEW DATA: {store.currentMap.name}</div>
         }
     } else {
-        if(store.idNamePairs[0]){
+        if (store.idNamePairs[0]) {
             //display first map info
-            inspect =<div>{store.idNamePairs[0].name}</div>
+            inspect = <div>{store.idNamePairs[0].name}</div>
         }
-        else{
+        else {
             //display nothing
-            inspect=<></>
+            inspect = <></>
         }
     }
 
     const sMen = <Menu
         anchorEl={banchor}
-        anchorOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
-        }}
+        // anchorOrigin={{
+        //     vertical: 'top',
+        //     horizontal: 'right',
+        // }}
         id={'sort-menu'}
-        keepMounted
-        transformOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
-        }}
+        // keepMounted
+        // transformOrigin={{
+        //     vertical: 'top',
+        //     horizontal: 'right',
+        // }}
         open={isSortOpen}
         onClose={handleMenuClose}
     >
@@ -138,11 +133,27 @@ const BrowseScreen = () => {
         <div>
             <div id="list-selector-list">
                 <div id='browseScreenProfileHeader'>
-                    <Box>
-                        Profile
-                    </Box>
-                    <Box>
-                        Settings
+                    <div id='browseScreenAvatar'>
+                        <Avatar sx={{ width: 56, height: 56 }}>{auth.getUserInitials()}</Avatar>
+                    </div>
+
+                    <Box sx={{ justifyContent: 'center', alignItems: 'center', height: 'fit-content' }}>
+                        <Typography variant='h5'>Settings</Typography>
+                        <List>
+                            <ListItem>
+                                <ListItemText>First name: {auth.getAccountDetails().firstName}</ListItemText>
+                                <ListItemText>Last name: {auth.getAccountDetails().lastName}</ListItemText>
+                            </ListItem>
+                            <ListItem>
+                                <ListItemText>Email: {auth.getAccountDetails().email} <Button size='small' color='primary' variant='outlined'>Change</Button></ListItemText>
+                            </ListItem>
+                            <ListItem>
+                                <ListItemText>Password: placeholder <Button size='small' color='primary' variant='outlined'>Change</Button></ListItemText>
+                            </ListItem>
+                            <ListItem>
+                                <ListItemText>Friends <Button size='small' color='primary' variant='outlined'>View</Button></ListItemText>
+                            </ListItem>
+                        </List>
                     </Box>
                 </div>
                 <div id='browseScreenSortHeader'>
@@ -162,7 +173,6 @@ const BrowseScreen = () => {
 
                 {sMen}
                 {mapCards}
-                {modalJSX}
             </div>
             <div id="list-inspector">
                 <Box sx={{ p: 1, width: "100%", height: "10%" }}>

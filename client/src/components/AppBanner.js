@@ -105,16 +105,16 @@ export default function AppBanner() {
     const loggedInMenu =
         <Menu
             anchorEl={anchorEl}
-            anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-            }}
-            id={menuId}
-            keepMounted
-            transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-            }}
+            // anchorOrigin={{
+            //     vertical: 'top',
+            //     horizontal: 'right',
+            // }}
+            // id={menuId}
+            // keepMounted
+            // transformOrigin={{
+            //     vertical: 'top',
+            //     horizontal: 'right',
+            // }}
             open={isMenuOpen}
             onClose={handleMenuClose}
         >
@@ -123,6 +123,7 @@ export default function AppBanner() {
 
     let menu = loggedOutMenu;
     if (auth.loggedIn) menu = loggedInMenu;
+    
     let addButt = "";
     if (!store.currentMap && auth.loggedIn) {
         if ((store.browseMode == 0 || store.browseMode == 3) && store.tabMode < 2 && auth.loggedIn) { //add list button
@@ -187,6 +188,7 @@ export default function AppBanner() {
                             </IconButton>
                         </Box>
                     </Toolbar>
+                    {menu}
                 </AppBar >
             </Box>
             : <></>
