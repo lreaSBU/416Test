@@ -1,7 +1,9 @@
-import React, { useContext, useEffect } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import AuthContext from '../auth';
 
 import { GlobalStoreContext } from '../store'
+import { sendMessage } from '../store/store-request-api'
+
 import ContactCard from './ContactCard.js'
 import MessageCard from './MessageCard.js'
 //import MUIPublishModal from './MUIPublishModal'
@@ -12,6 +14,7 @@ import TextField from '@mui/material/TextField';
 
 import List from '@mui/material/List';
 import Typography from '@mui/material/Typography'
+
 /*
     This React component lists all the top5 lists in the UI.
     
@@ -20,6 +23,7 @@ import Typography from '@mui/material/Typography'
 const MessageScreen = () => {
     const { store } = useContext(GlobalStoreContext);
     const { auth } = useContext(AuthContext);
+    const [someVar, setSomeVar] = useState(null);
 
     useEffect(() => {        
         store.loadIdNamePairs();
@@ -67,7 +71,33 @@ const MessageScreen = () => {
         }
         </List>;
     }
-
+    const handleMessageSent = (event) => {
+        if(event.key == 'Enter'){
+            console.log("ENTER PRESSED");
+            console.log(event.target.value);
+            console.log(store.currentConvo)
+            // sendMessage(auth, store.currentConvo._id, event.target.value);
+            store.currentConvo.copy.msgs.push(
+                {text: event.target.value, dir: store.currentConvo.copy.dir}
+            )
+            event.target.value = "";
+           // need to be able to render the new message
+           inspect =
+           <List sx={{ width: '100%', left: '0%', bgcolor: '#fff' }}>
+           {
+               store.currentConvo.copy.msgs.map((msg) => (
+                   <MessageCard
+                       sx={{bgcolor: 'background.paper'}}
+                       text={msg.text}
+                       dir={(msg.dir == store.currentConvo.copy.dir)}
+                   />
+               ))
+           }
+           </List>;
+        }
+        setSomeVar(true);
+    }
+    console.log(inspect);
     return (
         <div id="playlist-selector">
             <div id="list-selector-heading">
@@ -80,7 +110,10 @@ const MessageScreen = () => {
                 <Box sx={{p : 1, height: '90%', width: '100%', color: 'red', bgColor: 'red'}}>
                     {inspect}
                 </Box>
-                {store.currentConvo ? <TextField sx={{width:'100%'}} label="Message"/> : <></>}
+                {store.currentConvo ? 
+                    <TextField sx={{width:'100%'}} label="Message" onKeyDown={handleMessageSent}></TextField> 
+                : 
+                    <></>}
             </div>
         </div>)
 }
