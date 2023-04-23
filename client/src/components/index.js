@@ -1,5 +1,6 @@
 import AppBanner from './AppBanner'
 import EditToolbar from './EditToolbar'
+import ForgotScreen from './ForgotScreen'
 import HomeScreen from './HomeScreen'
 import HomeWrapper from './HomeWrapper'
 import MessageWrapper from './MessageWrapper'
@@ -31,7 +32,8 @@ export {
     AllWrapper,
     AppBanner,  
     BrowseScreen,
-    EditToolbar, 
+    EditToolbar,
+    ForgotScreen, 
     HomeScreen,
     HomeWrapper,
     ListCard, 

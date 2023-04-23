@@ -10,6 +10,7 @@ import {
     HomeWrapper,
     LoginScreen,
     RegisterScreen,
+    ForgotScreen,
     Statusbar,
     UserWrapper,
     MessageScreen,
@@ -50,6 +51,7 @@ const App = () => {
                             <Route path="/edit/" exact component={EditScreen} />
                             <Route path="/login/" exact component={LoginScreen} />
                             <Route path="/register/" exact component={RegisterScreen} />
+                            <Route path="/forgot/" exact component={ForgotScreen} />
                             <Route path="/help/" exact component={HelpScreen} />
                         </Switch>
                     </GlobalStoreContextProvider>
