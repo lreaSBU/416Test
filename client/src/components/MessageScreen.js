@@ -94,8 +94,11 @@ const MessageScreen = () => {
                ))
            }
            </List>;
+           //need to rerender everytime inspect is updated
+           let temp = someVar;
+           setSomeVar(!temp);
         }
-        setSomeVar(true);
+
     }
     console.log(inspect);
     return (
