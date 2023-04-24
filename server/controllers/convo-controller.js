@@ -3,6 +3,13 @@ const User = require('../models/user-model');
 const Convo = require('../models/convo-model');
 const Message = require('../models/message-model');
 
+createConvo = async (req, res) => {
+    console.log('making new Convo');
+    await User.findOne({_id : req.userId}, (err, user) => {
+        
+    }).catch(err => console.log(err))
+}
+
 getConvoPairs = async (req, res) => {
     console.log("calling getConvoPairs!");
     await User.findOne({_id : req.userId}, (err, user) => {

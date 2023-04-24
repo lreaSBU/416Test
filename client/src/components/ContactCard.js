@@ -13,6 +13,7 @@ import LikeIcon from '@mui/icons-material/ThumbUp';
 import DislikeIcon from '@mui/icons-material/ThumbDown';
 import LikeIconOff from '@mui/icons-material/ThumbUpOffAlt';
 import DislikeIconOff from '@mui/icons-material/ThumbDownOffAlt';
+import BlockIcon from '@mui/icons-material/Block';
 //import { Container } from '@mui/material';
 
 /*
@@ -24,7 +25,6 @@ import DislikeIconOff from '@mui/icons-material/ThumbDownOffAlt';
 */
 function ContactCard(props) {
     const { store } = useContext(GlobalStoreContext);
-    const [editActive, setEditActive] = useState(false);
     const [text, setText] = useState("");
     const { idNamePair, selected } = props;
 
@@ -33,35 +33,9 @@ function ContactCard(props) {
         store.setCurrentConv(id);
     }
 
-    function handleToggleEdit(event) {    
-        event.stopPropagation();
-        toggleEdit();
-    }
-
-    function toggleEdit() {
-        let newActive = !editActive;
-        if (newActive) {
-            store.setEditingMapName(true);
-        }
-        setEditActive(newActive);
-    }
-
-    async function handleDeleteList(event, id) {
-        event.stopPropagation();
-        let _id = event.target.id;
-        _id = ("" + _id).substring("delete-list-".length);
-        store.markListForDeletion(id);
-    }
-
-    function handleKeyPress(event) {
-        if (event.code === "Enter") {
-            let id = event.target.id.substring("list-".length);
-            store.changeMapName(id, text);
-            toggleEdit();
-        }
-    }
-    function handleUpdateText(event) {
-        setText(event.target.value);
+    function handleBlock(e, id){
+        e.stopPropagation();
+        console.log("BLOCKING", id);
     }
 
     let selectClass = "unselected-list-card";
@@ -81,6 +55,9 @@ function ContactCard(props) {
         style={{ width: '98%', height: '100%', fontSize: 'x-large', outline: 'solid', borderRadius: '5px', marginLeft: 'auto', marginRight: 'auto' }}
         onClick={(e) => {handleLoadConvo(e, idNamePair._id)}}
         button>
+            <IconButton onClick={(e) => {handleBlock(e, idNamePair._id)}}>
+                <BlockIcon sx={{color: (idNamePair.copy.msgs.length == 0 ? 'red' : '#aaa')}}/>
+            </IconButton>
             <Box>{idNamePair.name}</Box>
             <Box sx={{flexGrow: 1}}></Box>
             <Box>{idNamePair.copy.unread ? <Fab
@@ -93,26 +70,6 @@ function ContactCard(props) {
             </Box>
             {ldl}
         </ListItem>
-
-if (editActive) {
-    cardElement =
-        <TextField
-            margin="normal"
-            required
-            fullWidth
-            id={"list-" + idNamePair._id}
-            label=""
-            name="name"
-            autoComplete=""
-            className='list-card'
-            onKeyPress={handleKeyPress}
-            onChange={handleUpdateText}
-            defaultValue={idNamePair.name}
-            inputProps={{ style: { fontSize: 48 } }}
-            InputLabelProps={{ style: { fontSize: 24 } }}
-            autoFocus
-        />
-}
 return (
     <div>
         {cardElement}

@@ -11,6 +11,8 @@ import MessageCard from './MessageCard.js'
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
+import AddIcon from '@mui/icons-material/Add';
+import Fab from '@mui/material/Fab'
 
 import List from '@mui/material/List';
 import Typography from '@mui/material/Typography'
@@ -24,6 +26,7 @@ const MessageScreen = () => {
     const { store } = useContext(GlobalStoreContext);
     const { auth } = useContext(AuthContext);
     const [someVar, setSomeVar] = useState(null);
+    const [contactID, setContactID] = useState("");
 
     useEffect(() => {        
         store.loadIdNamePairs();
@@ -34,12 +37,24 @@ const MessageScreen = () => {
         case 1: modalJSX = <MUIDeleteModal />; break;
         case 2: modalJSX = <MUIPublishModal />; break;
     }*/
+    function handleSub(e){
+        if(e.key == "Enter"){
+            handleChangeContact(e);
+            handleNewContact(null);
+        }
+    }
+    function handleChangeContact(e){
+        setContactID(e.target.value);
+    }
+    function handleNewContact(e){
+        console.log("SHIT", contactID);
+    }
 
     let convoCards = "";
     if(store){
-        console.log("!!!!!!!!!!!RENDERING FOR CONVOS NOW -- !!GOOD...");
-        console.log("AMOUNT:: " + store.convoPairs.length);
-        console.log("CURRENT:: " + store.currentConvo);
+        //console.log("!!!!!!!!!!!RENDERING FOR CONVOS NOW -- !!GOOD...");
+        //console.log("AMOUNT:: " + store.convoPairs.length);
+        //console.log("CURRENT:: " + store.currentConvo);
         convoCards = 
         <List sx={{ width: '100%', left: '0%', bgcolor: 'background.paper' }}>
         {
@@ -100,12 +115,23 @@ const MessageScreen = () => {
         }
 
     }
-    console.log(inspect);
+    //console.log(inspect);
     return (
         <div id="playlist-selector">
-            <div id="list-selector-heading">
-            </div>
             <div id="contact-selector-list">
+                <div id="messageHeader">
+                    <Box sx={{ height: 'fit-content' }}>
+                        <TextField label="Add Contact" onChange={handleChangeContact} onKeyPress={handleSub}></TextField>
+                        <Fab
+                            sx={{alignItems: 'right'}}
+                            size='medium'
+                            color='primary'
+                            aria-label="add"
+                            id="addContactButton"
+                            onClick={handleNewContact}
+                        > <AddIcon /> </Fab>
+                    </Box>
+                </div>
                 {convoCards}
                 {modalJSX}
             </div>

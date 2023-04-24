@@ -14,6 +14,7 @@ import MenuItem from '@mui/material/MenuItem';
 import List from '@mui/material/List';
 import Typography from '@mui/material/Typography'
 import IconButton from '@mui/material/IconButton';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SortIcon from '@mui/icons-material/Menu';
 import { Avatar, ListItem, ListItemText } from '@mui/material';
 import Dialog from '@mui/material/Dialog';
@@ -139,6 +140,10 @@ const BrowseScreen = () => {
         }
     }
 
+    function handleCopy(code){
+        navigator.clipboard.writeText(code);
+    }
+
     function handleDialogClose() {
         setOpenEmail(false);
         setOpenPassword(false);
@@ -249,8 +254,10 @@ const BrowseScreen = () => {
                                 </ListItemText>
                             </ListItem>
                             <ListItem>
-                                <ListItemText>{'Friends: 0 '}
-                                    <Button size='small' color='primary' variant='outlined' onClick={(event) => { handleDialogOpen(3) }}>View</Button>
+                                <ListItemText>{'ContactID: '}{auth.getAccountDetails().userId}{' '}
+                                    <IconButton size='small' color='primary' variant='outlined' aria-label='select'>
+                                        <ContentCopyIcon onClick={(event) => { handleCopy(auth.getAccountDetails().userId) }} />
+                                    </IconButton>
                                 </ListItemText>
                             </ListItem>
                         </List>
