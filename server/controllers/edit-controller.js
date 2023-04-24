@@ -8,6 +8,8 @@ const Point = require('../models/point-model');
 async function getLayer(id){
     let ret = [];
     let l = await Layer.findById(id);
+    console.log(id);
+    console.log(l);
     for(let i = 0; i < l.groups.length; i++){
         let v = await getSubRegion(l.groups[i]);
         ret.push(v);
