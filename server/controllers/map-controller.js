@@ -39,7 +39,7 @@ createMap = async (req, res) => {
     map.l = []; //[[], [], [], [], []];
     for(var i = 0; i < 5; i++){
         let nl = new Layer();
-        nl.save().then(() => {
+        await nl.save().then(() => {
             map.l.push(nl);
         });
     }
