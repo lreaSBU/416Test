@@ -51,7 +51,7 @@ async function makePoly(s, i){
 }
 startData = async (req, res) => {
     await Map.findById(req.body.id, async (err, map) => {
-        if(map.owner._id != req.userId) return res.status(400).json({success: false});
+        if(map.owner != req.userId) return res.status(400).json({success: false});
         let ret = ({
             gd: null,
             l: [],

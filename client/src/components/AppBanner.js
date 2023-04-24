@@ -139,9 +139,9 @@ export default function AppBanner() {
         }
     }
     let editTab = '';
-    if (auth.loggedIn && store.tabMode > 1) {
+    /*if (auth.loggedIn && store.tabMode > 1) {
         editTab = <Button sx={{ bgcolor: '#e1e4cb', fontSize: '16px', textAlign: "center", m: 1 }} onClick={handleEditTab}>{(store.tabMode == 2 ? <>Graphics</> : <>Editing</>)}</Button>
-    }
+    }*/
 
     function getAccountMenu(loggedIn) {
         let userInitials = auth.getUserInitials();
@@ -153,7 +153,7 @@ export default function AppBanner() {
     }
 
     return (
-        (auth.loggedIn) && (store.tabMode < 1) ?
+        (auth.loggedIn) ?
             <Box sx={{ flexGrow: 1 }}>
                 <AppBar position="static" sx={{ bgcolor: 'primary.complement' }}>
                     <Toolbar>

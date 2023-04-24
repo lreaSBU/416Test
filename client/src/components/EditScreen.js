@@ -796,19 +796,6 @@ const EditScreen = () => {
     //if(!auth.loggedIn) return <SplashScreen />;
     //if(store.edit == null) return <></>;
     return (
-        <div>
-        <Box sx={{ flexGrow: 1 }}>
-            <AppBar position="static" sx={{ bgcolor: 'primary.complement' }}>
-                    <Toolbar>
-                        <Box id='appBannerLogo' color={'primary.main'}><PublicIcon></PublicIcon>Map Central</Box>
-                        <Box sx={{ width: '2%' }}></Box>
-                        <Link onClick={handleHome} to="/" ><HomeIcon className='hvr-grow' sx={{ color: 'primary.main' }}></HomeIcon></Link>
-                        <Box sx={{ width: '2%' }}></Box>
-                        <Box id='bannerStatus' sx={{ fontSize: 'xx-large' }}>{(store.browseMode == 0) ? (store.tabMode > 1 ? <>Editing</> : <>My Maps</>) : <>Search:</>}</Box>
-                        <Box sx={{ flexGrow: 1 }}></Box>
-                    </Toolbar>
-            </AppBar>
-        </Box >
         <div id='editParent'>
             <div id = "leftPar" className='editShelf'>
                 <Box id='toolTray' className='traySect' sx={{bgcolor: '#999', borderRadius: 3}}>
@@ -944,7 +931,6 @@ const EditScreen = () => {
                     </Box>
                 }
             </div>
-        </div>
         </div>
     );
 }
