@@ -123,7 +123,7 @@ async function cleanDB(){
     await SubRegion.deleteMany({});
     await Poly.deleteMany({});
 }
-cleanDB();
+//cleanDB();
 
 module.exports = {
     startData,
