@@ -6,11 +6,11 @@ const ConvoSchema = new Schema(
     {
         user1: {type: ObjectId, ref: 'User'},
         user2: {type: ObjectId, ref: 'User'},
-        unread1: {type: Number, required: true},
-        unread2: {type: Number, required: true},
-        block1: {type: Boolean, required: true},
-        block2: {type: Boolean, required: true},
-        msgs: [{type: ObjectId, ref: 'Message'}],
+        unread1: {type: Number, required: true, default: 0},
+        unread2: {type: Number, required: true, default: 0},
+        block1: {type: Boolean, required: true, default: false},
+        block2: {type: Boolean, required: true, default: false},
+        msgs: [{type: Object}],
     }
 )
 

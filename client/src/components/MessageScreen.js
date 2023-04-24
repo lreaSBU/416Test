@@ -47,7 +47,7 @@ const MessageScreen = () => {
         setContactID(e.target.value);
     }
     function handleNewContact(e){
-        console.log("SHIT", contactID);
+        store.createConvo(contactID);
     }
 
     let convoCards = "";
@@ -90,28 +90,31 @@ const MessageScreen = () => {
         if(event.key == 'Enter'){
             console.log("ENTER PRESSED");
             console.log(event.target.value);
-            console.log(store.currentConvo)
-            // sendMessage(auth, store.currentConvo._id, event.target.value);
+            console.log(store.currentConvo);
+            store.sendMessage(event.target.value);
             store.currentConvo.copy.msgs.push(
                 {text: event.target.value, dir: store.currentConvo.copy.dir}
             )
             event.target.value = "";
+            inspect =
+            <List sx={{ width: '100%', left: '0%', bgcolor: '#fff' }}>
+            {
+                store.currentConvo.copy.msgs.map((msg) => (
+                    <MessageCard
+                        sx={{bgcolor: 'background.paper'}}
+                        text={msg.text}
+                        dir={(msg.dir == store.currentConvo.copy.dir)}
+                    />
+                ))
+            }
+            </List>;
+            setSomeVar(!someVar);
+            // sendMessage(auth, store.currentConvo._id, event.target.value);
+            /*
            // need to be able to render the new message
-           inspect =
-           <List sx={{ width: '100%', left: '0%', bgcolor: '#fff' }}>
-           {
-               store.currentConvo.copy.msgs.map((msg) => (
-                   <MessageCard
-                       sx={{bgcolor: 'background.paper'}}
-                       text={msg.text}
-                       dir={(msg.dir == store.currentConvo.copy.dir)}
-                   />
-               ))
-           }
-           </List>;
            //need to rerender everytime inspect is updated
            let temp = someVar;
-           setSomeVar(!temp);
+           setSomeVar(!temp);*/
         }
 
     }
@@ -136,7 +139,7 @@ const MessageScreen = () => {
                 {modalJSX}
             </div>
             <div id="contact-inspector">
-                <Box sx={{p : 1, height: '90%', width: '100%', color: 'red', bgColor: 'red'}}>
+                <Box id="messageList" sx={{p : 1, height: '90%', width: '100%', color: 'red', bgColor: 'red'}}>
                     {inspect}
                 </Box>
                 {store.currentConvo ? 

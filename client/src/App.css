@@ -329,6 +329,9 @@ body {
   display: flex;
   flex-direction: column;
 }
+#messageList{
+  overflow: scroll;
+}
 
 #contact-selector-list {
   position: absolute;

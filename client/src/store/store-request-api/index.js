@@ -42,9 +42,15 @@ export const getMapPairs = (filter, searchMode, sortMode, page) => {
     });
 }
 
-export const getConvoPairs = (page) => {
+export const makeConvo = (id) => {
+    return api.put(`/makeconvo/`, {
+        contactId: id
+    });
+}
+export const getConvoPairs = (page, read) => {
     return api.put(`/convopairs/`, {
-        page: page
+        page: page,
+        read: read
     });
 }
 export const requestBlock = (id, flag) => {
@@ -72,6 +78,7 @@ const apis = {
     updateMapById,
     deleteMapById,
     getMapPairs,
+    makeConvo,
     getConvoPairs,
     requestBlock,
     sendMessage,

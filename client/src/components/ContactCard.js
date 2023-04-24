@@ -56,7 +56,7 @@ function ContactCard(props) {
         onClick={(e) => {handleLoadConvo(e, idNamePair._id)}}
         button>
             <IconButton onClick={(e) => {handleBlock(e, idNamePair._id)}}>
-                <BlockIcon sx={{color: (idNamePair.copy.msgs.length == 0 ? 'red' : '#aaa')}}/>
+                <BlockIcon sx={{color: (idNamePair.block ? 'red' : '#aaa')}}/>
             </IconButton>
             <Box>{idNamePair.name}</Box>
             <Box sx={{flexGrow: 1}}></Box>

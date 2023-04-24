@@ -171,76 +171,46 @@ function GlobalStoreContextProvider(props){
         asyncLoadIdNamePairs(pr);
     }
 
+    store.createConvo = async function(id){
+        const response = await api.makeConvo(id);
+        console.log(response);
+        if(response.success) store.loadConvoPairs(); //it worked, now get the pairs again
+    }
+
     store.loadConvoPairs = function(p = {}){
         async function asyncLoadConvoPairs(){
             try{
-                if(p.browseMode === undefined) p.browseMode = store.browseMode;
-                if(p.modalMode === undefined) p.modalMode = store.modalMode;
-                if(p.tabMode === undefined) p.tabMode = store.tabMode;
+                let readFlag = false;
+                if(p.browseMode == undefined) p.browseMode = store.browseMode;
+                if(p.modalMode == undefined) p.modalMode = store.modalMode;
+                if(p.tabMode == undefined) p.tabMode = store.tabMode;
                 p.idNamePairs = [];
                 p.edit = null;
-                if(p.currentMap === undefined) p.currentMap = store.currentMap;
-                if(p.sortMode === undefined) p.sortMode = store.sortMode;
-                if(p.searchMode === undefined) p.searchMode = store.searchMode;
-                if(p.filter === undefined) p.filter = store.filter;
-                if(p.page === undefined) p.page = store.page;
-                if(p.editingName === undefined) p.editingName = store.editingName;
-                if(p.currentConvo === undefined) p.currentConvo = store.currentConvo;
-                const response = await api.getConvoPairs(p.page);
-                console.log("GOT RESPONSE!!! --> " + JSON.stringify(response.data));
-                //p.convoPairs = response.data.convoPairs;
-                p.convoPairs = ([
-                    {
-                        _id: 1,
-                        name: "Bob",
-                        copy: {
-                            dir: true,
-                            msgs: [
-                                {
-                                    text: "Hey, how are you?",
-                                    dir: true
-                                }
-                            ],
-                            unread: 0
-                        }
-                    },
-                    {
-                        _id: 2,
-                        name: "Alice",
-                        copy: {
-                            dir: false,
-                            msgs: [
-                                {
-                                    text: "What's up?",
-                                    dir: false
-                                },
-                                {
-                                    text: "Not much",
-                                    dir: true
-                                }
-                            ],
-                            unread: 1
-                        }
-                    }
-                ]);
+                if(p.currentMap == undefined) p.currentMap = store.currentMap;
+                if(p.sortMode == undefined) p.sortMode = store.sortMode;
+                if(p.searchMode == undefined) p.searchMode = store.searchMode;
+                if(p.filter == undefined) p.filter = store.filter;
+                if(p.page == undefined) p.page = store.page;
+                if(p.editingName == undefined) p.editingName = store.editingName;
+                if(p.currentConvo == undefined) p.currentConvo = store.currentConvo;
+                else readFlag = true;
+                const response = await api.getConvoPairs(p.page, readFlag);
+                console.log("GOT RESPONSE!!! --> ", response.data);
+                p.convoPairs = response.data.convoPairs;
                 storeReducer(p);
-                if(!response.data.success) console.log("API FAILED TO GET THE LIST PAIRS");
             }catch(err){
                 console.log("caught logout error for convo");
             }
         }
         asyncLoadConvoPairs();
     }
+    store.sendMessage = async function(text){
+        const response = await api.sendMessage(store.currentConvo._id, text);
+        console.log("send msg resp", response);
+        if(response.success) store.loadConvoPairs(); //lets just refresh the entire thing for now
+    }
 
     store.loadEditorData = function(id){
-        /*const newEdit = ({
-            gd: [],
-            d: [[], [], [], [], []],
-            l: [[], [], [], [], []],
-            camX: 100,
-            camY: 100,
-            camZ: 1
-        });*/ //response.data.ed
         async function asyncStartEditing(){
             let response = await api.getStartData(id); //store.currentMap._id
             if(response.data.success){
