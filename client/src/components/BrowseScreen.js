@@ -16,6 +16,11 @@ import Typography from '@mui/material/Typography'
 import IconButton from '@mui/material/IconButton';
 import SortIcon from '@mui/icons-material/Menu';
 import { Avatar, ListItem, ListItemText } from '@mui/material';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle'
 
 const BrowseScreen = () => {
     const { store } = useContext(GlobalStoreContext);
@@ -27,6 +32,9 @@ const BrowseScreen = () => {
 
     const [anchorEl, setAnchorEl] = useState(null);
     const [banchor, setBanchor] = useState(null);
+    const [openEmail, setOpenEmail] = useState(false);
+    const [openPassword, setOpenPassword] = useState(false);
+    const [openFriend, setOpenFriend] = useState(false);
     const isMenuOpen = Boolean(anchorEl);
     const isSortOpen = Boolean(banchor);
 
@@ -49,6 +57,92 @@ const BrowseScreen = () => {
     }
     function handleCommentTab(e) {
         store.switchTab(1);
+    }
+
+    let emailDiag =
+        <Dialog
+            open={openEmail}
+            onClose={handleDialogClose}
+        >
+            <DialogTitle>
+                Change Email
+            </DialogTitle>
+            <DialogContent>
+                <DialogContentText>
+                    Change Email?
+                </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+                {/* <Button onClick={(event) => handleDeleteList(event, idNamePair._id)}>Delete</Button> */}
+                <Button onClick={handleDialogClose} autoFocus>
+                    Cancel
+                </Button>
+            </DialogActions>
+
+        </Dialog>;
+
+    let passwordDiag =
+        <Dialog
+            open={openPassword}
+            onClose={handleDialogClose}
+        >
+            <DialogTitle>
+                Change Password
+            </DialogTitle>
+            <DialogContent>
+                <DialogContentText>
+                    Change password?
+                </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+                {/* <Button onClick={(event) => handleDeleteList(event, idNamePair._id)}>Delete</Button> */}
+                <Button onClick={handleDialogClose} autoFocus>
+                    Cancel
+                </Button>
+            </DialogActions>
+
+        </Dialog>;
+
+    let friendDiag =
+        <Dialog
+            open={openFriend}
+            onClose={handleDialogClose}
+        >
+            <DialogTitle>
+                Viewing Friends
+            </DialogTitle>
+            <DialogContent>
+                <DialogContentText>
+                    Friends
+                </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+                {/* <Button onClick={(event) => handleDeleteList(event, idNamePair._id)}>Delete</Button> */}
+                <Button onClick={handleDialogClose} autoFocus>
+                    Cancel
+                </Button>
+            </DialogActions>
+
+        </Dialog>;
+
+    function handleDialogOpen(diagType) {
+        switch (diagType) {
+            case 1:
+                setOpenEmail(true);
+                break;
+            case 2:
+                setOpenPassword(true);
+                break;
+            case 3:
+                setOpenFriend(true);
+                break;
+        }
+    }
+
+    function handleDialogClose() {
+        setOpenEmail(false);
+        setOpenPassword(false);
+        setOpenFriend(false);
     }
 
     let mapCards = "";
@@ -145,15 +239,24 @@ const BrowseScreen = () => {
                                 <ListItemText>Last name: {auth.getAccountDetails().lastName}</ListItemText>
                             </ListItem>
                             <ListItem>
-                                <ListItemText>Email: {auth.getAccountDetails().email} <Button size='small' color='primary' variant='outlined'>Change</Button></ListItemText>
+                                <ListItemText>{'Email: '}{auth.getAccountDetails().email}{' '}
+                                    <Button size='small' color='primary' variant='outlined' onClick={(event) => { handleDialogOpen(1) }}>Change</Button>
+                                </ListItemText>
                             </ListItem>
                             <ListItem>
-                                <ListItemText>Password: placeholder <Button size='small' color='primary' variant='outlined'>Change</Button></ListItemText>
+                                <ListItemText>{'Password: placeholder '}
+                                    <Button size='small' color='primary' variant='outlined' onClick={(event) => { handleDialogOpen(2) }}>Change</Button>
+                                </ListItemText>
                             </ListItem>
                             <ListItem>
-                                <ListItemText>Friends <Button size='small' color='primary' variant='outlined'>View</Button></ListItemText>
+                                <ListItemText>{'Friends: 0 '}
+                                    <Button size='small' color='primary' variant='outlined' onClick={(event) => { handleDialogOpen(3) }}>View</Button>
+                                </ListItemText>
                             </ListItem>
                         </List>
+                        {emailDiag}
+                        {passwordDiag}
+                        {friendDiag}
                     </Box>
                 </div>
                 <div id='browseScreenSortHeader'>
