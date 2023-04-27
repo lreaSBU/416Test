@@ -9,7 +9,7 @@ const UserSchema = new Schema(
         email: { type: String, required: true },
         passwordHash: { type: String, required: true },
         maps: [{type: ObjectId, ref: 'Map'}],
-        convos: [{type: ObjectId, ref: 'Convo'}],
+        convos: [{type: ObjectId, ref: 'Convo'}]
     },
     { timestamps: true },
 )

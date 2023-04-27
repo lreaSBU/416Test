@@ -12,7 +12,8 @@ const MapSchema = new Schema(
         l: [{type: ObjectId, ref: 'Layer'}],
         camX: {type: Number, required: true},
         camY: {type: Number, required: true},
-        camZ: {type: Number, required: true}
+        camZ: {type: Number, required: true},
+        sesh: {type: Number, required: true, default: 0}
     },
     { timestamps: true },
 )

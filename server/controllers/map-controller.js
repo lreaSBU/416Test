@@ -43,9 +43,9 @@ createMap = async (req, res) => {
             map.l.push(nl);
         });
     }
-    map.camX = 123;
-    map.camY = 456;
-    map.camZ = 789;
+    map.camX = 100;
+    map.camY = 100;
+    map.camZ = 1;
 
     User.findOne({ _id: req.userId }, (err, user) => {
         console.log("user found: " + JSON.stringify(user));

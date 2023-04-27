@@ -5,20 +5,18 @@ import { Link } from 'react-router-dom'
 
 import api from './edit-request-api'
 import { GlobalStoreContext } from '../store'
-import ListCard from './ListCard.js'
-import YouTube from './YouTubePlayerExample.js'
-import CommentCard from './CommentCard.js'
-import MUIDeleteModal from './MUIDeleteModal'
-import MUIEditSongModal from './MUIEditSongModal'
-import MUIRemoveSongModal from './MUIRemoveSongModal'
+import Popper, { PopperPlacementType } from '@mui/material/Popper';
+import List from '@mui/material/List';
 import Box from '@mui/material/Box';
 import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import Collapse from '@mui/material/Collapse';
 import Checkbox from '@mui/material/Checkbox';
 import Button from '@mui/material/Button';
 import SplashScreen from './SplashScreen';
 import logo from './Capture.png'
 import colors from './colors.png'
+import Hidden from '@mui/material/Hidden';
 import IconButton from '@mui/material/IconButton';
 import MouseIcon from '@mui/icons-material/Mouse';
 import AddIcon from '@mui/icons-material/Add';
@@ -39,8 +37,13 @@ import Toolbar from '@mui/material/Toolbar';
 import HomeIcon from '@mui/icons-material/Home'
 import PublicIcon from '@mui/icons-material/Public'
 
-import List from '@mui/material/List';
+import jsTPS from '../common/jsTPS'
 import Typography from '@mui/material/Typography'
+import Remove_Transaction from '../transactions/Remove_Transaction';
+import Move_Transaction from '../transactions/Move_Transaction';
+import Insert_Transaction from '../transactions/Insert_Transaction';
+import DeletePoly_Transaction from '../transactions/DeletePoly_Transaction';
+import ChangeProperty_Transaction from '../transactions/ChangeProperty_Transaction';
 /*
     This React component lists all the top5 lists in the UI.
     
@@ -49,23 +52,34 @@ import Typography from '@mui/material/Typography'
 const EditScreen = () => {
     const { store } = useContext(GlobalStoreContext);
     const { auth } = useContext(AuthContext);
+    const [warning, setWarning] = useState(null);
     const myContainer = useRef(null);
     const fileContainer = useRef(null);
+    const propContainer = useRef(null);
+    const propList = useRef(null);
 
-    const handleHome = (e) => {
-        store.goHome();
+    const tps = new jsTPS();
+
+    function handleWarning(m){
+        m = "(Warning): " + m;
+        console.warn(m);
+        setWarning(m);
+        setTimeout(function(){
+            setWarning(null);
+        }, 10000);
     }
 
-    useEffect(() => {if(store.edit){
+    useEffect((e) => {if(store.edit && store.edit.raw){
+        let VERSION = JSON.stringify(store.edit.sesh);
+        
         var canv = myContainer.current;
-        canv.width = canv.height * (canv.clientWidth / canv.clientHeight);
-        //console.log("canv:::", canv);
+        //canv.width = canv.height * (canv.clientWidth / canv.clientHeight);
         var ctx = canv.getContext('2d');
-        //console.log("CTX:::", ctx);
         var fileIn = fileContainer.current;
-        //console.log("fileIn:::", fileIn);
+        var propButt = propContainer.current;
+        var propHolder = propList.current;
 
-        var CW = canv.width, CH = canv.height;
+        const CW = canv.width, CH = canv.height, HW = CH/2, HH = CH/2;
         var fi, bytes, camZ = 1, camX = 100, camY = 100;
 
         var CWS, CHS;
@@ -74,6 +88,7 @@ const EditScreen = () => {
             static Gen = new Point(0, 0);
             constructor(x, y){
                 this.x = x; this.y = y;
+                this.h = false;
             }
             dist(p){
                 return Math.sqrt(Math.pow(p.x-this.x, 2) + Math.pow(p.y-this.y, 2));
@@ -91,85 +106,195 @@ const EditScreen = () => {
             set(x, y){
                 this.x = x; this.y = y;
             }
-            addLocal(p){
+            addLocal(p, n = null){
+                if(n){
+                    this.x += p; this.y += n;
+                    return;
+                }
                 this.x += p.x; this.y += p.y;
+            }
+            subtractLocal(p){
+                this.x -= p.x; this.y -= p.y;
             }
             divideLocal(n){
                 this.x /= n; this.y /= n;
             }
             getLocal(){
-                Point.Gen.x = camZ*(this.x+camX);
-                Point.Gen.y = camZ*(this.y+camY);
+                Point.Gen.x = HW + camZ*(this.x+camX-HW);
+                Point.Gen.y = HH + camZ*(this.y+camY-HH);
                 return Point.Gen;
             }
             makeGlobal(){
-                this.x = this.x/camZ - camX;
-                this.y = this.y/camZ - camY;
+                //this.x = this.x/camZ - camX;
+                //this.y = this.y/camZ - camY;
+                this.x = (this.x-HW)/camZ - camX + HW;
+                this.y = (this.y-HH)/camZ - camY + HH;
                 return this;
+            }
+            copy(){
+                return new Point(this.x, this.y);
             }
             toString(){
                 return "(" + this.x + ", " + this.y + ")";
             }
         }
-
+        const scrIn = (1 - 1/1.1)/2, scrOut = (1 - 1.1)/2;
         canv.addEventListener("wheel", function(e){
+            if(VERSION != store.edit.sesh) return;
             let scr = e.deltaY < 0 ? 1 : -1, czo = camZ;
             if(scr == 1) camZ *= 1.1;
             else camZ /= 1.1;
-            //Zoom.innerHTML = camZ;
             CWS = CW-camZ;
             CHS = CH-camZ;
-            //camX += canv.width*(czo-camZ)/camZ;
-            //camY += canv.height*(czo-camZ)/camZ;
             Poly.Draw();
         });
 
-        var mx = 0, my = 0, smx, smy;
-        var selDot = null;
+        var mx = 0, my = 0, smx, smy, mcl = false;
+        var mel = null;
+        const movoff = new Point(0, 0), toolSet = [];
 
         canv.addEventListener("mousemove", function(e){
+            if(VERSION != store.edit.sesh) return;
             smx = e.offsetX;
             smy = e.offsetY;
-            if(e.buttons == 1){
-                camX += (e.offsetX - mx)/camZ;
-                camY += (e.offsetY - my)/camZ;
-                selDot = null;
+            if((mcl = e.buttons == 1)){
+                switch(tool){
+                    case 0: //cam
+                        camX += (e.offsetX - mx)/camZ;
+                        camY += (e.offsetY - my)/camZ;
+                    break; case 1: //move
+                        //movoff.addLocal((e.offsetX - mx)/camZ, (e.offsetY - my)/camZ);
+                        movoff.x += (e.offsetX - mx)/camZ;
+                        movoff.y += (e.offsetY - my)/camZ;
+                        for(let m of mels){
+                            m.x += (e.offsetX - mx)/camZ;
+                            m.y += (e.offsetY - my)/camZ;
+                        }
+                    break; case 2: //drag boxSelect
+                        //movoff.x += (e.offsetX - mx)/camZ;
+                        //movoff.y += (e.offsetY - my)/camZ;
+                    break;
+                }
+                mel = null;
                 Poly.Draw();
-            }else if(e.buttons == 0 && sels.length == 1){
-                var d, md = 1/camZ, mp = null, ref = new Point(e.offsetX, e.offsetX);
+            }else if(e.buttons == 0 && mode){
+                var d, md = 100000000000000, mp = null, ref = new Point(e.offsetX, e.offsetY);
                 ref.makeGlobal();
-                for(var e of sels[0].elems) for(var p of e.points) if((d = ref.fastDist(p)) < md){
+                for(var e of mode.elems) for(var p of e.points) if((d = ref.dist(p)) < md){
                     md = d;
                     mp = p;
                 }
                 Poly.Draw();
-                if(mp != null) drawDot(mp);
-                selDot = mp;
+                if(mp != null) drawDot(mp, true);
+                mel = mp;
             }
             mx = smx; my = smy;
         });
-        var keys = {}, mode = false;
+        var keys = {}, mode = false, tool = 0, pmode = false;
         function swapMode(){
-            if(mode) mode = false;
-            else mode = sels[sels.length-1];
+            let fm = mode;
+            if(mode){
+                mode = false;
+                mels = [];
+            }else mode = sels[sels.length-1];
+            if(mode == undefined) mode = false;
+            if(fm != mode) Poly.Draw();
+        }
+        function swapTool(t){
+            tool = t;
+            switch(tool){
+                case 1: //reset movoff
+                    movoff.set(0, 0);
+                break; case 2: //init box select
+                    movoff.set(mx, my);
+                break;
+            }
+        }
+        function insert_tool(){
+            if(mode && mels.length == 2){
+                let ps = [];
+                for(let m of mels) ps.push(findParent(m, mode));
+                for(let i = 0; i < mels.length-1; i++){
+                    if(ps[i].p == ps[i+1].p && Math.abs(ps[i].i - ps[i+1].i) == 1){
+                        let np = new Point((mels[i].x+mels[i+1].x)/2, (mels[i].y+mels[i+1].y)/2);
+                        tps.addTransaction(new Insert_Transaction(store, mode.level, mode.group, ps[i].p, Math.max(ps[i].i, ps[i+1].i), np));
+                    }
+                }
+            }
+        }
+        function remove_tool(){
+            /* //ITERATOR FOR SHARED POINT REMOVAL:::
+            for(var l of store.edit.l) for(var g of l) for(var e of g.elems)
+                if(e.minX <= mel.x && e.maxX >= mel.x && e.minY <= mel.y && e.maxY >= mel.y)
+                    for(var i = 0; i < e.points.length; i++) if(mel.eq(e.points[i])){
+                        e.points.splice(i, 1);
+                        break;
+                    }
+            */
+            if(mode && mels.length > 0){
+                if(keys.Alt){ //delete the entire Poly
+                    if(mode.elems.length == 1) return handleWarning('Cannot remove all Polys of a Subregion');
+                    let par = findParent(mels[0], mode);
+                    for(let m of mels) if(findParent(m, mode).p != par.p) return handleWarning('All selected Points must belong to the same Poly');
+                    tps.addTransaction(new DeletePoly_Transaction(store, mode.level, mode.group, par.p, mode.elems[par.p]));
+                    return;
+                }
+                let rpm = undefined;
+                while(mels.length){
+                    let m = mels.splice(0, 1)[0];
+                    let par = findParent(m, mode);
+                    if(mode.elems[par.p].points.length < 5){
+                        handleWarning('Aborting point removal; Must maintain minimum Point count');
+                        break;
+                    }
+                    if(par.i == 0 || par.i == mode.elems[par.p].points.length-1){
+                        handleWarning('Cannot delete Poly origin point');
+                        rpm = m;
+                        continue;
+                    }
+                    tps.addTransaction(new Remove_Transaction(store, true, mode.level, mode.group, par.p, par.i, m));
+                }
+                if(rpm) mels.splice(0, 0, rpm);
+            }else if(!mode && sels.length > 0){
+                console.log('deleting subregions later...');
+            }
         }
         window.addEventListener("keydown", function(e){
-            //console.log(e.key);
-            switch(e.key){
-                case 'Space': swapMode(); break;
-                case 'p': console.log(store.edit); break;
-                case 'f': Poly.Draw(true); break;
+            if(VERSION != store.edit.sesh) return;
+            if(store.edit.focus) return;
+            let changeFlag = !tool;
+            if(changeFlag) switch(e.key){
+                case ' ': swapMode(); break;
+                case 'b': swapTool(2); break;
+                case 'g': swapTool(1); break;
+                case 'x': remove_tool(); break;
+                case 'i': insert_tool(); break;
+                case 'p': handleWarning('wahh'); break;
+                case 'f': Poly.Draw(true); changeFlag = false; break;
                 case 'm': mergeRegions(); break;
-                case 'x': if(selDot != null) remPoint(); break;
+                case 'y': if(keys.Control && tps.hasTransactionToRedo()) tps.doTransaction(); break;
+                case 'z': if(keys.Control && tps.hasTransactionToUndo()) tps.undoTransaction(); break;
                 case 'ArrowUp': viewChange(true); break; //change focus level
                 case 'ArrowDown': viewChange(false); break; //change focus level
+                default: changeFlag = false; break;
             }
             keys[e.key] = true;
+            if(changeFlag) Poly.Draw();
         });
         window.addEventListener("keyup", function(e){
+            if(VERSION != store.edit.sesh) return;
             keys[e.key] = false;
         });
 
+        function findParent(point, group){
+            let ind = -1;
+            for(let po of group.elems){
+                if((ind = po.indexOf(point)) != -1){
+                    return {i: ind, p: group.elems.indexOf(po)};
+                }
+            }
+            return {i: -1, p: null};
+        }
         function viewChange(dir){
             viewLevel += dir ? 1 : -1;
             if(viewLevel < 0) viewLevel = 0;
@@ -180,41 +305,135 @@ const EditScreen = () => {
             Poly.Draw();
         }
 
-        var px, py, mp = new Point(), sel, ser;
+        var px, py, mp = new Point(), sel = null, ser;
         var CLC = CW/10;
 
         canv.addEventListener("mousedown", function(e){
+            if(VERSION != store.edit.sesh) return;
+            store.edit.focus = false;
             mp.set(e.offsetX, e.offsetY);
+            if(tool == 2){ //init box select FOR REAL
+                movoff.set(mp.x, mp.y);
+            }
         });
         var sels = [], mels = [];
         function deSel(){
             while(sels.length) (sels.pop()).h = false;
         }
+        var saveMel;
+        function deMel(ctrl){
+            if(ctrl) saveMel = mels[mels.length-1];
+            while(mels.length) (mels.pop()).h = false;
+            if(ctrl){
+                mels.push(saveMel);
+                saveMel.h = true;
+                saveMel = null;
+            }
+        }
         canv.addEventListener("mouseup", function(e){
+            if(VERSION != store.edit.sesh) return;
+            if(tool) switch(tool){
+                case 1: //move release
+                    for(let m of mels){
+                        let par = findParent(m, mode);
+                        m.subtractLocal(movoff);
+                        tps.addTransaction(new Move_Transaction(store, true, mode.level, mode.group, par.p, par.i, movoff.copy()));
+                    }
+                break; case 2: //boxSelect release
+                    let temp1 = movoff.makeGlobal();
+                    let temp2 = (new Point(mx, my)).makeGlobal();
+                    let start = new Point(Math.min(temp1.x, temp2.x), Math.min(temp1.y, temp2.y));
+                    let end = new Point(Math.max(temp1.x, temp2.x), Math.max(temp1.y, temp2.y));
+                    if(mode){
+                        for(let p of mode.elems) for(let pp of p.points){
+                            if(!pp.h && (pp.x > start.x && pp.x < end.x) && (pp.y > start.y && pp.y < end.y)){
+                                pp.h = true;
+                                mels.push(pp);
+                            }
+                        }
+                    }else{
+                        for(let s of store.edit.l[viewLevel]){
+                            //console.log(start, end, s.minX, s.minY, s.maxX, s.maxY)
+                            //if(!s.h && ((s.minX > start.x && s.minX < end.x) || (s.maxX > start.x && s.maxX < end.x)) && ((s.minY > start.x && s.minY < end.x) || (s.maxY > start.x && s.maxY < end.x))){
+                            if(!s.h && (s.mean.x > start.x && s.mean.x < end.x) && (s.mean.y > start.y && s.mean.y < end.y)){
+                                s.h = true;
+                                sels.push(s);
+                            }
+                        }
+                        movoff.set(0, 0);
+                    }
+                    tool = 0;
+                    Poly.Draw(); //just do this immediately for boxSelect
+                break;
+            }else{
+                store.sendTransac(7, -1, -1, -1, null, [camX, camY, camZ]);
+            }
+            tool = 0;
             if(mp.x != e.offsetX || mp.y != e.offsetY) return;
             if(store.edit.l[viewLevel] == undefined) return;
-            px = e.offsetX/camZ-camX;
-            py = e.offsetY/camZ-camY;
+            px = (e.offsetX-HW)/camZ-camX+HW;
+            py = (e.offsetY-HH)/camZ-camY+HH;
             mp.set(px, py);
             sel = null;
             ser = 1000000000;
             //console.log("(" + px + ", " + py + ")");
             var gen;
-            for(var g of store.edit.l[viewLevel]) for(var p of g.elems){
-                if((gen = p._mean.dist(mp)) < CLC*camZ && gen < ser && p.minX < px && px < p.maxX && p.minY < py && py < p.maxY){
-                    sel = g;
-                    ser = gen;
+            if(!tool){ //selecting
+                for(var g of store.edit.l[viewLevel]) for(var p of g.elems){
+                    if((gen = p._mean.dist(mp)) < CLC*camZ && gen < ser && p.minX < px && px < p.maxX && p.minY < py && py < p.maxY){
+                        sel = g;
+                        ser = gen;
+                    }
                 }
-            }
-            if(sel != null){
-                sel.h = !sel.h;
-                if(!keys.Shift){
-                    sel.h = sel.h || (sels.length > 0);
-                    deSel();
+                if(!mode && sel != null){
+                    sel.h = !sel.h;
+                    if(!keys.Shift){
+                        sel.h = sel.h || (sels.length > 0);
+                        deSel();
+                    }
+                    if(sel.h) sels.push(sel);
+                    else sels.splice(sels.indexOf(sel), 1);
+                    //SETTING PROP MENU:{
+                    let head = sels[sels.length-1];
+                    if(head && head.props){
+                        //store.edit.pk[0] = Object.keys(head.props)[0];
+                        //store.edit.pv[0] = head.props[Object.keys(head.props)[0]];
+                    }
+                    //}
+                    Poly.Draw();
+                }else if(mode && mel != null){
+                    mel.h = !mel.h;
+                    if(!keys.Shift){
+                        mel.h = mel.h || (mels.length > 0);
+                        deMel(keys.Control);
+                    }
+                    if(mels.length && keys.Control){ //connect
+                        let ind1 = -1, ind2 = -1, p1 = null, p2 = null;
+                        for(let i of mode.elems) if((ind1 = i.indexOf(mels[mels.length-1])) != -1) p1 = i;
+                        for(let i of mode.elems) if((ind2 = i.indexOf(mel)) != -1) p2 = i;
+                        if(p1 == p2 && ind1 != -1 && ind2 != -1){ //belong to the same Poly
+                            let dif = ind2-ind1;
+                            //console.log(ind1, ind2, dif);
+                            let dir = (dif > 0) ? 1 : -1;
+                            let lim = Math.abs(dif);
+                            //console.log(lim);
+                            ind1+=dir;
+                            while(--lim){
+                                if(mels.indexOf(p1.points[ind1] != -1)) mels.push(p1.points[ind1]);
+                                mels[mels.length-1].h = true;
+                                ind1 += dir;
+                            }
+                        }
+                    }else if(keys.Alt){ //whole poly
+                        let par = findParent(mel, mode);
+                        for(let p of mode.elems[par.p].points) if(!p.h){
+                            mels.push(p); p.h = true;
+                        }
+                    }
+                    if(mel.h) mels.push(mel);
+                    else mels.splice(mels.indexOf(mel), 1);
+                    Poly.Draw();
                 }
-                if(sel.h) sels.push(sel);
-                else sels.splice(sels.indexOf(sel), 1);
-                Poly.Draw();
             }
         })
 
@@ -299,12 +518,12 @@ const EditScreen = () => {
 
         var safeCount, fileLevel, viewLevel = 0, transacNum = 0, syncWait = 0;
 
-        async function sendTransac(typ, fl, gn, pn, od, nd){
-            syncWait++;
-            const resp = await api.sendEdit(store.currentMap._id, transacNum++, typ, fl, gn, pn, od, nd);
+        /*async function sendTransac(typ, fl, gn, pn, od, nd){
+            store.edit.syncWait++;
+            const resp = await api.sendEdit(store.currentMap._id, store.edit.transacNum++, typ, fl, gn, pn, od, nd);
             //console.log('EDIT RESP:', resp);
-            syncWait--;
-        }
+            store.edit.syncWait--;
+        }*/
 
         function recordRead(count){
             var fiBase = fi;
@@ -359,9 +578,9 @@ const EditScreen = () => {
                     npc++;
                 }
                 store.edit.l[fileLevel][count].mean.addLocal(ret.mean());
-                ret.finalize(fileLevel, count); //finalize
+                ret.finalize(fileLevel, count, store.edit.l[fileLevel][count]); //finalize
             }
-            store.edit.l[fileLevel][count].mean.divideLocal(store.edit.l[fileLevel][count].elems.length);
+            //store.edit.l[fileLevel][count].mean.divideLocal(store.edit.l[fileLevel][count].elems.length);
             console.log("DONE!");
             fi = fiSave + rs*2; //position set after this record
         }
@@ -459,7 +678,7 @@ const EditScreen = () => {
             console.log(cols);
             for(var g = 0; g < store.edit.l[fileLevel].length; g++){
                 for(var c of cols) store.edit.l[fileLevel][g].props[c.name] = c.elems[g];
-                sendTransac(1, fileLevel, g, -1, null, store.edit.l[fileLevel][g].props);
+                store.sendTransac(1, fileLevel, g, -1, null, store.edit.l[fileLevel][g].props);
             }
             Poly.Draw();
             //reconcileData(fileLevel);
@@ -490,15 +709,15 @@ const EditScreen = () => {
                         elems: [],
                         props: f.properties
                     });
-                    sendTransac(1, fileLevel, GN, -1, null, f.properties); //send the data entry for this new subregion
+                    store.sendTransac(1, fileLevel, GN, -1, null, f.properties); //send the data entry for this new subregion
                     for(var c of f.geometry.coordinates){
                         var np = new Poly(-1, fileLevel, GN);
                         for(var p of c[0]) np.add(new Point(p[0], -p[1]));
                         store.edit.l[fileLevel][GN].elems.push(np);
                         store.edit.l[fileLevel][GN].mean.addLocal(np.mean());
-                        np.finalize(fileLevel, GN);
+                        np.finalize(fileLevel, GN, store.edit.l[fileLevel][GN]);
                     }
-                    store.edit.l[fileLevel][GN].mean.divideLocal(store.edit.l[fileLevel][GN].elems.length);
+                    //store.edit.l[fileLevel][GN].mean.divideLocal(store.edit.l[fileLevel][GN].elems.length);
                     /*var i = 0;
                     for(var a in f.properties){
                         cols[i].elems.push(f.properties[a]);
@@ -525,17 +744,42 @@ const EditScreen = () => {
         fileIn.onchange = function(){
             for(var f of this.files) readFile(f);
         }
-        function drawDot(p){
-            ctx.fillStyle="#ff0000";
+        propHolder.onchange = function(){
+            Poly.Draw();
+        }
+        propButt.onclick = function(){
+            store.edit.prop = undefined;
+            store.reduceEdit();
+            if(sels.length > 0){
+                store.edit.prop = sels[sels.length-1];
+            }
+            store.reduceEdit();
+        }
+        var hBox;
+        function drawBox(p){
+            hBox = (camZ**.4);
+            ctx.strokeStyle = '#ff00ff';
             ctx.beginPath();
-            ctx.arc(camZ*(p.x+camX), camZ*(p.y+camY), camZ**.2, 0, 2*Math.PI);
-            ctx.fill();
+            ctx.rect(camZ*(p.x+camX)-hBox, camZ*(p.y+camY)-hBox, hBox*2, hBox*2);
+            ctx.stroke();
+        }
+        function drawDot(p, h=false){
+            if(h) ctx.strokeStyle = '#ff0000';
+            else ctx.fillStyle = p.h ? "#fbbd0c" : "#000";
+            ctx.beginPath();
+            ctx.arc(HW+camZ*(p.x+camX-HW), HH+camZ*(p.y+camY-HH), camZ**.2, 0, 2*Math.PI);
+            if(h) ctx.stroke();
+            else ctx.fill();
+        }
+        function bool(x){
+            if(x) return true;
+            return false;
         }
         var fx, fy, pLast = new Point(0, 0), dx, dy;
         var LOD_SKIP, LOD_STEP, LOD_REF, finSum, li, ni, ci;
         var defCol = "#000", mark, Acc = false;
         var dots = [];
-        const subColRefs = ['#aba99f', '#000', '#fbbd0c'];
+        const subColRefs = ['#aba99f', '#000', '#000'];
         class Poly{
             static l = [[], [], [], [], []]; //poly struct
             static d = [[], [], [], [], []]; //data struct
@@ -549,23 +793,38 @@ const EditScreen = () => {
                         if(l.props != null && Object.keys(l.props).length){ //has data
                             l.mean.getLocal();
                             ctx.fillStyle = l.h ? "#fbbd0c" : '#000';
-                            if(l.props['name'] != undefined) ctx.fillText(l.props['name'], Point.Gen.x, Point.Gen.y);
-                            else ctx.fillText(l.props['NAME_'+p], Point.Gen.x, Point.Gen.y);
+                            if(!mode){
+                                if(l.props['name'] != undefined)
+                                    ctx.fillText(l.props['name'], Point.Gen.x, Point.Gen.y);
+                                else if(l.props['NAME_'+p] != undefined)
+                                    ctx.fillText(l.props['NAME_'+p], Point.Gen.x, Point.Gen.y);
+                            }
                         }
-                        for(g of l.elems) if((ind == 2) == (l.h)) g.draw(l.h);
+                        for(g of l.elems) if((ind == 2) == l.h){
+                            g.draw(l.h && !mode, l.h && (l == mode));
+                        }
                     }
                 }
             }
             static Draw(af = false){
                 ctx.clearRect(0, 0, canv.width, canv.height);
-                for(var d of dots) drawDot(d);
+                
                 //var p = 0, l, g;
                 //if(af) autoFrame();
                 if(store.edit.l[viewLevel] == undefined) return;
                 Acc = af;
                 //Poly.SubDraw(0);
+                dots = [];
                 Poly.SubDraw(1);
                 Poly.SubDraw(2);
+                if(tool == 2 && mcl){
+                    ctx.strokeStyle = '#fbbd0c';
+                    ctx.setLineDash([5, 15]);
+                    ctx.beginPath();
+                    ctx.rect(movoff.x, movoff.y, mx-movoff.x, my-movoff.y);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
             }
             constructor(id, fl, gn){
                 if(store.edit.l[fl][gn].elems == undefined) this.id = id;
@@ -576,14 +835,9 @@ const EditScreen = () => {
                 this.lodRatio = 0.0005;
                 this.lodBound = diagBound;
                 this.points = [];
-                //this.h = false;
                 this.clockWise = true;
                 this.minX = this.minY = 100000000;
-                //this.minY = 0;
                 this.maxX = this.maxY = -100000000;
-                //this.maxY = 0;
-                //store.edit.l[fl][gn].push(this);
-                //store.edit.l[fl][gn].elems.push(this);
             }
             add(p){
                 this.minX = Math.min(p.x, this.minX);
@@ -610,6 +864,12 @@ const EditScreen = () => {
                 for(var i of p.points) if(this.indexOf(i) != -1) return true;
                 return false;
             }
+            isAdj(a, b){
+                let dif = Math.abs(a-b);
+                if(dif == 1) return Math.min(a, b);
+                if(dif == this.points.length-2) return Math.max(a, b);
+                return null;
+            }
             [Symbol.iterator](){
                 this.i = 0;
                 return this;
@@ -617,7 +877,7 @@ const EditScreen = () => {
             next(){
                 return{value: this.points[this.i], done: ++this.i >= this.points.length};
             }
-            finalize(fl, gn){
+            finalize(fl, gn, par){
                 //console.log("xBounds: (" + this.minX + " to " + this.maxX + ")");
                 //console.log("yBounds: (" + this.minY + " to " + this.maxY + ")");
                 finSum = 0;
@@ -625,9 +885,34 @@ const EditScreen = () => {
                     finSum += (this.points[i+1].x-this.points[i].x) * (this.points[i].y+this.points[i+1].y);
                 }
                 this.clockWise = finSum < 0;
+                this.reCalc(par);
                 if(fl != null){
-                    console.log("SENDING WITH PID:", this.id);
-                    sendTransac(0, fl, gn, this.id, null, this.points); //type, fl, gn, pn, od, nd
+                    store.sendTransac(0, fl, gn, this.id, null, this.points); //type, fl, gn, pn, od, nd
+                }
+            }
+            reCalc(parent){
+                this.bound();
+                this.mean();
+                parent.minX = parent.minY = 100000000;
+                parent.maxX = parent.maxY = -100000000;
+                for(let p of parent.elems){
+                    parent.minX = Math.min(p.minX, parent.minX);
+                    parent.minY = Math.min(p.minY, parent.minY);
+                    parent.maxX = Math.max(p.maxX, parent.maxX);
+                    parent.maxY = Math.max(p.maxY, parent.maxY);
+                }
+                parent.mean.set(0, 0);
+                for(let p of parent.elems) parent.mean.addLocal(p._mean);
+                parent.mean.divideLocal(parent.elems.length);
+            }
+            bound(){
+                this.minX = this.minY = 100000000;
+                this.maxX = this.maxY = -100000000;
+                for(let p of this.points){
+                    this.minX = Math.min(p.x, this.minX);
+                    this.minY = Math.min(p.y, this.minY);
+                    this.maxX = Math.max(p.x, this.maxX);
+                    this.maxY = Math.max(p.y, this.maxY);
                 }
             }
             mean(){
@@ -637,51 +922,46 @@ const EditScreen = () => {
                 m.y /= this.points.length;
                 return (this._mean = m);
             }
-            draw(high){ //use camZ for zoom
-                if(camZ*(this.maxX+camX) < 0) return;
-                if(camZ*(this.minX+camX) > CW) return;
-                if(camZ*(this.maxY+camY) < 0) return;
-                if(camZ*(this.minY+camY) > CH) return;
+            draw(high, sigh){ //use camZ for zoom
+                if(HW + camZ*(this.maxX+camX-HW) < 0) return;
+                if(HW + camZ*(this.minX+camX-HW) > CW) return;
+                if(HH + camZ*(this.maxY+camY-HH) < 0) return;
+                if(HH + camZ*(this.minY+camY-HH) > CH) return;
                 //drawDot(this.points[0]);
                 ctx.beginPath();
-                ctx.strokeStyle = high ? "#fbbd0c" : defCol;
+                ctx.strokeStyle = mode && !sigh ? "#aba99f" : (high ? "#fbbd0c" : defCol);
                 //accTally = 1;
                 LOD_STEP = 100;
                 LOD_SKIP = this.lodRatio * this.lodBound / camZ / camZ;
+                //if(mode && !sigh) LOD_SKIP = 10000000000 * this.lodBound;
                 aFrame = true; bFrame = false;
                 var f = this.points[0]; LOD_REF = f;
-                fx = camZ*(f.x + camX);
-                fy = camZ*(f.y + camY);
+                fx = HW + camZ*(f.x + camX - HW);
+                fy = HH + camZ*(f.y + camY - HH);
                 mark = 0;
+                dots = [];
+                if(sigh) dots.push(f);
                 //pLast.set(undefined, undefined); //pLast.set(fx, fy);
                 ctx.moveTo(fx, fy);
-                for(var i = 1; i < this.points.length; i++){ //need to optimize this
+                for(var i = 1; i < this.points.length-1; i++){ //need to optimize this
                     //i % LOD_STEP == 0 && 
                     if(!Acc && LOD_REF.fastDist(this.points[i]) < LOD_SKIP) continue;
                     LOD_REF = this.points[i];
-                    fx = camZ*(LOD_REF.x+camX);
-                    fy = camZ*(LOD_REF.y+camY);
+                    fx = HW+camZ*(LOD_REF.x+camX-HW);
+                    fy = HH+camZ*(LOD_REF.y+camY-HH);
                     if((fx < 0 || fx > CW) && (fy < 0 || fy > CH)) continue;
+                    if(sigh && i != this.points.length-1) dots.push(this.points[i]);
                     ctx.lineTo(fx, fy);
                 }
-                fx = camZ*(f.x + camX);
-                fy = camZ*(f.y + camY);
+                fx = HW + camZ*(f.x + camX - HW);
+                fy = HH + camZ*(f.y + camY - HH);
                 if(fx > 0 && fx < CW && fy > 0 && fy < CH) ctx.lineTo(fx, fy);
                 ctx.stroke();
                 LOD_REF = null;
+                if(dots.length) drawBox(dots[0]);
+                for(let d of dots) drawDot(d);
                 //console.log(accTally / this.points.length);
             }
-        }
-
-        function remPoint(){
-            for(var l of store.edit.l) for(var g of l) for(var e of g.elems)
-                if(e.minX <= selDot.x && e.maxX >= selDot.x && e.minY <= selDot.y && e.maxY >= selDot.y)
-                    for(var i = 0; i < e.points.length; i++) if(selDot.eq(e.points[i])){
-                        e.points.splice(i, 1);
-                        break;
-                    }
-            selDot = null;
-            Poly.Draw();
         }
 
         function merge(A, B, level, group){
@@ -723,7 +1003,7 @@ const EditScreen = () => {
             }
             ret.add(first);
             ret.mean();
-            ret.finalize(null, null);
+            ret.finalize(null, null, store.l[level][group]);
             return ret;
         }
 
@@ -778,15 +1058,18 @@ const EditScreen = () => {
                         let np = new Poly(m, i, n);
                         for(let p of store.edit.l[i][n].elems[m]) np.add(new Point(p.x, p.y));
                         temp.mean.addLocal(np.mean());
-                        np.finalize(null, null);
                         temp.elems.push(np);
+                        np.finalize(null, null, temp);
                     }
-                    temp.mean.divideLocal(temp.elems.length);
+                    //temp.mean.divideLocal(temp.elems.length);
                     //store.edit.l[i][n] = temp;
                     store.edit.l[i].splice(n, 1, temp);
                 }
             }
             store.edit.raw = false;
+            //camX = store.camX;
+            //camY = store.camY;
+            //camZ = store.camZ;
             console.log('CLEANED:', store.edit.l);
             Poly.Draw();
         }
@@ -821,7 +1104,7 @@ const EditScreen = () => {
                         <CopyAllIcon  style={{fontSize:'32pt'}} />
                     </IconButton>
                     <IconButton aria-label='properties'>
-                        <MenuIcon style={{fontSize:'32pt'}} />
+                        <MenuIcon ref={propContainer} style={{fontSize:'32pt'}} />
                     </IconButton>
                     <IconButton aria-label='traverse up layer'>
                         <ArrowUpwardIcon  style={{fontSize:'32pt'}} />
@@ -833,18 +1116,69 @@ const EditScreen = () => {
                         <ZoomOutMapIcon  style={{fontSize:'32pt'}} />
                     </IconButton>
                     <IconButton variant="contained" component="label" aria-label='upload'>
-                        <input ref={fileContainer} type="file" id="fileIn" name="ShapeUpload" hidden multiple></input>
+                        <input ref={fileContainer} type="file" id="fileIn" name="ShapeUpload" hidden></input>
                         <FileUploadIcon  style={{fontSize:'32pt'}} />
                     </IconButton>
                 </Box>
-                <Box id='displayMenu' className='traySect' sx={{borderTop: 2, borderBottom: 2, borderColor: '#00ff00'}}>
-                    <FormGroup>
-                        <FormControlLabel control={<Checkbox />} label="Name" />
-                        <FormControlLabel control={<Checkbox />} label="Population" />
-                        <FormControlLabel control={<Checkbox />} label="Abbreviation" />
-                        <FormControlLabel control={<Checkbox />} label="GDP" />
-                        <FormControlLabel control={<Checkbox />} label="..." />
-                    </FormGroup>
+                <Box id='displayMenu' ref={propList} className='traySect' sx={{maxHeight: '40%', overflow: 'auto', borderTop: 2, borderBottom: 2, borderColor: '#00ff00'}}>
+                    {
+                        store.edit && store.edit.prop && store.edit.prop.props ? (<div>
+                            <List sx={{width: '100%', left: '0%'}}>
+                            {
+                                Object.keys(store.edit.prop.props).map((key) => (
+                                    <Box sx={{display: 'flex', flexDirection: 'row'}} key={key}>
+                                        <TextField sx={{flex: 10, marginTop: 1}} label={key} defaultValue={(store.edit.prop.props[key] ? store.edit.prop.props[key] : '')}
+                                            onKeyDown={(e) => {
+                                                if((e.ctrlKey || e.metaKey) && (e.key == 'z' || e.key == 'y')){
+                                                    e.preventDefault();
+                                                    return false;
+                                                }
+                                                store.edit.focus = true;
+                                                if(e.key == 'Enter'){
+                                                    store.edit.focus = false;
+                                                    //store.edit.prop.props[key] = e.target.value;
+                                                    tps.addTransaction(new ChangeProperty_Transaction(store, store.edit.prop.level, store.edit.prop.group, -1, key, e.target.value));
+                                                    propList.current.onchange(null); //force recycle
+                                                    store.reduceEdit();
+                                                }
+                                            }}
+                                        />
+                                        <IconButton sx={{flex: 1, color: 'red'}} aria-label='remove'
+                                            onClick={(e) => {
+                                                //delete store.edit.prop[key];
+                                                tps.addTransaction(new ChangeProperty_Transaction(store, store.edit.prop.level, store.edit.prop.group, -1, key, undefined));
+                                                store.reduceEdit();
+                                            }}
+                                        >
+                                            <ClearIcon style={{fontSize:'16pt'}} />
+                                        </IconButton>
+                                    </Box>
+                                ))
+                            }
+                            </List>
+                            <Box sx={{display: 'flex', flexDirection: 'row', color: 'blue'}}>
+                                <TextField sx={{flex: 10, marginTop: 2, color: 'blue'}} label={'New Field Name'}
+                                    onKeyDown={(e) => {
+                                        if((e.ctrlKey || e.metaKey) && (e.key == 'z' || e.key == 'y')){
+                                            e.preventDefault();
+                                            return false;
+                                        }
+                                        store.edit.focus = true;
+                                        if(e.key == 'Enter'){
+                                            if(store.edit.prop.props[e.target.value] != undefined) handleWarning('Property field with that name already exists');
+                                            else{
+                                                store.edit.focus = false;
+                                                //store.edit.prop.props[e.target.value] = '';
+                                                tps.addTransaction(new ChangeProperty_Transaction(store, store.edit.prop.level, store.edit.prop.group, -1, e.target.value, ''));
+                                                propList.current.onchange(null); //force recycle
+                                                store.reduceEdit();
+                                            }
+                                        }
+                                    }}
+                                />
+                            </Box>
+                        </div>) : <></>
+                    }
                 </Box>
                 <Box id='optSliders' className='traySect'>
                     <Box className='sliderLabel'>
@@ -904,7 +1238,11 @@ const EditScreen = () => {
                 <canvas ref={myContainer} id="editView" width="1000" height="850" style={{border: "1px solid #5EB120"}}></canvas>
             </Box>
             <div id = "rightPar" className='editShelf'>
-                <Box sx={{height:'5%'}}></Box>
+                <Box sx={{maxHeight: '10%', overflow: 'auto'}}>
+                    <Collapse in={(warning != null)}>
+                        <Typography sx={{color: '#fbbd0c', bgcolor: '#997a00'}} variant='h6'>{warning}</Typography>
+                    </Collapse>
+                </Box>
                 <Box id='inspector' className='traySect' sx={{bgcolor: '#999', borderRadius: 1}}>
                     <FormGroup sx={{padding: '5%', width: '80%'}}>
                         <FormControlLabel control={<TextField sx={{width:'60%'}} variant="filled" value="234.65"/>} label="X" />
@@ -913,23 +1251,14 @@ const EditScreen = () => {
                     </FormGroup>
                 </Box>
                 <Box sx={{height:'5%'}}></Box>
-                {store.tabMode == 3 ? <></> :
-                    <Box id='inspector2' className='traySect' sx={{bgcolor: '#999', borderRadius: 1}}>
-                        <FormGroup sx={{padding: '5%', width: '80%'}}>
-                            <FormControlLabel control={<TextField disabled sx={{width:'60%'}} variant="filled" value="Subregion"/>} label="Type" />
-                            <FormControlLabel control={<TextField disabled sx={{width:'60%'}} variant="filled" value="1"/>} label="Layer" />
-                            <FormControlLabel control={<TextField disabled sx={{width:'60%'}} variant="filled" value="2"/>} label="Group" />
-                            <FormControlLabel control={<TextField disabled sx={{width:'60%'}} variant="filled" value="75"/>} label="Children" />
-                        </FormGroup>
-                    </Box>
-                }
-                {store.tabMode == 2 ? <></> : 
-                    <Box id='inspector3' className='traySect' sx={{bgcolor: '#999', borderRadius: 1}}>
-                        <img id='exampleCols'
-                            src={colors}
-                        />
-                    </Box>
-                }
+                <Box id='inspector2' className='traySect' sx={{bgcolor: '#999', borderRadius: 1}}>
+                    <FormGroup sx={{padding: '5%', width: '80%'}}>
+                        <FormControlLabel control={<TextField disabled sx={{width:'60%'}} variant="filled" value="Subregion"/>} label="Type" />
+                        <FormControlLabel control={<TextField disabled sx={{width:'60%'}} variant="filled" value="1"/>} label="Layer" />
+                        <FormControlLabel control={<TextField disabled sx={{width:'60%'}} variant="filled" value="2"/>} label="Group" />
+                        <FormControlLabel control={<TextField disabled sx={{width:'60%'}} variant="filled" value="75"/>} label="Children" />
+                    </FormGroup>
+                </Box>
             </div>
         </div>
     );

@@ -5,7 +5,7 @@ const Message = require('../models/message-model');
 
 createConvo = async (req, res) => {
     console.log('making new Convo');
-    await User.findOne({_id : req.userId}, async (err, user) => {
+    await User.findById(req.userId, async (err, user) => {
         const convos = user.convos;
         for(let c of convos){
             let user1 = await User.findById(c.user1);
@@ -15,7 +15,7 @@ createConvo = async (req, res) => {
                 return res.status(500).json({ success: false })
             }
         }
-        let otherUser = await User.findOne({_id: req.body.contactId});
+        let otherUser = await User.findById(req.body.contactId);
         if(!otherUser) return res.status(400).json({ success: false });
         const newConvo = new Convo();
         newConvo.user1 = req.userId;

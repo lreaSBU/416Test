@@ -2,6 +2,7 @@ import { createContext, useContext, useState } from 'react'
 import { useHistory } from 'react-router-dom'
 import jsTPS from '../common/jsTPS'
 import api from './store-request-api'
+import epi from '../components/edit-request-api'
 import CreateSong_Transaction from '../transactions/CreateSong_Transaction'
 import MoveSong_Transaction from '../transactions/MoveSong_Transaction'
 import RemoveSong_Transaction from '../transactions/RemoveSong_Transaction'
@@ -13,7 +14,6 @@ export const GlobalStoreContext = createContext({});
 console.log("create GlobalStoreContext");
 
 const tps = new jsTPS(); //TPS stack for options in the browse screen (basic)
-const tpsEdit = new jsTPS(); //TPS stack for edit screen (large and complex)
 
 // WITH THIS WE'RE MAKING OUR GLOBAL DATA STORE
 // AVAILABLE TO THE REST OF THE APPLICATION
@@ -73,7 +73,7 @@ function GlobalStoreContextProvider(props){
         });
     }
     store.goHome = function(){
-        console.log("1"); store.loadIdNamePairs({
+        store.loadIdNamePairs({
             currentMap: null,
             browseMode: 0,
             filter: null,
@@ -84,7 +84,7 @@ function GlobalStoreContextProvider(props){
         });
     }
     store.goSearchByUser = function(){
-        console.log("2"); store.loadIdNamePairs({
+        store.loadIdNamePairs({
             currentMap: null,
             browseMode: 1,
             filter: "",
@@ -94,7 +94,7 @@ function GlobalStoreContextProvider(props){
         });
     }
     store.goSearchByName = function(){
-        console.log("3"); store.loadIdNamePairs({
+        store.loadIdNamePairs({
             currentMap: null,
             browseMode: 2,
             filter: "",
@@ -105,27 +105,27 @@ function GlobalStoreContextProvider(props){
     }
 
     store.changeSortMode = function(type){
-        console.log("4"); store.loadIdNamePairs({
+        store.loadIdNamePairs({
             sortMode: type,
             page: 0
         });
     }
 
     store.startSearch = function(nf){
-        console.log("5"); store.loadIdNamePairs({
+        store.loadIdNamePairs({
             filter: nf,
             page: 0
         });
     }
 
     store.switchTab = function(newTab){
-        console.log("6"); store.loadIdNamePairs({
+        store.loadIdNamePairs({
             tabMode: newTab
         });
     }
 
     store.setEditingMapName = function(act){
-        console.log("7"); store.loadIdNamePairs({
+        store.loadIdNamePairs({
             editingName: act
         });
     }
@@ -137,7 +137,7 @@ function GlobalStoreContextProvider(props){
         async function asyncUpdate(){
             const response = await api.updateMapById(id, p);
             if(response.data.success){
-                console.log("8"); store.loadIdNamePairs();
+                store.loadIdNamePairs();
             }else console.log("FAILED TO UPDATE!?!?!?");
         }
         asyncUpdate();
@@ -214,6 +214,7 @@ function GlobalStoreContextProvider(props){
         async function asyncStartEditing(){
             let response = await api.getStartData(id); //store.currentMap._id
             if(response.data.success){
+                response.data.ed.syncWait = 0;
                 storeReducer({
                     browseMode: 0,
                     tabMode: 2,
@@ -232,6 +233,17 @@ function GlobalStoreContextProvider(props){
         });
         */
     }
+    store.sendTransac = async function(typ, fl, gn, pn, od, nd){
+        store.edit.syncWait++;
+        const resp = await epi.sendEdit(store.currentMap._id, store.edit.transacNum++, typ, fl, gn, pn, od, nd);
+        //console.log('EDIT RESP:', resp);
+        store.edit.syncWait--;
+    }
+    store.reduceEdit = function(){
+        storeReducer({
+            edit: store.edit
+        });
+    }
     store.editTabSwitch = function(){
         storeReducer({
             tabMode: store.tabMode == 2 ? 3 : 2
@@ -244,7 +256,7 @@ function GlobalStoreContextProvider(props){
             if(response.data.success){
                 let map = response.data.map;
                 tps.clearAllTransactions();
-                console.log("9"); store.loadIdNamePairs({
+                store.loadIdNamePairs({
                     currentMap: map
                 });
                 //history.push("/playlist/" + playlist._id);
@@ -266,7 +278,7 @@ function GlobalStoreContextProvider(props){
         const response = await api.createMap(newName, auth.user);
         if(response.status === 201){
             tps.clearAllTransactions();
-            console.log("10"); store.loadIdNamePairs({
+            store.loadIdNamePairs({
                 currentMap: response.data.map
             });
             // IF IT'S A VALID LIST THEN LET'S START EDITING IT
