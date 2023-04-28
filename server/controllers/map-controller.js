@@ -74,35 +74,45 @@ createMap = async (req, res) => {
 deleteMap = async (req, res) => {
     console.log("delete map with id: " + JSON.stringify(req.params.id));
     console.log("delete " + req.params.id);
-    Map.findById({ _id: req.params.id }, (err, map) => {
-        console.log("Map found: " + JSON.stringify(map));
-        if (err) {
-            return res.status(404).json({
-                errorMessage: 'Map not found!',
-            })
-        }
 
-        // DOES THIS MAP BELONG TO THIS USER?
-        async function asyncFindUser(m) {
-            User.findOne({ email: m.ownerEmail }, (err, user) => {
-                console.log("user._id: " + user._id);
-                console.log("req.userId: " + req.userId);
-                if (user._id == req.userId) {
-                    console.log("correct user!");
-                    Playlist.findOneAndDelete({ _id: req.params.id }, () => {
-                        return res.status(200).json({});
-                    }).catch(err => console.log(err))
-                }
-                else {
-                    console.log("DELETING WITH incorrect user!");
-                    return res.status(400).json({ 
-                        errorMessage: "authentication error" 
-                    });
-                }
-            }).catch(err => console.log(err));
-        }
-        asyncFindUser(map);
+    Map.findByIdAndDelete({_id: req.params.id}, (err, map) =>{
+        if (err) {
+            res.status(500).json({ error: err });
+          } else {
+            return res.status(200).json({success: true});
+          }
     })
+
+
+    // Map.findById({ _id: req.params.id }, (err, map) => {
+    //     console.log("Map found: " + JSON.stringify(map));
+    //     if (err) {
+    //         return res.status(404).json({
+    //             errorMessage: 'Map not found!',
+    //         })
+    //     }
+
+    //     // DOES THIS MAP BELONG TO THIS USER?
+    //     async function asyncFindUser(m) {
+    //         User.findOne({ email: m.ownerEmail }, (err, user) => {
+    //             console.log("user._id: " + user._id);
+    //             console.log("req.userId: " + req.userId);
+    //             if (user._id == req.userId) {
+    //                 console.log("correct user!");
+    //                 Playlist.findOneAndDelete({ _id: req.params.id }, () => {
+    //                     return res.status(200).json({});
+    //                 }).catch(err => console.log(err))
+    //             }
+    //             else {
+    //                 console.log("DELETING WITH incorrect user!");
+    //                 return res.status(400).json({ 
+    //                     errorMessage: "authentication error" 
+    //                 });
+    //             }
+    //         }).catch(err => console.log(err));
+    //     }
+    //     asyncFindUser(map);
+    // })
 }
 getMapById = async (req, res) => {
     console.log("Find Map with id: " + JSON.stringify(req.params.id));

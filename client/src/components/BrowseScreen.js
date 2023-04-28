@@ -104,28 +104,6 @@ const BrowseScreen = () => {
 
         </Dialog>;
 
-    let friendDiag =
-        <Dialog
-            open={openFriend}
-            onClose={handleDialogClose}
-        >
-            <DialogTitle>
-                Viewing Friends
-            </DialogTitle>
-            <DialogContent>
-                <DialogContentText>
-                    Friends
-                </DialogContentText>
-            </DialogContent>
-            <DialogActions>
-                {/* <Button onClick={(event) => handleDeleteList(event, idNamePair._id)}>Delete</Button> */}
-                <Button onClick={handleDialogClose} autoFocus>
-                    Cancel
-                </Button>
-            </DialogActions>
-
-        </Dialog>;
-
     function handleDialogOpen(diagType) {
         switch (diagType) {
             case 1:
@@ -133,9 +111,6 @@ const BrowseScreen = () => {
                 break;
             case 2:
                 setOpenPassword(true);
-                break;
-            case 3:
-                setOpenFriend(true);
                 break;
         }
     }
@@ -255,7 +230,7 @@ const BrowseScreen = () => {
                             </ListItem>
                             <ListItem>
                                 <ListItemText>{'ContactID: '}{auth.getAccountDetails().userId}{' '}
-                                    <IconButton size='small' color='primary' variant='outlined' aria-label='select'>
+                                    <IconButton size='small' color='primary' variant='outlined' aria-label='copy'>
                                         <ContentCopyIcon onClick={(event) => { handleCopy(auth.getAccountDetails().userId) }} />
                                     </IconButton>
                                 </ListItemText>
@@ -263,7 +238,6 @@ const BrowseScreen = () => {
                         </List>
                         {emailDiag}
                         {passwordDiag}
-                        {friendDiag}
                     </Box>
                 </div>
                 <div id='browseScreenSortHeader'>

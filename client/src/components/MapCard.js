@@ -84,8 +84,9 @@ function MapCard(props) {
         // let _id = event.target.id;
         // _id = ("" + _id).substring("delete-list-".length);
 
-        console.log(id);
-        // store.markListForDeletion(id);
+        console.log('DELETING ID ', id);
+        store.deleteMapById(id);
+        setOpen(false);
     }
 
     function handleKeyPress(event) {

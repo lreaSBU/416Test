@@ -17,7 +17,7 @@ const tps = new jsTPS(); //TPS stack for options in the browse screen (basic)
 
 // WITH THIS WE'RE MAKING OUR GLOBAL DATA STORE
 // AVAILABLE TO THE REST OF THE APPLICATION
-function GlobalStoreContextProvider(props){
+function GlobalStoreContextProvider(props) {
     // THESE ARE ALL THE THINGS OUR DATA STORE WILL MANAGE
     const [store, setStore] = useState({
         browseMode: 0,
@@ -52,27 +52,27 @@ function GlobalStoreContextProvider(props){
             currentMap: (p.currentMap === undefined ? store.currentMap : p.currentMap),
             sortMode: (p.sortMode === undefined ? store.sortMode : p.sortMode),
             searchMode: (p.searchMode === undefined ? store.searchMode : p.searchMode),
-            filter : (p.filter === undefined ? store.filter : p.filter),
-            page : (p.page === undefined ? store.page : p.page),
-            editingName : (p.editingName === undefined ? store.editingName : p.editingName),
-            currentConvo : (p.currentConvo === undefined ? store.currentConvo : p.currentConvo),
-            convoPairs : (p.convoPairs === undefined ? store.convoPairs : p.convoPairs),
-            edit : (p.edit === undefined ? store.edit : p.edit)
+            filter: (p.filter === undefined ? store.filter : p.filter),
+            page: (p.page === undefined ? store.page : p.page),
+            editingName: (p.editingName === undefined ? store.editingName : p.editingName),
+            currentConvo: (p.currentConvo === undefined ? store.currentConvo : p.currentConvo),
+            convoPairs: (p.convoPairs === undefined ? store.convoPairs : p.convoPairs),
+            edit: (p.edit === undefined ? store.edit : p.edit)
         });
     }
 
-    store.goToEditor = function(id){
+    store.goToEditor = function (id) {
         store.loadEditorData(id);
     }
 
-    store.goMessages = function(){
+    store.goMessages = function () {
         store.loadConvoPairs({
             //browseMode: 3,
             currentConvo: null,
             page: 0
         });
     }
-    store.goHome = function(){
+    store.goHome = function () {
         store.loadIdNamePairs({
             currentMap: null,
             browseMode: 0,
@@ -83,7 +83,7 @@ function GlobalStoreContextProvider(props){
             page: 0
         });
     }
-    store.goSearchByUser = function(){
+    store.goSearchByUser = function () {
         store.loadIdNamePairs({
             currentMap: null,
             browseMode: 1,
@@ -93,7 +93,7 @@ function GlobalStoreContextProvider(props){
             page: 0
         });
     }
-    store.goSearchByName = function(){
+    store.goSearchByName = function () {
         store.loadIdNamePairs({
             currentMap: null,
             browseMode: 2,
@@ -104,125 +104,138 @@ function GlobalStoreContextProvider(props){
         });
     }
 
-    store.changeSortMode = function(type){
+    store.changeSortMode = function (type) {
         store.loadIdNamePairs({
             sortMode: type,
             page: 0
         });
     }
 
-    store.startSearch = function(nf){
+    store.startSearch = function (nf) {
         store.loadIdNamePairs({
             filter: nf,
             page: 0
         });
     }
 
-    store.switchTab = function(newTab){
+    store.switchTab = function (newTab) {
         store.loadIdNamePairs({
             tabMode: newTab
         });
     }
 
-    store.setEditingMapName = function(act){
+    store.setEditingMapName = function (act) {
         store.loadIdNamePairs({
             editingName: act
         });
     }
-    store.changeMapName = function(id, nn){
-        store.updateMapById(id, {name: nn});
+    store.changeMapName = function (id, nn) {
+        store.updateMapById(id, { name: nn });
     }
 
-    store.updateMapById = function(id, p){
-        async function asyncUpdate(){
+    store.updateMapById = function (id, p) {
+        async function asyncUpdate() {
             const response = await api.updateMapById(id, p);
-            if(response.data.success){
+            if (response.data.success) {
                 store.loadIdNamePairs();
-            }else console.log("FAILED TO UPDATE!?!?!?");
+            } else console.log("FAILED TO UPDATE!?!?!?");
+        }
+        asyncUpdate();
+    }
+
+    store.deleteMapById = function (id) {
+        async function asyncUpdate() {
+            const response = await api.deleteMapById(id);
+            if (response.data.success) {
+                store.loadIdNamePairs();
+            } else {
+                console.log("FAILED TO DELETE");
+            }
+
         }
         asyncUpdate();
     }
 
     // THIS FUNCTION LOADS ALL THE ID, NAME PAIRS SO WE CAN LIST ALL THE LISTS
-    store.loadIdNamePairs = function(pr = {}){
+    store.loadIdNamePairs = function (pr = {}) {
         console.log("LOADING!!!!!!!");
-        async function asyncLoadIdNamePairs(p){
-            try{
-                if(p.browseMode === undefined) p.browseMode = store.browseMode;
-                if(p.modalMode === undefined) p.modalMode = store.modalMode;
-                if(p.tabMode === undefined) p.tabMode = 0; //store.tabMode;
+        async function asyncLoadIdNamePairs(p) {
+            try {
+                if (p.browseMode === undefined) p.browseMode = store.browseMode;
+                if (p.modalMode === undefined) p.modalMode = store.modalMode;
+                if (p.tabMode === undefined) p.tabMode = 0; //store.tabMode;
                 p.convoPairs = [];
                 p.edit = null;
-                if(p.currentMap === undefined) p.currentMap = store.currentMap;
-                if(p.sortMode === undefined) p.sortMode = store.sortMode;
-                if(p.searchMode === undefined) p.searchMode = store.searchMode;
-                if(p.filter === undefined) p.filter = store.filter;
-                if(p.page === undefined) p.page = store.page;
-                if(p.editingName === undefined) p.editingName = store.editingName;
-                if(p.currentConvo === undefined) p.currentConvo = store.currentConvo;
+                if (p.currentMap === undefined) p.currentMap = store.currentMap;
+                if (p.sortMode === undefined) p.sortMode = store.sortMode;
+                if (p.searchMode === undefined) p.searchMode = store.searchMode;
+                if (p.filter === undefined) p.filter = store.filter;
+                if (p.page === undefined) p.page = store.page;
+                if (p.editingName === undefined) p.editingName = store.editingName;
+                if (p.currentConvo === undefined) p.currentConvo = store.currentConvo;
                 const response = p.filter === "" ? null : await api.getMapPairs(p.filter, p.searchMode, p.sortMode, p.page);
                 p.idNamePairs = (p.filter === "" ? [] : response.data.idNamePairs);
                 storeReducer(p);
-                if(p.filter !== "" && !response.data.success) console.log("API FAILED TO GET THE LIST PAIRS");
-            }catch(err){
+                if (p.filter !== "" && !response.data.success) console.log("API FAILED TO GET THE LIST PAIRS");
+            } catch (err) {
                 console.log("caught logout error: " + err);
             }
         }
         asyncLoadIdNamePairs(pr);
     }
 
-    store.createConvo = async function(id){
+    store.createConvo = async function (id) {
         const response = await api.makeConvo(id);
         console.log(response);
-        if(response.success) store.loadConvoPairs(); //it worked, now get the pairs again
+        if (response.success) store.loadConvoPairs(); //it worked, now get the pairs again
     }
 
-    store.loadConvoPairs = function(p = {}){
-        async function asyncLoadConvoPairs(){
-            try{
+    store.loadConvoPairs = function (p = {}) {
+        async function asyncLoadConvoPairs() {
+            try {
                 let readFlag = false;
-                if(p.browseMode == undefined) p.browseMode = store.browseMode;
-                if(p.modalMode == undefined) p.modalMode = store.modalMode;
-                if(p.tabMode == undefined) p.tabMode = store.tabMode;
+                if (p.browseMode == undefined) p.browseMode = store.browseMode;
+                if (p.modalMode == undefined) p.modalMode = store.modalMode;
+                if (p.tabMode == undefined) p.tabMode = store.tabMode;
                 p.idNamePairs = [];
                 p.edit = null;
-                if(p.currentMap == undefined) p.currentMap = store.currentMap;
-                if(p.sortMode == undefined) p.sortMode = store.sortMode;
-                if(p.searchMode == undefined) p.searchMode = store.searchMode;
-                if(p.filter == undefined) p.filter = store.filter;
-                if(p.page == undefined) p.page = store.page;
-                if(p.editingName == undefined) p.editingName = store.editingName;
-                if(p.currentConvo == undefined) p.currentConvo = store.currentConvo;
+                if (p.currentMap == undefined) p.currentMap = store.currentMap;
+                if (p.sortMode == undefined) p.sortMode = store.sortMode;
+                if (p.searchMode == undefined) p.searchMode = store.searchMode;
+                if (p.filter == undefined) p.filter = store.filter;
+                if (p.page == undefined) p.page = store.page;
+                if (p.editingName == undefined) p.editingName = store.editingName;
+                if (p.currentConvo == undefined) p.currentConvo = store.currentConvo;
                 else readFlag = true;
                 const response = await api.getConvoPairs(p.page, readFlag);
                 console.log("GOT RESPONSE!!! --> ", response.data);
                 p.convoPairs = response.data.convoPairs;
                 storeReducer(p);
-            }catch(err){
+            } catch (err) {
                 console.log("caught logout error for convo");
             }
         }
         asyncLoadConvoPairs();
     }
-    store.sendMessage = async function(text){
+    store.sendMessage = async function (text) {
         const response = await api.sendMessage(store.currentConvo._id, text);
         console.log("send msg resp", response);
-        if(response.success) store.loadConvoPairs(); //lets just refresh the entire thing for now
+        if (response.success) store.loadConvoPairs(); //lets just refresh the entire thing for now
     }
 
-    store.loadEditorData = function(id){
-        async function asyncStartEditing(){
+    store.loadEditorData = function (id) {
+        async function asyncStartEditing() {
             let response = await api.getStartData(id); //store.currentMap._id
-            if(response.data.success){
+            if (response.data.success) {
                 response.data.ed.syncWait = 0;
                 storeReducer({
                     browseMode: 0,
                     tabMode: 2,
                     edit: response.data.ed,
-                    currentMap: {_id: id}
+                    currentMap: { _id: id }
                 });
                 console.log("NEW_EDIT:::", response.data.ed);
-            }else console.log("EDIT STARTING ERROR: ", response);
+            } else console.log("EDIT STARTING ERROR: ", response);
         }
         asyncStartEditing();
         /*
@@ -233,18 +246,18 @@ function GlobalStoreContextProvider(props){
         });
         */
     }
-    store.sendTransac = async function(typ, fl, gn, pn, od, nd){
+    store.sendTransac = async function (typ, fl, gn, pn, od, nd) {
         store.edit.syncWait++;
         const resp = await epi.sendEdit(store.currentMap._id, store.edit.transacNum++, typ, fl, gn, pn, od, nd);
         //console.log('EDIT RESP:', resp);
         store.edit.syncWait--;
     }
-    store.reduceEdit = function(){
+    store.reduceEdit = function () {
         storeReducer({
             edit: store.edit
         });
     }
-    store.editTabSwitch = function(){
+    store.editTabSwitch = function () {
         storeReducer({
             tabMode: store.tabMode == 2 ? 3 : 2
         });
@@ -253,7 +266,7 @@ function GlobalStoreContextProvider(props){
     store.setCurrentMap = function (id) {
         async function asyncSetCurrentMap(id) {
             let response = await api.getMapById(id);
-            if(response.data.success){
+            if (response.data.success) {
                 let map = response.data.map;
                 tps.clearAllTransactions();
                 store.loadIdNamePairs({
@@ -265,25 +278,25 @@ function GlobalStoreContextProvider(props){
         asyncSetCurrentMap(id);
     }
 
-    store.setCurrentConv = function(id){
+    store.setCurrentConv = function (id) {
         let i;
-        for(i = 0; i < store.convoPairs.length; i++) if(store.convoPairs[i]._id == id) break;
-        if(i >= store.convoPairs.length) return;
+        for (i = 0; i < store.convoPairs.length; i++) if (store.convoPairs[i]._id == id) break;
+        if (i >= store.convoPairs.length) return;
         store.loadConvoPairs({
             currentConvo: store.convoPairs[i]
         });
     }
 
-    store.createNewMap = async function(newName = "Untitled"){
+    store.createNewMap = async function (newName = "Untitled") {
         const response = await api.createMap(newName, auth.user);
-        if(response.status === 201){
+        if (response.status === 201) {
             tps.clearAllTransactions();
             store.loadIdNamePairs({
                 currentMap: response.data.map
             });
             // IF IT'S A VALID LIST THEN LET'S START EDITING IT
             //history.push("/playlist/" + newMap._id);
-        }else console.log("API FAILED TO CREATE A NEW LIST");
+        } else console.log("API FAILED TO CREATE A NEW LIST");
     }
 
     return (
