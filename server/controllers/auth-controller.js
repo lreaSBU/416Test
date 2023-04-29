@@ -96,6 +96,10 @@ logoutUser = async (req, res) => {
     }).send();
 }
 
+requestRecovery = async (req, res) => {
+    //do something...
+}
+
 registerUser = async (req, res) => {
     try {
         const { firstName, lastName, email, password, passwordVerify } = req.body;
@@ -174,5 +178,6 @@ module.exports = {
     getLoggedIn,
     registerUser,
     loginUser,
-    logoutUser
+    logoutUser,
+    requestRecovery
 }

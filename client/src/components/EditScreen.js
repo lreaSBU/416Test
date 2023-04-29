@@ -198,7 +198,10 @@ const EditScreen = () => {
                 mels = [];
             }else mode = sels[sels.length-1];
             if(mode == undefined) mode = false;
-            if(fm != mode) Poly.Draw();
+            if(fm != mode){
+                tps.clearAllTransactions();
+                Poly.Draw();
+            }
         }
         function swapTool(t){
             tool = t;
@@ -211,13 +214,15 @@ const EditScreen = () => {
             }
         }
         function insert_tool(){
-            if(mode && mels.length == 2){
+            if(mode){
                 let ps = [];
                 for(let m of mels) ps.push(findParent(m, mode));
                 for(let i = 0; i < mels.length-1; i++){
-                    if(ps[i].p == ps[i+1].p && Math.abs(ps[i].i - ps[i+1].i) == 1){
+                    if(ps[i].p != ps[i+1].p) continue;
+                    let adj = store.edit.l[mode.level][mode.group].elems[ps[i].p].isAdj(ps[i].i, ps[i+1].i);
+                    if(adj != null){
                         let np = new Point((mels[i].x+mels[i+1].x)/2, (mels[i].y+mels[i+1].y)/2);
-                        tps.addTransaction(new Insert_Transaction(store, mode.level, mode.group, ps[i].p, Math.max(ps[i].i, ps[i+1].i), np));
+                        tps.addTransaction(new Insert_Transaction(store, mode.level, mode.group, ps[i].p, adj, np));
                     }
                 }
             }
@@ -243,7 +248,7 @@ const EditScreen = () => {
                 while(mels.length){
                     let m = mels.splice(0, 1)[0];
                     let par = findParent(m, mode);
-                    if(mode.elems[par.p].points.length < 5){
+                    if(mode.elems[par.p].points.length < 4){
                         handleWarning('Aborting point removal; Must maintain minimum Point count');
                         break;
                     }
@@ -272,10 +277,12 @@ const EditScreen = () => {
                 case 'p': handleWarning('wahh'); break;
                 case 'f': Poly.Draw(true); changeFlag = false; break;
                 case 'm': mergeRegions(); break;
-                case 'y': if(keys.Control && tps.hasTransactionToRedo()) tps.doTransaction(); break;
-                case 'z': if(keys.Control && tps.hasTransactionToUndo()) tps.undoTransaction(); break;
-                case 'ArrowUp': viewChange(true); break; //change focus level
-                case 'ArrowDown': viewChange(false); break; //change focus level
+                case 'y': if(keys.Control && tps.hasTransactionToRedo()) tps.doMulti(); break;
+                case 'z': if(keys.Control && tps.hasTransactionToUndo()) tps.undoMulti(); break;
+                case 'Y': if(keys.Control && tps.hasTransactionToRedo()) tps.doTransaction(); break;
+                case 'Z': if(keys.Control && tps.hasTransactionToUndo()) tps.undoTransaction(); break;
+                case 'ArrowUp': viewChange(true); break;
+                case 'ArrowDown': viewChange(false); break;
                 default: changeFlag = false; break;
             }
             keys[e.key] = true;
@@ -296,12 +303,14 @@ const EditScreen = () => {
             return {i: -1, p: null};
         }
         function viewChange(dir){
+            if(mode) return;
             viewLevel += dir ? 1 : -1;
             if(viewLevel < 0) viewLevel = 0;
             else if(viewLevel > 4) viewLevel = 4;
             else{ //viewLevel actually changed
                 deSel();
             }
+            tps.clearAllTransactions();
             Poly.Draw();
         }
 
@@ -334,11 +343,13 @@ const EditScreen = () => {
             if(VERSION != store.edit.sesh) return;
             if(tool) switch(tool){
                 case 1: //move release
+                    tps.bookMark();
                     for(let m of mels){
                         let par = findParent(m, mode);
                         m.subtractLocal(movoff);
                         tps.addTransaction(new Move_Transaction(store, true, mode.level, mode.group, par.p, par.i, movoff.copy()));
                     }
+                    tps.unMark();
                 break; case 2: //boxSelect release
                     let temp1 = movoff.makeGlobal();
                     let temp2 = (new Point(mx, my)).makeGlobal();
@@ -409,17 +420,23 @@ const EditScreen = () => {
                     }
                     if(mels.length && keys.Control){ //connect
                         let ind1 = -1, ind2 = -1, p1 = null, p2 = null;
-                        for(let i of mode.elems) if((ind1 = i.indexOf(mels[mels.length-1])) != -1) p1 = i;
-                        for(let i of mode.elems) if((ind2 = i.indexOf(mel)) != -1) p2 = i;
+                        for(let i of mode.elems) if((ind1 = i.indexOf(mels[mels.length-1])) != -1){p1 = i; break;}
+                        for(let i of mode.elems) if((ind2 = i.indexOf(mel)) != -1){p2 = i; break;}
                         if(p1 == p2 && ind1 != -1 && ind2 != -1){ //belong to the same Poly
                             let dif = ind2-ind1;
-                            //console.log(ind1, ind2, dif);
                             let dir = (dif > 0) ? 1 : -1;
                             let lim = Math.abs(dif);
-                            //console.log(lim);
+                            if(lim > parseInt(p1.points.length/2)){ //flip
+                                dif -= dir*parseInt(p1.points.length/2);
+                                dir *= -1;
+                                lim = p1.points.length-lim;
+                            }
                             ind1+=dir;
                             while(--lim){
-                                if(mels.indexOf(p1.points[ind1] != -1)) mels.push(p1.points[ind1]);
+                                ind2 = ind1;
+                                if(ind2 < 0) ind2 += p1.points.length;
+                                else if(ind2 >= p1.points.length) ind2 -= p1.points.length;
+                                if(mels.indexOf(p1.points[ind2] != -1)) mels.push(p1.points[ind2]);
                                 mels[mels.length-1].h = true;
                                 ind1 += dir;
                             }
@@ -710,9 +727,12 @@ const EditScreen = () => {
                         props: f.properties
                     });
                     store.sendTransac(1, fileLevel, GN, -1, null, f.properties); //send the data entry for this new subregion
+                    let cr;
                     for(var c of f.geometry.coordinates){
                         var np = new Poly(-1, fileLevel, GN);
-                        for(var p of c[0]) np.add(new Point(p[0], -p[1]));
+                        cr = (c[0].length == 2 ? c : c[0]);
+                        for(let i = 0; i < cr.length-1; i++) np.add(new Point(cr[i][0], -cr[i][1]));
+                        console.log(np.points[0], "VS.", np.points[np.points.length-1]);
                         store.edit.l[fileLevel][GN].elems.push(np);
                         store.edit.l[fileLevel][GN].mean.addLocal(np.mean());
                         np.finalize(fileLevel, GN, store.edit.l[fileLevel][GN]);
@@ -760,7 +780,7 @@ const EditScreen = () => {
             hBox = (camZ**.4);
             ctx.strokeStyle = '#ff00ff';
             ctx.beginPath();
-            ctx.rect(camZ*(p.x+camX)-hBox, camZ*(p.y+camY)-hBox, hBox*2, hBox*2);
+            ctx.rect(HW+camZ*(p.x+camX-HW)-hBox, HH+camZ*(p.y+camY-HH)-hBox, hBox*2, hBox*2);
             ctx.stroke();
         }
         function drawDot(p, h=false){
@@ -778,7 +798,7 @@ const EditScreen = () => {
         var fx, fy, pLast = new Point(0, 0), dx, dy;
         var LOD_SKIP, LOD_STEP, LOD_REF, finSum, li, ni, ci;
         var defCol = "#000", mark, Acc = false;
-        var dots = [];
+        var dots = [], remp, remi;
         const subColRefs = ['#aba99f', '#000', '#000'];
         class Poly{
             static l = [[], [], [], [], []]; //poly struct
@@ -839,6 +859,12 @@ const EditScreen = () => {
                 this.minX = this.minY = 100000000;
                 this.maxX = this.maxY = -100000000;
             }
+            remove(i){
+                remp = this.points[i];
+                if((remi = mels.indexOf(remp)) != -1) mels.splice(remi, 1);
+                this.points.splice(i, 1);
+                //this.reCalc(); //MAYBE???
+            }
             add(p){
                 this.minX = Math.min(p.x, this.minX);
                 this.minY = Math.min(p.y, this.minY);
@@ -866,8 +892,8 @@ const EditScreen = () => {
             }
             isAdj(a, b){
                 let dif = Math.abs(a-b);
-                if(dif == 1) return Math.min(a, b);
-                if(dif == this.points.length-2) return Math.max(a, b);
+                if(dif == 1) return Math.max(a, b);
+                if(dif == this.points.length-1) return Math.min(a, b);
                 return null;
             }
             [Symbol.iterator](){
@@ -890,19 +916,20 @@ const EditScreen = () => {
                     store.sendTransac(0, fl, gn, this.id, null, this.points); //type, fl, gn, pn, od, nd
                 }
             }
-            reCalc(parent){
+            reCalc(parent = null){
                 this.bound();
                 this.mean();
+                if(!parent) return;
                 parent.minX = parent.minY = 100000000;
                 parent.maxX = parent.maxY = -100000000;
+                parent.mean.set(0, 0);
                 for(let p of parent.elems){
                     parent.minX = Math.min(p.minX, parent.minX);
                     parent.minY = Math.min(p.minY, parent.minY);
                     parent.maxX = Math.max(p.maxX, parent.maxX);
                     parent.maxY = Math.max(p.maxY, parent.maxY);
+                    parent.mean.addLocal(p._mean);
                 }
-                parent.mean.set(0, 0);
-                for(let p of parent.elems) parent.mean.addLocal(p._mean);
                 parent.mean.divideLocal(parent.elems.length);
             }
             bound(){
@@ -943,14 +970,14 @@ const EditScreen = () => {
                 if(sigh) dots.push(f);
                 //pLast.set(undefined, undefined); //pLast.set(fx, fy);
                 ctx.moveTo(fx, fy);
-                for(var i = 1; i < this.points.length-1; i++){ //need to optimize this
+                for(var i = 1; i < this.points.length; i++){ //need to optimize this
                     //i % LOD_STEP == 0 && 
                     if(!Acc && LOD_REF.fastDist(this.points[i]) < LOD_SKIP) continue;
                     LOD_REF = this.points[i];
                     fx = HW+camZ*(LOD_REF.x+camX-HW);
                     fy = HH+camZ*(LOD_REF.y+camY-HH);
                     if((fx < 0 || fx > CW) && (fy < 0 || fy > CH)) continue;
-                    if(sigh && i != this.points.length-1) dots.push(this.points[i]);
+                    if(sigh) dots.push(this.points[i]);
                     ctx.lineTo(fx, fy);
                 }
                 fx = HW + camZ*(f.x + camX - HW);
