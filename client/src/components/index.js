@@ -13,7 +13,7 @@ import MUIRemoveSongModal from './MUIRemoveSongModal'
 import RegisterScreen from './RegisterScreen'
 import SongCard from './SongCard'
 import SplashScreen from './SplashScreen'
-import BrowseScreen from './BrowseScreen'
+import ProfileScreen from './ProfileScreen'
 import MessageScreen from './MessageScreen'
 import Statusbar from './Statusbar'
 import WorkspaceScreen from './WorkspaceScreen'
@@ -24,6 +24,7 @@ import Sortbar from './Sortbar'
 import EditScreen from './EditScreen'
 import EditorCanvas from './EditorCanvas'
 import HelpScreen from './HelpScreen'
+import BrowseScreen from './BrowseScreen'
 /*
     Serves as a module so that we can import
     all the other components as we wish.
@@ -31,6 +32,7 @@ import HelpScreen from './HelpScreen'
 export { 
     AllWrapper,
     AppBanner,  
+    ProfileScreen,
     BrowseScreen,
     EditToolbar,
     ForgotScreen, 

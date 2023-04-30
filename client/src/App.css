@@ -252,7 +252,7 @@ body {
   float: left;
 }
 
-#browseScreenProfileHeader {
+#profileScreenProfileHeader {
   display: grid;
   align-items: center;
   height: fit-content;
@@ -276,13 +276,13 @@ body {
   border-radius: 10px;
 }
 
-#browseScreenAvatar {
+#profileScreenAvatar {
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-#browseScreenSortHeader {
+#profileScreenSortHeader {
   display: flex;
   align-items: center;
 }

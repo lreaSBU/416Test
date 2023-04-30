@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import BrowseScreen from './BrowseScreen'
+import ProfileScreen from './ProfileScreen'
 import SplashScreen from './SplashScreen'
 import AuthContext from '../auth'
 import { GlobalStoreContext } from '../store'
@@ -12,5 +12,5 @@ export default function HomeWrapper() {
     if (!auth.loggedIn)
         return <SplashScreen />    
     else
-        return <BrowseScreen />
+        return <ProfileScreen />
 }

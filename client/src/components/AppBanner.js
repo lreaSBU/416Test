@@ -163,23 +163,21 @@ export default function AppBanner() {
                         <Box sx={{ width: '2%' }}></Box>
                         <Link onClick={handleHome} to="/" ><HomeIcon className='hvr-grow' sx={{ color: 'primary.main' }}></HomeIcon></Link>
                         <Box sx={{ width: '2%' }}></Box>
-                        <Link className='hvr-grow' style={{ textDecoration: 'none', color: 'black' }} onClick={handleAll} to="/">Browse</Link>
-                        <Box sx={{ width: '2%' }}></Box>
-                        <Link className='hvr-grow' style={{ textDecoration: 'none', color: 'black' }} onClick={handleUser} to="/">Users</Link>
+                        <Link className='hvr-grow' style={{ textDecoration: 'none', color: 'black' }} onClick={handleAll} to="/browse/">Browse</Link>
                         <Box sx={{ width: '2%' }}></Box>
                         <Link className='hvr-grow' style={{ textDecoration: 'none', color: 'black' }} onClick={handleDM} to="/message/">Chat</Link>
                         <Box sx={{ width: '2%' }}></Box>
                         <Link className='hvr-grow' style={{ textDecoration: 'none', color: 'black' }} onClick={handleHelp} to="/help/"><QuestionMarkIcon></QuestionMarkIcon></Link>
                         <Box sx={{ width: '5%' }}></Box>
-                        <Box id='bannerStatus' sx={{ fontSize: 'xx-large' }}>{(store.tabMode > 1 ? <>Editing</> :
-                            <Fab
-                                size='large'
-                                color='primary'
-                                aria-label="add"
-                                id="add-list-button"
-                                variant='extended'
-                                onClick={handleCreateNewMap}
-                            > <AddIcon /> New Map</Fab>)
+                        <Box id='bannerStatus' sx={{ fontSize: 'xx-large' }}>{(store.browseMode == 0 ? <Link onClick={handleHome} to="/"><Fab
+                            size='large'
+                            color='primary'
+                            aria-label="add"
+                            id="add-list-button"
+                            variant='extended'
+                            onClick={handleCreateNewMap}
+                        > <AddIcon /> New Map</Fab></Link> : <></>
+                        )
                         }</Box>
 
                         <Box sx={{ flexGrow: 1 }}></Box>
