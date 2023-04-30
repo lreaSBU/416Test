@@ -44,7 +44,7 @@ export default function ForgotScreen() {
                         <LockOutlinedIcon />
                     </Avatar>
                     <Typography component="h1" variant="h5">
-                    Enter your email address and we will send you instructions to reset your password.
+                    We sent a verification code to your email. Enter the code, a new password, and re-enter the password to continue.
                     </Typography>
                     <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 3 }}>
                         <Grid container spacing={2}>
@@ -52,20 +52,45 @@ export default function ForgotScreen() {
                                 <TextField
                                     required
                                     fullWidth
-                                    id="email"
-                                    label="Email Address"
-                                    name="email"
-                                    autoComplete="email"
+                                    id="code"
+                                    label="Verification Code"
+                                    name="code"
+                                    autoComplete="code"
                                 />
                             </Grid>
                         </Grid>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12}>
+                                <TextField
+                                    required
+                                    fullWidth
+                                    id="newPass"
+                                    label="New Password"
+                                    name="newPass"
+                                    autoComplete="newPass"
+                                />
+                            </Grid>
+                        </Grid>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12}>
+                                <TextField
+                                    required
+                                    fullWidth
+                                    id="rePass"
+                                    label="Re-enter Password"
+                                    name="rePass"
+                                    autoComplete="rePass"
+                                />
+                            </Grid>
+                        </Grid>
+
                         <Button
                             type="submit"
                             fullWidth
                             variant="contained"
                             sx={{ mt: 3, mb: 2 }}
                         >
-                            Send email
+                            Continue
                         </Button>
                         <Grid container justifyContent="flex-end">
                             <Grid item>
