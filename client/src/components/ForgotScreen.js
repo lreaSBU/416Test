@@ -26,6 +26,15 @@ export default function ForgotScreen() {
             formData.get('email'),
             store
         );
+
+
+
+
+        /*EXAMPLE CALL::::
+        let email = 'some.one@gmail.com'
+        auth.requestRecovery(
+            email
+        );*/
     };
 
     return (

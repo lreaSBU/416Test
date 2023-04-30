@@ -17,7 +17,7 @@ export default class Remove_Transaction extends jsTPS_Transaction {
             /*for(let i = 0; i < this.po.length; i++){
                 store.edit.l[this.fl][this.gn].elems[this.po[i]].points[this.d1[i]] = null;
             }*/
-            this.store.edit.l[this.fl][this.gn].elems[this.po].points.splice(this.d1, 1);
+            this.store.edit.l[this.fl][this.gn].elems[this.po].remove(this.d1, 1);
             this.store.edit.l[this.fl][this.gn].elems[this.po].reCalc(this.store.edit.l[this.fl][this.gn]);
             this.d2.h = false;
             this.store.sendTransac(2, this.fl, this.gn, this.po, this.d1, this.d2);

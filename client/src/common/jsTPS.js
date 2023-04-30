@@ -36,6 +36,8 @@ export default class jsTPS {
     constructor() {
         // THE TRANSACTION STACK
         this.transactions = [];
+        this.marks = [];
+        this.MARK = false;
 
         // THE TOTAL NUMBER OF TRANSACTIONS ON THE STACK,
         // INCLUDING THOSE THAT MAY HAVE ALREADY BEEN UNDONE
@@ -54,6 +56,12 @@ export default class jsTPS {
         this.performingUndo = false;
     }
 
+    bookMark(){
+        this.MARK = true;
+    }
+    unMark(){
+        this.MARK = false;
+    }
     /**
      * isPerformingDo
      * 
@@ -137,6 +145,7 @@ export default class jsTPS {
             || (this.mostRecentTransaction < (this.transactions.length - 1))) {
                 for (let i = this.transactions.length - 1; i > this.mostRecentTransaction; i--) {
                     this.transactions.splice(i, 1);
+                    this.marks.splice(i, 1);
                 }
                 this.numTransactions = this.mostRecentTransaction + 2;
         }
@@ -146,6 +155,8 @@ export default class jsTPS {
 
         // ADD THE TRANSACTION
         this.transactions[this.mostRecentTransaction+1] = transaction;
+        this.marks[this.mostRecentTransaction+1] = this.MARK;
+        this.MARK = false;
 
         // AND EXECUTE IT
         this.doTransaction();
@@ -165,7 +176,13 @@ export default class jsTPS {
             transaction.doTransaction();
             this.mostRecentTransaction++;
             this.performingDo = false;
+            return true;
         }
+        return false;
+    }
+    doMulti(){
+        this.doTransaction();
+        while(!this.marks[this.mostRecentTransaction+1]) if(!this.doTransaction()) break;
     }
 
     /**
@@ -179,7 +196,13 @@ export default class jsTPS {
             transaction.undoTransaction();
             this.mostRecentTransaction--;
             this.performingUndo = false;
+            return true;
         }
+        return false;
+    }
+    undoMulti(){
+        while(!this.marks[this.mostRecentTransaction]) if(!this.undoTransaction()) break;
+        this.undoTransaction();
     }
 
     /**

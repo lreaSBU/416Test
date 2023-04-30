@@ -29,11 +29,17 @@ export const registerUser = (firstName, lastName, email, password, passwordVerif
         passwordVerify : passwordVerify
     })
 }
+export const requestRecovery = (email) => {
+    return api.post(`/recover/`, {
+        email: email
+    })
+}
 const apis = {
     getLoggedIn,
     registerUser,
     loginUser,
-    logoutUser
+    logoutUser,
+    requestRecovery
 }
 
 export default apis
