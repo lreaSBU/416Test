@@ -98,6 +98,32 @@ logoutUser = async (req, res) => {
 
 requestRecovery = async (req, res) => {
     //do something...
+    console.log("requestRecovery");
+    try {
+        const { email } = req.body;
+        console.log("email: " + email);
+        if (!email) {
+            return res
+                .status(400)
+                .json({ errorMessage: "Please enter email." });
+        }
+        const existingUser = await User.findOne({ email: email });
+        console.log("existingUser: " + existingUser);
+        if (!existingUser) {
+            return res
+                .status(401)
+                .json({
+                    errorMessage: "Wrong email provided."
+                })
+        }
+
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send();
+    }
+
+
 }
 
 registerUser = async (req, res) => {
