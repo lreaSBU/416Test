@@ -1,6 +1,8 @@
 const auth = require('../auth')
 const User = require('../models/user-model')
 const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
+const nodemailer = require('nodemailer')
 
 getLoggedIn = async (req, res) => {
     try {
@@ -116,6 +118,45 @@ requestRecovery = async (req, res) => {
                     errorMessage: "Wrong email provided."
                 })
         }
+        // User was found
+        //const token = jwt.sign({ _id: existingUser._id }, process.env.JWT_SECRET);
+        //console.log("token: " + token);
+        //const url = `http://localhost:3000/reset-password/${token}`;
+        //console.log("url: " + url);
+        const transporter = nodemailer.createTransport({
+            service: 'hotmail',
+            auth: {
+                user: 'map-central@outlook.com',
+                pass: 'mapcentral123'
+            }
+        });
+        // Generate a random verification code
+        const verificationCode = Math.floor(Math.random() * (999999 - 100000) + 100000);
+        console.log("verificationCode: " + verificationCode);
+        // Save the verification code to the user
+        existingUser.verificationCode = verificationCode;
+        await existingUser.save();
+        // Send the email
+        const mailOptions = {
+            from: 'map-central@outlook.com',
+            to: email,
+            subject: 'Password Reset',
+            text: `Your verification code is: ${verificationCode}`
+        };
+        transporter.sendMail(mailOptions, function (error, info) {
+            if (error) {
+                console.log(error);
+                res.status(500).send();
+            } else {
+                console.log('Email sent: ' + info.response);
+                res.status(200).json({
+                    success: true,
+                })
+            }
+        });
+
+
+
 
 
     } catch (err) {
@@ -125,6 +166,55 @@ requestRecovery = async (req, res) => {
 
 
 }
+
+verifyCode = async (req, res) => {
+    console.log("verifyCode");
+    try {
+        const { email, code, password } = req.body;
+        console.log("email: " + email);
+        console.log("code: " + code);
+        console.log("password: " + password);
+        if (!code || !password) {
+            return res
+                .status(400)
+                .json({ errorMessage: "Please enter all required fields." });
+        }
+        // make sure the code entered matches the one in the database and if so, update the password
+        const existingUser = await User.findOne({ email: email });
+        console.log("existingUser: " + existingUser);
+        if (!existingUser) {
+            return res
+                .status(401)
+                .json({
+                    errorMessage: "Wrong email provided."
+                })
+        }
+        console.log("existingUser.verificationCode: " + existingUser.verificationCode);
+        console.log("code: " + code);
+        if (existingUser.verificationCode != code) {
+            return res
+                .status(401)
+                .json({
+                    errorMessage: "Wrong verification code provided."
+                })
+        }
+        // Verification code matches
+        // Hash the new password
+        const salt = await bcrypt.genSalt();
+        const passwordHash = await bcrypt.hash(password, salt);
+        // Save the new password hash to the user
+        existingUser.passwordHash = passwordHash;
+        await existingUser.save();
+        console.log("password updated");
+        res.status(200).json({
+            success: true,
+        })
+    } catch (err) {
+        console.error(err);
+        res.status(500).send();
+    }
+}
+
 
 registerUser = async (req, res) => {
     try {
@@ -205,5 +295,6 @@ module.exports = {
     registerUser,
     loginUser,
     logoutUser,
-    requestRecovery
+    requestRecovery,
+    verifyCode
 }

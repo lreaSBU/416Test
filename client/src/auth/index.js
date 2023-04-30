@@ -174,11 +174,51 @@ function AuthContextProvider(props) {
     }
 
     auth.requestRecovery = async function(email){
-        const response = await api.requestRecovery(email);
-        //do something...
-        
-        return response;
+        try{
+            const response = await api.requestRecovery(email);
+            if (response.status === 200) {
+                authReducer({
+                    type: AuthActionType.REPORT_ERROR,
+                    payload: {
+                        error: response.data.message
+                    }
+                })
+            }
+        }catch(errorMsg){
+            console.log(errorMsg);
+            authReducer({
+                type: AuthActionType.REPORT_ERROR,
+                payload: {
+                    error: errorMsg.response.data.errorMessage
+                }
+            })
+        }
     }
+
+    auth.verifyCode = async function(email, code, password){
+        try{
+            const response = await api.verifyCode(email, code, password);
+            if (response.status === 200) {
+                authReducer({
+                    type: AuthActionType.REPORT_ERROR,
+                    payload: {
+                        error: response.data.message
+                    }
+                })
+            }
+        }catch(errorMsg){
+            console.log(errorMsg);
+            authReducer({
+                type: AuthActionType.REPORT_ERROR,
+                payload: {
+                    error: errorMsg.response.data.errorMessage
+                }
+            })
+        }
+    }
+
+
+
 
     return (
         <AuthContext.Provider value={{

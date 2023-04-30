@@ -34,12 +34,21 @@ export const requestRecovery = (email) => {
         email: email
     })
 }
+export const verifyCode = (email, code, password) => {
+    return api.post(`/verify/`, {
+        email: email,
+        code: code,
+        password: password
+    })
+}
+
 const apis = {
     getLoggedIn,
     registerUser,
     loginUser,
     logoutUser,
-    requestRecovery
+    requestRecovery,
+    verifyCode
 }
 
 export default apis

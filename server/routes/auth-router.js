@@ -7,5 +7,6 @@ router.post('/login', AuthController.loginUser)
 router.get('/logout', AuthController.logoutUser)
 router.get('/loggedIn', AuthController.getLoggedIn)
 router.post('/recover', AuthController.requestRecovery)
+router.post('/verify', AuthController.verifyCode)
 
 module.exports = router
