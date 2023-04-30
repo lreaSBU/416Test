@@ -272,8 +272,8 @@ function MapCard(props) {
                         </DialogContentText>
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={(event) => handleDeleteList(event, idNamePair._id)}>Delete</Button>
-                        <Button onClick={handleDialogClose} autoFocus>
+                        <Button color='error' variant='contained' onClick={(event) => handleDeleteList(event, idNamePair._id)}>Delete</Button>
+                        <Button variant='outlined' onClick={handleDialogClose} autoFocus>
                             Cancel
                         </Button>
                     </DialogActions>

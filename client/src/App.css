@@ -263,6 +263,7 @@ body {
   border-style: solid;
   border-radius: 10px;
 }
+
 #messageHeader {
   display: grid;
   align-items: center;
@@ -306,6 +307,7 @@ body {
   height: 90%;
   display: flex;
   flex-direction: column;
+  margin: 6px;
 }
 
 #list-selector-list {
@@ -329,7 +331,8 @@ body {
   display: flex;
   flex-direction: column;
 }
-#messageList{
+
+#messageList {
   overflow: scroll;
 }
 

@@ -123,10 +123,11 @@ export default function AppBanner() {
 
     let menu = loggedOutMenu;
     if (auth.loggedIn) menu = loggedInMenu;
-    
+
     let addButt = "";
-    if (!store.currentMap && auth.loggedIn) {
-        if ((store.browseMode == 0 || store.browseMode == 3) && store.tabMode < 2 && auth.loggedIn) { //add list button
+    if (store.currentMap && auth.loggedIn) {
+        // if ((store.browseMode == 0 || store.browseMode == 3) && store.tabMode < 2 && auth.loggedIn) { //add list button
+        if (store.tabMode < 2) {
             addButt = <Fab
                 size='medium'
                 color='primary'
@@ -134,11 +135,12 @@ export default function AppBanner() {
                 id="add-list-button"
                 onClick={handleCreateNewMap}
             > <AddIcon /> </Fab>
-        } else if (store.browseMode > 0) {
-            addButt = <SearchBar />
         }
+        // } else if (store.browseMode > 0) {
+        //     addButt = <SearchBar />
+        // }
     }
-    let editTab = '';
+    // let editTab = '';
     /*if (auth.loggedIn && store.tabMode > 1) {
         editTab = <Button sx={{ bgcolor: '#e1e4cb', fontSize: '16px', textAlign: "center", m: 1 }} onClick={handleEditTab}>{(store.tabMode == 2 ? <>Graphics</> : <>Editing</>)}</Button>
     }*/
@@ -169,11 +171,19 @@ export default function AppBanner() {
                         <Box sx={{ width: '2%' }}></Box>
                         <Link className='hvr-grow' style={{ textDecoration: 'none', color: 'black' }} onClick={handleHelp} to="/help/"><QuestionMarkIcon></QuestionMarkIcon></Link>
                         <Box sx={{ width: '5%' }}></Box>
-                        <Box id='bannerStatus' sx={{ fontSize: 'xx-large' }}>{(store.browseMode == 0) ? (store.tabMode > 1 ? <>Editing</> : <>My Maps</>) : <>Search:</>}</Box>
-                        <Box sx={{ width: '1%' }}></Box>
-                        {addButt}
+                        <Box id='bannerStatus' sx={{ fontSize: 'xx-large' }}>{(store.tabMode > 1 ? <>Editing</> :
+                            <Fab
+                                size='large'
+                                color='primary'
+                                aria-label="add"
+                                id="add-list-button"
+                                variant='extended'
+                                onClick={handleCreateNewMap}
+                            > <AddIcon /> New Map</Fab>)
+                        }</Box>
+
                         <Box sx={{ flexGrow: 1 }}></Box>
-                        {editTab}
+                        {/* {editTab} */}
                         <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
                             <IconButton
                                 size="large"

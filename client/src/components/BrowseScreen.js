@@ -21,7 +21,10 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle'
+import DialogTitle from '@mui/material/DialogTitle';
+import PublicIcon from '@mui/icons-material/Public';
+import PublicOffIcon from '@mui/icons-material/PublicOff';
+import placeholderimg from './Capture.png';
 
 const BrowseScreen = () => {
     const { store } = useContext(GlobalStoreContext);
@@ -115,7 +118,7 @@ const BrowseScreen = () => {
         }
     }
 
-    function handleCopy(code){
+    function handleCopy(code) {
         navigator.clipboard.writeText(code);
     }
 
@@ -147,40 +150,41 @@ const BrowseScreen = () => {
 
     let inspect = '';
     if (store.currentMap) {
-        if (store.tabMode) { //comments
-            /*var index = 0;
-            inspect = 
-            <div>
-                <List sx={{ width: '100%', height: '90%', left: '0%', bgcolor: 'background.paper', overflow: 'auto' }}>
-                {
-                    store.currentMap.comments.map((pair) => (
-                        <CommentCard
-                            id={'playlist-comment-' + (index)}
-                            key={'playlist-comment-' + (index++)}
-                            cDat={pair}
-                        />
-                    ))
-                }
-                </List>
-                <input id="cText" type="text" onKeyPress={handleCommentSub} />
-            </div>;*/
+        if (store.currentMap.name) { //After editing store.currentMap is different
+            let createdDate = store.currentMap.createdAt
+            let sliceDate = createdDate.slice(0, 10)
+
+            let publish = '';
             if (store.currentMap.published) {
-                inspect = <div>COMMENTS!!!</div>;
-            } else {
-                inspect = <div><Box sx={{ borderRadius: 2, bgColor: '#aaa' }}>Unpublished Maps will not have a comments section.</Box></div>;
+                publish = <PublicIcon color='primary'></PublicIcon>
             }
-        } else { //player
-            inspect = <div>PREVIEW DATA: {store.currentMap.name}</div>
+            else {
+                publish = <PublicOffIcon></PublicOffIcon>
+            }
+
+            inspect =
+                <Box>
+                    <Typography variant='h3'>
+                        {store.currentMap.name}
+                    </Typography>
+                    <Typography variant='h5'>
+                        {'Created by: ' + auth.getAccountDetails().firstName + ' ' + auth.getAccountDetails().lastName}
+                        <br></br>
+                        {'Created on: ' + sliceDate}
+                        <br></br>
+                        {publish}
+                    </Typography>
+                    <Box component='img' sx={{ height: '80%', width: '80%' }} src={placeholderimg}></Box>
+                </Box>
         }
     } else {
-        if (store.idNamePairs[0]) {
-            //display first map info
-            inspect = <div>{store.idNamePairs[0].name}</div>
-        }
-        else {
-            //display nothing
-            inspect = <></>
-        }
+        console.log('IN EHREHRHEHRHERH')
+        inspect =
+            <Box>
+                <Typography variant='h3' sx={{ textAlign: 'center' }}>
+                    Click on map to preview
+                </Typography>
+            </Box>
     }
 
     const sMen = <Menu
@@ -259,11 +263,7 @@ const BrowseScreen = () => {
                 {mapCards}
             </div>
             <div id="list-inspector">
-                <Box sx={{ p: 1, width: "100%", height: "10%" }}>
-                    <Button sx={{ bgcolor: ((!store.currentMap || store.tabMode == 1) ? 'primary.complement' : ''), fontSize: '16px', textAlign: "center", m: 1 }} onClick={handlePreviewTab}>Preview</Button>
-                    <Button sx={{ bgcolor: ((!store.currentMap || store.tabMode == 0) ? 'primary.complement' : ''), fontSize: '16px', textAlign: "center", m: 1 }} onClick={handleCommentTab}>Comments</Button>
-                </Box>
-                <Box sx={{ p: 1, height: '90%', width: '100%', color: 'black' }}>
+                <Box >
                     {inspect}
                 </Box>
             </div>

@@ -173,11 +173,11 @@ function AuthContextProvider(props) {
         })
     }
 
-    auth.requestRecovery = function(email){
-        const response = await api.requestRecovery(email);
-        //do something...
-        return response;
-    }
+    // auth.requestRecovery = function(email){
+    //     const response = await api.requestRecovery(email);
+    //     //do something...
+    //     return response;
+    // }
 
     return (
         <AuthContext.Provider value={{
