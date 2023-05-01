@@ -67,13 +67,21 @@ function GlobalStoreContextProvider(props) {
 
     store.goMessages = function () {
         store.loadConvoPairs({
-            //browseMode: 3,
+            browseMode: 3,
+            currentConvo: null,
+            page: 0
+        });
+    }
+    store.goHelp = function(){
+        store.loadIdNamePairs({
+            browseMode: 4,
             currentConvo: null,
             page: 0
         });
     }
     store.goHome = async function () {
         await store.loadIdNamePairs({
+            idNamePairs: [],
             currentMap: null,
             browseMode: 0,
             filter: null,
@@ -85,6 +93,7 @@ function GlobalStoreContextProvider(props) {
     }
     store.goSearchByName = async function () {
         await store.loadIdNamePairs({
+            idNamePairs: [],
             currentMap: null,
             browseMode: 2,
             filter: "",

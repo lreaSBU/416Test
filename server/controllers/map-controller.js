@@ -137,6 +137,7 @@ async function namePairs(nm) {
 getMapPairs = async (req, res) => {
     let bod = req.body;
     let maps = [];
+    if(bod.filter == '') return res.status(200).json({ success: true, idNamePairs: [] });
     if(bod.filter == null){ //getting ones own maps
         maps = await Map.find({owner: req.userId});
     }else if(!bod.searchMode){ //searching by MAP name

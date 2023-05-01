@@ -112,13 +112,6 @@ export default function ForgotScreen() {
                         >
                             Continue
                         </Button>
-                        <Grid container justifyContent="flex-end">
-                            <Grid item>
-                                <Link to="/login/" variant="body2">
-                                    Remember now? Login
-                                </Link>
-                            </Grid>
-                        </Grid>
                     </Box>
                 </Box>
             </Container>
@@ -186,13 +179,6 @@ export default function ForgotScreen() {
                         >
                             Continue
                         </Button>
-                        <Grid container justifyContent="flex-end">
-                            <Grid item>
-                                <Link to="/login/" variant="body2">
-                                    Remember now? Login
-                                </Link>
-                            </Grid>
-                        </Grid>
                     </Box>
                 </Box>
             </Container>
@@ -263,13 +249,6 @@ export default function ForgotScreen() {
                         >
                             Continue
                         </Button>
-                        <Grid container justifyContent="flex-end">
-                            <Grid item>
-                                <Link to="/login/" variant="body2">
-                                    Remember now? Login
-                                </Link>
-                            </Grid>
-                        </Grid>
                     </Box>
                 </Box>
                 <Copyright sx={{ mt: 5 }} />

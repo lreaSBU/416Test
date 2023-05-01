@@ -60,7 +60,7 @@ export default function AppBanner() {
     }
 
     const handleHelp = (e) => {
-        //store.goHelp(); //probably dont have to to anything
+        store.goHelp(); //probably dont have to to anything
     }
 
     const handleProfileMenuOpen = (event) => {

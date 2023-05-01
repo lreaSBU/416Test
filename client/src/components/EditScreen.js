@@ -370,6 +370,7 @@ const EditScreen = () => {
                 deSel();
             }
             tps.clearAllTransactions();
+            setVal(3, viewLevel);
             Poly.Draw();
         }
 
@@ -1379,7 +1380,7 @@ const EditScreen = () => {
                 <Box sx={{height:'5%'}}></Box>
                 <Box id='inspector2' className='traySect' sx={{bgcolor: '#999', borderRadius: 1}}>
                     <TextField ref={modeTxt} variant="filled" label="Mode" value="Object"/>
-                    <TextField ref={layerTxt} variant="filled" label="Layer #" value="-"/>
+                    <TextField ref={layerTxt} variant="filled" label="Layer #" value="1"/>
                     <TextField ref={groupTxt} variant="filled" label="Subregion #" value="-"/>
                 </Box>
             </div>
