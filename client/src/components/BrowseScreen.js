@@ -78,7 +78,7 @@ const BrowseScreen = () => {
     </Menu>
 
     return (
-        <> IN BROWSE SCREEn</>
+        <></>
 
 
     )

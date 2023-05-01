@@ -24,6 +24,8 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle'
 import SearchIcon from '@mui/icons-material/Search';
+import PublicIcon from '@mui/icons-material/Public';
+import PublicOffIcon from '@mui/icons-material/PublicOff';
 
 function MapCard(props) {
     const { store } = useContext(GlobalStoreContext);
@@ -108,6 +110,10 @@ function MapCard(props) {
         setOpen(false);
     }
 
+    function handleTogglePublic(event, id, flag) {
+        store.changePublished(id, flag);
+    }
+
     let selectClass = "unselected-list-card";
     if (selected) {
         selectClass = "selected-list-card";
@@ -116,78 +122,14 @@ function MapCard(props) {
     if (store.isListNameEditActive) {
         cardStatus = true;
     }
-    // let ldl = '';
-    // let npl = <Box sx={{ p: 1, flexGrow: 1, fontSize: '16px' }}>{(store.browseMode ? idNamePair.ownerName : (idNamePair.copy.published ? "*Published" : ""))}</Box>
 
-    // let ldl =
-    //     <Container sx={{ display: 'flex', alignItems: 'center', float: 'right' }}>
-    //         <Link onClick={(event) => { handleEditor(event, idNamePair._id) }} to="/edit/"><EditIcon sx={{ color: 'primary.main' }}></EditIcon></Link>
-    //         <IconButton onClick={(event) => { handleDeleteList(event, idNamePair._id) }} aria-label='delete'><DeleteIcon></DeleteIcon></IconButton>
-    //         <Box sx={{ flexGrow: 1 }}></Box>
-    //         {(idNamePair.copy.published ? '' : (<IconButton onClick={handleToggleEdit} aria-label='edit'>
-    //             <EditIcon style={{ fontSize: '16pt' }} />
-    //         </IconButton>))}
-    //         <IconButton onClick={(event) => { handleLoadList(event, idNamePair._id) }} aria-label='open'><SearchIcon></SearchIcon></IconButton>
-    //     </Container>;
-
-
-    // let cardElement =
-    //     <ListItem
-    //         id={idNamePair._id}
-    //         key={idNamePair._id}
-    //         sx={{ marginTop: '15px', p: 1 }}
-    //         style={{ width: '98%', height: '100%', fontSize: 'x-large', outline: 'solid', borderRadius: '5px', marginLeft: 'auto', marginRight: 'auto' }}
-    //         button
-    //     >
-
-    //         <Container sx={{ display: 'flex', alignItems: 'center' }}>
-    //             <Box>{idNamePair.name}</Box>
-    //             {/* <Box>
-    //                 {(idNamePair.copy.published ? '' : (<IconButton onClick={handleToggleEdit} aria-label='edit'>
-    //                     <EditIcon style={{ fontSize: '32pt' }} />
-    //                 </IconButton>))}
-    //             </Box> */}
-    //             {/* {npl} */}
-    //             {/* <Box sx={{ flexGrow: 1 }}></Box> */}
-    //             {ldl}
-    //         </Container>
-    //         {/* <div display='flex' alignItems='center'>
-
-
-    //             <Box sx={{ p: 1, flexGrow: 1 }}>{idNamePair.name}</Box>
-    //             <Box>
-    //                 {(idNamePair.copy.published ? '' : (<IconButton onClick={handleToggleEdit} aria-label='edit'>
-    //                     <EditIcon style={{ fontSize: '32pt' }} />
-    //                 </IconButton>))}
-    //             </Box>
-
-    //             {npl}
-    //             <Box sx={{ flexGrow: 1 }}></Box>
-    //             {ldl}
-    //         </div> */}
-    //         {/* <Box sx={{ flexGrow: 1 }}></Box>
-    //         {ldl} */}
-    //     </ListItem>
-
-    // if (editActive) {
-    //     cardElement =
-    //         <TextField
-    //             margin="normal"
-    //             required
-    //             fullWidth
-    //             id={"list-" + idNamePair._id}
-    //             label=""
-    //             name="name"
-    //             autoComplete=""
-    //             className='list-card'
-    //             onKeyPress={handleKeyPress}
-    //             onChange={handleUpdateText}
-    //             defaultValue={idNamePair.name}
-    //             inputProps={{ style: { fontSize: 48 } }}
-    //             InputLabelProps={{ style: { fontSize: 24 } }}
-    //             autoFocus
-    //         />
-    // }
+    let publishButton = '';
+    if (props.idNamePair.copy.published) {
+        publishButton = <IconButton size='small' color='primary' onClick={(event) => { handleTogglePublic(event, idNamePair._id, false) }} ><PublicIcon></PublicIcon></IconButton>
+    }
+    else {
+        publishButton = <IconButton size='small' onClick={(event) => { handleTogglePublic(event, idNamePair._id, true) }} ><PublicOffIcon></PublicOffIcon></IconButton>
+    }
 
     let mapTitleElement = <Box sx={{ width: 'fit-content' }} onClick={handleToggleEdit}>{idNamePair.name}</Box>;
     if (editActive) {
@@ -210,29 +152,6 @@ function MapCard(props) {
     }
 
     return (
-        // <div>
-        //     {cardElement}
-        //     <Dialog
-        //         open={open}
-        //         onClose={handleDialogClose}
-        //     >
-        //         <DialogTitle>
-        //             {"Delete Map"}
-        //         </DialogTitle>
-        //         <DialogContent>
-        //             <DialogContentText>
-        //                 Do you want to delete this map?
-        //             </DialogContentText>
-        //         </DialogContent>
-        //         <DialogActions>
-        //             <Button onClick={handleDialogClose}>Delete</Button>
-        //             <Button onClick={handleDialogClose} autoFocus>
-        //                 Cancel
-        //             </Button>
-        //         </DialogActions>
-
-        //     </Dialog>
-        // </div>
 
         <Card className='map-card' style={{ height: 'fit-content' }}>
             <CardActionArea onClick={(event) => { handleLoadList(event, idNamePair._id) }}>
@@ -253,9 +172,11 @@ function MapCard(props) {
 
 
             <CardActions>
-                <Button size='small' color='primary' variant='contained'><Link onClick={(event) => { handleEditor(event, idNamePair._id) }} to="/edit/">Edit</Link></Button>
-
+                <Button size='small' color='primary' variant='contained'><Link style={{ textDecoration: 'none' }} onClick={(event) => { handleEditor(event, idNamePair._id) }} to="/edit/">Edit</Link></Button>
+                {publishButton}
                 <IconButton size='small' color='primary' onClick={(event) => { handleDialogOpen(event) }} aria-label='delete'><DeleteIcon></DeleteIcon></IconButton>
+
+
 
 
 

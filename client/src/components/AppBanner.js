@@ -159,7 +159,7 @@ export default function AppBanner() {
             <Box sx={{ flexGrow: 1 }}>
                 <AppBar position="static" sx={{ bgcolor: 'primary.complement' }}>
                     <Toolbar>
-                        <Box id='appBannerLogo' color={'primary.main'}><PublicIcon></PublicIcon>Map Central</Box>
+                        <Box id='appBannerLogo' color={'primary.main'}><PublicIcon sx={{fontSize: 'xx-large'}}></PublicIcon>Map Central</Box>
                         <Box sx={{ width: '2%' }}></Box>
                         <Link onClick={handleHome} to="/" ><HomeIcon className='hvr-grow' sx={{ color: 'primary.main' }}></HomeIcon></Link>
                         <Box sx={{ width: '2%' }}></Box>

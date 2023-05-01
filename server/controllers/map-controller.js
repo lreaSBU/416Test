@@ -37,7 +37,7 @@ createMap = async (req, res) => {
     map.age = Date.now();
     map.published = false;
     map.l = []; //[[], [], [], [], []];
-    for(var i = 0; i < 5; i++){
+    for (var i = 0; i < 5; i++) {
         let nl = new Layer();
         await nl.save().then(() => {
             map.l.push(nl);
@@ -75,12 +75,12 @@ deleteMap = async (req, res) => {
     console.log("delete map with id: " + JSON.stringify(req.params.id));
     console.log("delete " + req.params.id);
 
-    Map.findByIdAndDelete({_id: req.params.id}, (err, map) =>{
+    Map.findByIdAndDelete({ _id: req.params.id }, (err, map) => {
         if (err) {
             res.status(500).json({ error: err });
-          } else {
-            return res.status(200).json({success: true});
-          }
+        } else {
+            return res.status(200).json({ success: true });
+        }
     })
 
 
@@ -126,7 +126,7 @@ getMapById = async (req, res) => {
         return res.status(200).json({ success: true, map: list });
     }).catch(err => console.log(err))
 }
-async function namePairs(nm){
+async function namePairs(nm) {
     await Map.find({ name: nm, published: true }, (err, maps) => {
         console.log("found maps by name: " + JSON.stringify(maps));
         if (err) {
@@ -161,8 +161,8 @@ async function namePairs(nm){
     }).catch(err => console.log(err))
 }
 getMapPairs = async (req, res) => {
-    if(req.body.searchMode == 1) return await namePairs(req.body.filter);
-    var tar = req.body.filter == null ? { _id: req.userId } : {firstName: req.body.filter}
+    // if(req.body.searchMode == 1) return await namePairs(req.body.filter);
+    var tar = req.body.filter == null ? { _id: req.userId } : { firstName: req.body.filter }
     await User.findOne(tar, (err, user) => {
         console.log("find user with :->: " + tar);
         async function asyncFindList(usr) {
@@ -236,27 +236,27 @@ commentPlaylist = async (req, res) => {
                 message: 'Playlist not found!'
             })
         }
-        
-        list.comments.push({name: body.name, msg: body.msg});
+
+        list.comments.push({ name: body.name, msg: body.msg });
 
         list
-        .save()
-        .then(() => {
-            console.log("SUCCESS!!!");
-            return res.status(200).json({
-                success: true,
-                cDat: {name: body.name, msg: body.msg},
-                id: list._id,
-                message: 'Playlist updated!',
+            .save()
+            .then(() => {
+                console.log("SUCCESS!!!");
+                return res.status(200).json({
+                    success: true,
+                    cDat: { name: body.name, msg: body.msg },
+                    id: list._id,
+                    message: 'Playlist updated!',
+                })
             })
-        })
-        .catch(error => {
-            console.log("FAILURE: " + JSON.stringify(error));
-            return res.status(404).json({
-                error,
-                message: 'Playlist not updated!',
+            .catch(error => {
+                console.log("FAILURE: " + JSON.stringify(error));
+                return res.status(404).json({
+                    error,
+                    message: 'Playlist not updated!',
+                })
             })
-        })
     })
 }
 
@@ -277,44 +277,44 @@ likePlaylist = async (req, res) => {
             })
         }
         var p = true;
-        if(body.email != list.ownerEmail){
-            for(var i = 0; i < list.likers.length; i++){
-                if(list.likers[i] === body.email){
+        if (body.email != list.ownerEmail) {
+            for (var i = 0; i < list.likers.length; i++) {
+                if (list.likers[i] === body.email) {
                     p = false;
                     break;
                 }
             }
-            if(p){
+            if (p) {
                 list.likers.push(body.email);
-                if(body.lt) list.likes++;
+                if (body.lt) list.likes++;
                 else list.dislikes++;
             }
-        }else p = false;
+        } else p = false;
 
         list
-        .save()
-        .then(() => {
-            console.log("SUCCESS!!!");
-            return res.status(200).json({
-                success: true,
-                acStat: p,
-                id: list._id,
-                message: 'Playlist updated!',
+            .save()
+            .then(() => {
+                console.log("SUCCESS!!!");
+                return res.status(200).json({
+                    success: true,
+                    acStat: p,
+                    id: list._id,
+                    message: 'Playlist updated!',
+                })
             })
-        })
-        .catch(error => {
-            console.log("FAILURE: " + JSON.stringify(error));
-            return res.status(404).json({
-                error,
-                message: 'Playlist not updated!',
+            .catch(error => {
+                console.log("FAILURE: " + JSON.stringify(error));
+                return res.status(404).json({
+                    error,
+                    message: 'Playlist not updated!',
+                })
             })
-        })
     }).catch(err => console.log(err));
 }
 
 updateMap = async (req, res) => {
     const body = req.body
-    console.log("updatePlaylist: " + JSON.stringify(body));
+    console.log("UPDATING MAP HERE " + JSON.stringify(req.params));
     //console.log("req.body.name: " + req.body.name);
 
     if (!body) {
@@ -347,8 +347,8 @@ updateMap = async (req, res) => {
                     list.songs = body.playlist.songs;
                     list.published = body.playlist.published;
                     list.comments = body.playlist.comments;*/
-                    if(body.map.name !== undefined) list.name = body.map.name;
-                    if(body.map.published !== undefined) list.published = body.map.published;
+                    if (body.map.name !== undefined) list.name = body.map.name;
+                    if (body.map.published !== undefined) list.published = body.map.published;
                     list
                         .save()
                         .then(() => {

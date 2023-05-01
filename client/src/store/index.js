@@ -133,6 +133,10 @@ function GlobalStoreContextProvider(props) {
         store.updateMapById(id, { name: nn });
     }
 
+    store.changePublished = function (id, pb) {
+        store.updateMapById(id, {published: pb});
+    }
+
     store.updateMapById = function (id, p) {
         async function asyncUpdate() {
             const response = await api.updateMapById(id, p);
@@ -175,6 +179,20 @@ function GlobalStoreContextProvider(props) {
                 if (p.currentConvo === undefined) p.currentConvo = store.currentConvo;
                 const response = p.filter === "" ? null : await api.getMapPairs(p.filter, p.searchMode, p.sortMode, p.page);
                 p.idNamePairs = (p.filter === "" ? [] : response.data.idNamePairs);
+
+                switch (p.sortMode) {
+                    case 0: //sort by date (old - new)
+                        p.idNamePairs.sort((a, b) => new Date(a.copy.age) - new Date(b.copy.age))
+                        break;
+                    case 1: //sort by date (new - old)
+                        p.idNamePairs.sort((a, b) => new Date(b.copy.age) - new Date(a.copy.age))
+                        break;
+                    case 2: //sort by name
+                        p.idNamePairs.sort((a, b) => a.name.localeCompare(b.name));
+                        break;
+                    default:
+                }
+
                 storeReducer(p);
                 if (p.filter !== "" && !response.data.success) console.log("API FAILED TO GET THE LIST PAIRS");
             } catch (err) {

@@ -16,7 +16,7 @@ import Typography from '@mui/material/Typography'
 import IconButton from '@mui/material/IconButton';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SortIcon from '@mui/icons-material/Menu';
-import { Avatar, ListItem, ListItemText } from '@mui/material';
+import { Avatar, InputBase, ListItem, ListItemText, TextField } from '@mui/material';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -130,9 +130,6 @@ const ProfileScreen = () => {
 
     let mapCards = "";
     if (store) {
-        console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!RENDERING FOR CURRENTVIEW: " + store.browseMode);
-        console.log("AMOUNT::: " + store.idNamePairs.length);
-        console.log("FILTER::: " + store.filter);
         mapCards =
             <List sx={{ width: '100%', left: '0%' }}>
                 {
@@ -154,13 +151,13 @@ const ProfileScreen = () => {
             let createdDate = store.currentMap.createdAt
             let sliceDate = createdDate.slice(0, 10)
 
-            let publish = '';
-            if (store.currentMap.published) {
-                publish = <PublicIcon color='primary'></PublicIcon>
-            }
-            else {
-                publish = <PublicOffIcon></PublicOffIcon>
-            }
+            // let publish = '';
+            // if (store.currentMap.published) {
+            //     publish = <PublicIcon color='primary'></PublicIcon>
+            // }
+            // else {
+            //     publish = <PublicOffIcon></PublicOffIcon>
+            // }
 
             inspect =
                 <Box>
@@ -172,7 +169,7 @@ const ProfileScreen = () => {
                         <br></br>
                         {'Created on: ' + sliceDate}
                         <br></br>
-                        {publish}
+                        {/* {publish} */}
                     </Typography>
                     <Box component='img' sx={{ height: '80%', width: '80%' }} src={placeholderimg}></Box>
                 </Box>
@@ -244,17 +241,19 @@ const ProfileScreen = () => {
                     </Box>
                 </div>
                 <div id='profileScreenSortHeader'>
-                    Sort
-                    <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
+                    <Box sx={{ display: { xs: 'none', md: 'flex', width: '80%'} }}>
                         <IconButton
                             size="large"
-                            edge="end"
+                            // edge="end"
                             aria-label="sort mode"
                             aria-controls={'primary-search-account-menu'}
                             aria-haspopup="true"
                             onClick={handleSortMenuOpen}
-                            color="inherit"
+                            // color="inherit"
+                            sx={{p: '10x'}}
                         ><SortIcon /></IconButton>
+                        <TextField placeholder='Search Maps' variant='outlined' fullWidth>
+                        </TextField>
                     </Box>
                 </div>
 
