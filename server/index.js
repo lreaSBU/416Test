@@ -12,7 +12,7 @@ const app = express()
 
 // SETUP THE MIDDLEWARE
 app.use(express.urlencoded({ extended: true }))
-app.use(bodyParser.json({limit: '500kb'}))
+app.use(bodyParser.json({limit: '5000kb'}))
 app.use(cors({
     origin: ["http://localhost:3000", "https://finaltest1-front.onrender.com", "https://finaltest1.onrender.com"],
     credentials: true

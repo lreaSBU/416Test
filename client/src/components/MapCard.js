@@ -132,6 +132,8 @@ function MapCard(props) {
     else {
         publishButton = <IconButton size='small' onClick={(event) => { handleTogglePublic(event, idNamePair._id, true) }} ><PublicOffIcon></PublicOffIcon></IconButton>
     }
+    let editButton = <></>;
+    if(!idNamePair.copy.published) editButton = <Button size='small' color='primary' variant='contained'><Link style={{ textDecoration: 'none' }} onClick={(event) => { handleEditor(event, idNamePair._id) }} to="/edit/">Edit</Link></Button>
 
     let mapTitleElement = <Box sx={{ width: 'fit-content' }} onClick={handleToggleEdit}>{idNamePair.name}</Box>;
     if (editActive) {
@@ -173,7 +175,7 @@ function MapCard(props) {
             </CardContent>
             {owned ? (
                 <CardActions>
-                    <Button size='small' color='primary' variant='contained'><Link style={{ textDecoration: 'none' }} onClick={(event) => { handleEditor(event, idNamePair._id) }} to="/edit/">Edit</Link></Button>
+                    {editButton}
                     {publishButton}
                     <IconButton size='small' color='primary' onClick={(event) => { handleDialogOpen(event) }} aria-label='delete'><DeleteIcon></DeleteIcon></IconButton>
                     <Dialog

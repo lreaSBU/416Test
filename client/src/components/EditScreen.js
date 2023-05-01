@@ -23,11 +23,12 @@ import AddIcon from '@mui/icons-material/Add';
 import ClearIcon from '@mui/icons-material/Clear';
 import PanToolIcon from '@mui/icons-material/PanTool';
 import HighlightAltIcon from '@mui/icons-material/HighlightAlt';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import CopyAllIcon from '@mui/icons-material/CopyAll';
+import CallMergeIcon from '@mui/icons-material/CallMerge';
+import CallSplitIcon from '@mui/icons-material/CallSplit';
 import MenuIcon from '@mui/icons-material/Menu';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import Slider from '@mui/material/Slider';
@@ -58,7 +59,12 @@ const EditScreen = () => {
     const propContainer = useRef(null);
     const propList = useRef(null);
     const camXTxt = useRef(null), camYTxt = useRef(null), camZTxt = useRef(null);
-    const layerTxt = useRef(null), groupTxt = useRef(null), polyTxt = useRef(null);
+    const layerTxt = useRef(null), groupTxt = useRef(null), modeTxt = useRef(null);
+    const selectRefer = useRef(null);
+    const addRefer = useRef(null);
+    const removeRefer = useRef(null);
+    const moveRefer = useRef(null);
+    const boxRefer = useRef(null);
 
     const tps = new jsTPS();
 
@@ -85,7 +91,14 @@ const EditScreen = () => {
         camZText = camZTxt.current.children[1].children[0];
         var layerText = layerTxt.current.children[1].children[0],
         groupText = groupTxt.current.children[1].children[0],
-        polyText = polyTxt.current.children[1].children[0];
+        modeText = modeTxt.current.children[1].children[0];
+        var toolRefs = [
+            selectRefer.current,
+            addRefer.current,
+            removeRefer.current,
+            moveRefer.current,
+            boxRefer.current
+        ];
 
         function cleanVal(n, b, i){
             if(!i && !isNaN(n)) n = n.toFixed(5);
@@ -100,7 +113,7 @@ const EditScreen = () => {
                 case 2: camZText.value = v; break;
                 case 3: layerText.value = v; break;
                 case 4: groupText.value = v; break;
-                case 5: polyText.value = v; break;
+                case 5: modeText.value = v; break;
             }
         }
 
@@ -219,15 +232,19 @@ const EditScreen = () => {
             let fm = mode;
             if(mode){
                 mode = false;
-                mels = [];
+                deMel();
             }else mode = sels[sels.length-1];
             if(mode == undefined) mode = false;
             if(fm != mode){
                 tps.clearAllTransactions();
+                setVal(5, mode ? 'Edit' : 'Object');
                 Poly.Draw();
             }
         }
+        const defStyle = 'fontSize:"32pt";color: #444',
+        selStyle = 'fontSize:"32pt";color: #fbbd0c';
         function swapTool(t){
+            for(let tool of toolRefs) tool.style = defStyle;
             tool = t;
             switch(tool){
                 case 0: //reset inspector
@@ -238,15 +255,19 @@ const EditScreen = () => {
                         setVal(0, sels[sels.length-1].mean.x);
                         setVal(1, sels[sels.length-1].mean.y);
                     }
+                    toolRefs[0].style = selStyle;
                 break; case 1: //reset movoff
                     movoff.set(0, 0);
+                    toolRefs[3].style = selStyle;
                 break; case 2: //init box select
                     movoff.set(mx, my);
+                    toolRefs[4].style = selStyle;
                 break;
             }
         }
         function insert_tool(){
-            if(mode){
+            tps.bookMark();
+            if(mode && mels.length == 2){
                 let ps = [];
                 for(let m of mels) ps.push(findParent(m, mode));
                 for(let i = 0; i < mels.length-1; i++){
@@ -258,6 +279,7 @@ const EditScreen = () => {
                     }
                 }
             }
+            tps.unMark();
         }
         function remove_tool(){
             /* //ITERATOR FOR SHARED POINT REMOVAL:::
@@ -268,6 +290,7 @@ const EditScreen = () => {
                         break;
                     }
             */
+            tps.bookMark();
             if(mode && mels.length > 0){
                 if(keys.Alt){ //delete the entire Poly
                     if(mode.elems.length == 1) return handleWarning('Cannot remove all Polys of a Subregion');
@@ -295,6 +318,10 @@ const EditScreen = () => {
             }else if(!mode && sels.length > 0){
                 console.log('deleting subregions later...');
             }
+            tps.unMark();
+        }
+        function canSel(){
+            return (mode && mels.length > 0) || (!mode && sels.length > 0);
         }
         window.addEventListener("keydown", function(e){
             if(VERSION != store.edit.sesh) return;
@@ -303,9 +330,9 @@ const EditScreen = () => {
             if(changeFlag) switch(e.key){
                 case ' ': swapMode(); break;
                 case 'b': swapTool(2); break;
-                case 'g': swapTool(1); break;
-                case 'x': remove_tool(); break;
-                case 'i': insert_tool(); break;
+                case 'g': if(canSel()) swapTool(1); break;
+                case 'x': if(canSel()) remove_tool(); break;
+                case 'i': if(canSel()) insert_tool(); break;
                 case 'p': console.log(camXText.value); break;
                 case 'f': Poly.Draw(true); changeFlag = false; break;
                 case 'm': mergeRegions(); break;
@@ -431,7 +458,10 @@ const EditScreen = () => {
                 if(!mode && sel != null){
                     sel.h = !sel.h;
                     if(!keys.Shift){
-                        sel.h = sel.h || (sels.length > 0);
+                        if(!sel.h && sels.length > 1){
+                            sels.splice(sels.indexOf(sel), 1);
+                            sel.h = true;
+                        }
                         deSel();
                     }
                     if(sel.h) sels.push(sel);
@@ -440,12 +470,14 @@ const EditScreen = () => {
                     setVal(1, sel.mean.y);
                     setVal(3, sel.level+1);
                     setVal(4, sel.group+1);
-                    setVal(5, '-');
                     Poly.Draw();
                 }else if(mode && mel != null){
                     mel.h = !mel.h;
                     if(!keys.Shift){
-                        mel.h = mel.h || (mels.length > 0);
+                        if(!mel.h && mels.length > 1){
+                            mels.splice(mels.indexOf(mel), 1);
+                            mel.h = true;
+                        }
                         deMel(keys.Control);
                     }
                     if(mels.length && keys.Control){ //connect
@@ -483,7 +515,6 @@ const EditScreen = () => {
                     setVal(1, mel.y);
                     setVal(3, mode.level+1);
                     setVal(4, mode.group+1);
-                    setVal(5, '-');
                     Poly.Draw();
                 }
             }
@@ -810,6 +841,35 @@ const EditScreen = () => {
             }
             store.reduceEdit();
         }
+        /*
+        var toolRefs = [
+            selectRefer.current,
+            addRefer.current,
+            removeRefer.current,
+            moveRefer.current,
+            boxRefer.current
+        ];
+        */
+        toolRefs[0].onclick = function(){
+            swapTool(0);
+            Poly.Draw();
+        }
+        toolRefs[1].onclick = function(){
+            if(canSel()) insert_tool();
+            Poly.Draw();
+        }
+        toolRefs[2].onclick = function(){
+            if(canSel()) remove_tool();
+            Poly.Draw();
+        }
+        toolRefs[3].onclick = function(){
+            if(canSel()) swapTool(1);
+            Poly.Draw();
+        }
+        toolRefs[4].onclick = function(){
+            swapTool(2);
+            Poly.Draw();
+        }
         var hBox;
         function drawBox(p){
             hBox = (camZ**.4);
@@ -822,7 +882,7 @@ const EditScreen = () => {
             if(h) ctx.strokeStyle = '#ff0000';
             else ctx.fillStyle = p.h ? "#fbbd0c" : "#000";
             ctx.beginPath();
-            ctx.arc(HW+camZ*(p.x+camX-HW), HH+camZ*(p.y+camY-HH), camZ**.2, 0, 2*Math.PI);
+            ctx.arc(HW+camZ*(p.x+camX-HW), HH+camZ*(p.y+camY-HH), (h ? 2 : 1) * camZ**.2, 0, 2*Math.PI);
             if(h) ctx.stroke();
             else ctx.fill();
         }
@@ -832,9 +892,9 @@ const EditScreen = () => {
         }
         var fx, fy, pLast = new Point(0, 0), dx, dy;
         var LOD_SKIP, LOD_STEP, LOD_REF, finSum, li, ni, ci;
-        var defCol = "#000", mark, Acc = false;
+        var defCol, fillCol, mark, Acc = false;
         var dots = [], remp, remi, gi, mri;
-        const subColRefs = ['#aba99f', '#000', '#000'];
+        const subColRefs = ['#aba99f', '#000', '#000', ''];
         class Poly{
             static l = [[], [], [], [], []]; //poly struct
             static d = [[], [], [], [], []]; //data struct
@@ -842,9 +902,13 @@ const EditScreen = () => {
             static SubDraw(ind){
                 var p = 0, l, g;
                 defCol = subColRefs[ind];
+                fillCol = subColRefs[ind+3];
                 for(p = 0; p < store.edit.l.length; p++){
                     if((!ind) == (viewLevel == p)) continue;
                     if(Poly.vis[p]) for(l of store.edit.l[p]){
+                        for(g of l.elems) if((ind == 2) == l.h){
+                            g.draw(l.h && !mode, l.h && (l == mode));
+                        }
                         if(l.props != null && Object.keys(l.props).length){ //has data
                             l.mean.getLocal();
                             ctx.fillStyle = l.h ? "#fbbd0c" : '#000';
@@ -855,15 +919,13 @@ const EditScreen = () => {
                                     ctx.fillText(l.props['NAME_'+p], Point.Gen.x, Point.Gen.y);
                             }
                         }
-                        for(g of l.elems) if((ind == 2) == l.h){
-                            g.draw(l.h && !mode, l.h && (l == mode));
-                        }
                     }
                 }
             }
             static Draw(af = false){
                 ctx.clearRect(0, 0, canv.width, canv.height);
-                
+                ctx.fillStyle = '#99b3ff';
+                ctx.fillRect(0, 0, canv.width, canv.height);
                 //var p = 0, l, g;
                 //if(af) autoFrame();
                 if(store.edit.l[viewLevel] == undefined) return;
@@ -1020,6 +1082,8 @@ const EditScreen = () => {
                 fy = HH + camZ*(this.points[0].y + camY - HH);
                 if(mri == this.points.length-1 || (fx > 0 && fx < CW && fy > 0 && fy < CH)) ctx.lineTo(fx, fy);
                 ctx.stroke();
+                ctx.fillStyle = mode && !sigh ? "#ddffcc" : (high ? "#666600" : '#99ff66');
+                ctx.fill();
                 LOD_REF = null;
                 if(dots.length) drawBox(dots[0]);
                 for(let d of dots) drawDot(d);
@@ -1112,6 +1176,7 @@ const EditScreen = () => {
         }
 
         function start(){ //translate raw DB data into more robust editing structure
+            ctx.lineWidth = 2;
             if(!store.edit.raw) return;
             console.log('RAW:', store.edit.l);
             for(let i = 0; i < store.edit.l.length; i++){
@@ -1145,38 +1210,38 @@ const EditScreen = () => {
         <div id='editParent'>
             <div id = "leftPar" className='editShelf'>
                 <Box id='toolTray' className='traySect' sx={{bgcolor: '#999', borderRadius: 3}}>
-                    <IconButton aria-label='select'>
-                        <MouseIcon style={{fontSize:'32pt', color: '#000'}} />
+                    <IconButton ref={selectRefer} aria-label='select'>
+                        <MouseIcon style={{fontSize:'32pt'}} />
                     </IconButton>
-                    <IconButton aria-label='add'>
+                    <IconButton ref={addRefer} aria-label='add'>
                         <AddIcon style={{fontSize:'32pt'}} />
                     </IconButton>
-                    <IconButton aria-label='remove'>
+                    <IconButton ref={removeRefer} aria-label='remove'>
                         <ClearIcon style={{fontSize:'32pt'}} />
                     </IconButton>
-                    <IconButton aria-label='move'>
+                    <IconButton ref={moveRefer} aria-label='move'>
                         <PanToolIcon style={{fontSize:'32pt'}} />
                     </IconButton>
-                    <IconButton aria-label='box select'>
+                    <IconButton ref={boxRefer} aria-label='box select'>
                         <HighlightAltIcon style={{fontSize:'32pt'}} />
                     </IconButton>
                     <IconButton aria-label='duplicate'>
-                        <ContentCopyIcon style={{fontSize:'32pt'}} />
+                        <CallMergeIcon style={{fontSize:'32pt'}} />
                     </IconButton>
                     <IconButton aria-label='merge'>
-                        <CopyAllIcon  style={{fontSize:'32pt'}} />
+                        <CallSplitIcon style={{fontSize:'32pt'}} />
                     </IconButton>
                     <IconButton aria-label='properties'>
                         <MenuIcon ref={propContainer} style={{fontSize:'32pt'}} />
                     </IconButton>
+                    <IconButton aria-label='duplicate'>
+                        <ContentCopyIcon style={{fontSize:'32pt'}} />
+                    </IconButton>
                     <IconButton aria-label='traverse up layer'>
-                        <ArrowUpwardIcon  style={{fontSize:'32pt'}} />
+                        <ArrowUpwardIcon style={{fontSize:'32pt'}} />
                     </IconButton>
                     <IconButton aria-label='traverse down layer'>
-                        <ArrowDownwardIcon  style={{fontSize:'32pt'}} />
-                    </IconButton>
-                    <IconButton aria-label='scale'>
-                        <ZoomOutMapIcon  style={{fontSize:'32pt'}} />
+                        <ArrowDownwardIcon style={{fontSize:'32pt'}} />
                     </IconButton>
                     <IconButton variant="contained" component="label" aria-label='upload'>
                         <input ref={fileContainer} type="file" id="fileIn" name="ShapeUpload" hidden></input>
@@ -1297,7 +1362,7 @@ const EditScreen = () => {
                     </Box>
                 </Box>
             </div>
-            <Box id="midPar">
+            <Box id='midPar'>
                 <canvas ref={myContainer} id="editView" width="1000" height="850" style={{border: "1px solid #5EB120"}}></canvas>
             </Box>
             <div id = "rightPar" className='editShelf'>
@@ -1313,9 +1378,9 @@ const EditScreen = () => {
                 </Box>
                 <Box sx={{height:'5%'}}></Box>
                 <Box id='inspector2' className='traySect' sx={{bgcolor: '#999', borderRadius: 1}}>
+                    <TextField ref={modeTxt} variant="filled" label="Mode" value="Object"/>
                     <TextField ref={layerTxt} variant="filled" label="Layer #" value="-"/>
                     <TextField ref={groupTxt} variant="filled" label="Subregion #" value="-"/>
-                    <TextField ref={polyTxt} variant="filled" label="Poly #" value="-"/>
                 </Box>
             </div>
         </div>

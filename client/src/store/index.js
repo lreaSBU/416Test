@@ -167,7 +167,7 @@ function GlobalStoreContextProvider(props) {
             if (p.page == undefined) p.page = store.page;
             if (p.editingName == undefined) p.editingName = store.editingName;
             if (p.currentConvo == undefined) p.currentConvo = store.currentConvo;
-            console.log(store.filter, '==>', p.filter);
+            //console.log(store.filter, '==>', p.filter);
             storeReducer(p);
             const response = await api.getMapPairs(!p.browseMode ? null : p.filter, p.searchMode, p.sortMode, p.page);
             p.idNamePairs = response.data.idNamePairs;

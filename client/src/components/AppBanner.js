@@ -165,7 +165,7 @@ export default function AppBanner() {
                         <Box sx={{ width: '2%' }}></Box>
                         <Link className='hvr-grow' style={{ textDecoration: 'none', color: 'black' }} onClick={handleHelp} to="/help/"><QuestionMarkIcon></QuestionMarkIcon></Link>
                         <Box sx={{ width: '5%' }}></Box>
-                        <Box id='bannerStatus' sx={{ fontSize: 'xx-large' }}>{(store.browseMode == 0 ? <Link onClick={handleHome} to="/"><Fab
+                        <Box id='bannerStatus' sx={{ fontSize: 'xx-large' }}>{(store.browseMode == 0 && store.tabMode < 2 ? <Link onClick={handleHome} to="/"><Fab
                             size='large'
                             color='primary'
                             aria-label="add"

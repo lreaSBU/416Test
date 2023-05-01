@@ -16,6 +16,10 @@ body {
   background-color: var(--swatch-foundation);
 }
 
+.toolButton {
+  font-size: '32pt'
+}
+
 #editParent {
   width: 100%;
   height: 93%;
@@ -36,6 +40,10 @@ body {
 
 #midPar {
   flex-grow: 2;
+}
+
+#editView{
+  flex-grow: 1;
 }
 
 .traySect {
