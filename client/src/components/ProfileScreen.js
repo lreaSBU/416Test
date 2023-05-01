@@ -139,6 +139,7 @@ const ProfileScreen = () => {
                             key={pair._id}
                             idNamePair={pair}
                             selected={false}
+                            owned={true}
                         />
                     ))
                 }
@@ -203,6 +204,19 @@ const ProfileScreen = () => {
         <MenuItem onClick={(event) => { handleSort(2) }}>By Name (A-Z)</MenuItem>
     </Menu>
 
+    /*
+    <ListItem>
+        <ListItemText>{'Email: '}{auth.getAccountDetails().email}{' '}
+            <Button size='small' color='primary' variant='outlined' onClick={(event) => { handleDialogOpen(1) }}>Change</Button>
+        </ListItemText>
+    </ListItem>
+    <ListItem>
+        <ListItemText>{'Password: placeholder '}
+            <Button size='small' color='primary' variant='outlined' onClick={(event) => { handleDialogOpen(2) }}>Change</Button>
+        </ListItemText>
+    </ListItem>
+    */
+
     return (
         <div>
             <div id="list-selector-list">
@@ -218,16 +232,7 @@ const ProfileScreen = () => {
                                 <ListItemText>First name: {auth.getAccountDetails().firstName}</ListItemText>
                                 <ListItemText>Last name: {auth.getAccountDetails().lastName}</ListItemText>
                             </ListItem>
-                            <ListItem>
-                                <ListItemText>{'Email: '}{auth.getAccountDetails().email}{' '}
-                                    <Button size='small' color='primary' variant='outlined' onClick={(event) => { handleDialogOpen(1) }}>Change</Button>
-                                </ListItemText>
-                            </ListItem>
-                            <ListItem>
-                                <ListItemText>{'Password: placeholder '}
-                                    <Button size='small' color='primary' variant='outlined' onClick={(event) => { handleDialogOpen(2) }}>Change</Button>
-                                </ListItemText>
-                            </ListItem>
+                            
                             <ListItem>
                                 <ListItemText>{'ContactID: '}{auth.getAccountDetails().userId}{' '}
                                     <IconButton size='small' color='primary' variant='outlined' aria-label='copy'>
@@ -252,8 +257,6 @@ const ProfileScreen = () => {
                             // color="inherit"
                             sx={{p: '10x'}}
                         ><SortIcon /></IconButton>
-                        <TextField placeholder='Search Maps' variant='outlined' fullWidth>
-                        </TextField>
                     </Box>
                 </div>
 

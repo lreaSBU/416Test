@@ -57,6 +57,8 @@ const EditScreen = () => {
     const fileContainer = useRef(null);
     const propContainer = useRef(null);
     const propList = useRef(null);
+    const camXTxt = useRef(null), camYTxt = useRef(null), camZTxt = useRef(null);
+    const layerTxt = useRef(null), groupTxt = useRef(null), polyTxt = useRef(null);
 
     const tps = new jsTPS();
 
@@ -78,11 +80,32 @@ const EditScreen = () => {
         var fileIn = fileContainer.current;
         var propButt = propContainer.current;
         var propHolder = propList.current;
+        var camXText = camXTxt.current.children[1].children[0],
+        camYText = camYTxt.current.children[1].children[0],
+        camZText = camZTxt.current.children[1].children[0];
+        var layerText = layerTxt.current.children[1].children[0],
+        groupText = groupTxt.current.children[1].children[0],
+        polyText = polyTxt.current.children[1].children[0];
+
+        function cleanVal(n, b, i){
+            if(!i && !isNaN(n)) n = n.toFixed(5);
+            if(b && n >= 0) n = '+' + n;
+            return n;
+        }
+        function setVal(a, v, b = false){
+            v = cleanVal(v, b, a > 2);
+            switch(a){
+                case 0: camXText.value = v; break;
+                case 1: camYText.value = v; break;
+                case 2: camZText.value = v; break;
+                case 3: layerText.value = v; break;
+                case 4: groupText.value = v; break;
+                case 5: polyText.value = v; break;
+            }
+        }
 
         const CW = canv.width, CH = canv.height, HW = CH/2, HH = CH/2;
         var fi, bytes, camZ = 1, camX = 100, camY = 100;
-
-        var CWS, CHS;
 
         class Point{
             static Gen = new Point(0, 0);
@@ -144,8 +167,7 @@ const EditScreen = () => {
             let scr = e.deltaY < 0 ? 1 : -1, czo = camZ;
             if(scr == 1) camZ *= 1.1;
             else camZ /= 1.1;
-            CWS = CW-camZ;
-            CHS = CH-camZ;
+            setVal(2, camZ);
             Poly.Draw();
         });
 
@@ -170,9 +192,11 @@ const EditScreen = () => {
                             m.x += (e.offsetX - mx)/camZ;
                             m.y += (e.offsetY - my)/camZ;
                         }
+                        setVal(0, movoff.x, true);
+                        setVal(1, -movoff.y, true);
                     break; case 2: //drag boxSelect
-                        //movoff.x += (e.offsetX - mx)/camZ;
-                        //movoff.y += (e.offsetY - my)/camZ;
+                        setVal(0, Math.abs(movoff.x-mx), true);
+                        setVal(1, Math.abs(movoff.y-my), true);
                     break;
                 }
                 mel = null;
@@ -206,7 +230,15 @@ const EditScreen = () => {
         function swapTool(t){
             tool = t;
             switch(tool){
-                case 1: //reset movoff
+                case 0: //reset inspector
+                    if(mode && mels.length > 0){
+                        setVal(0, mels[mels.length-1].x);
+                        setVal(1, mels[mels.length-1].y);
+                    }else if(!mode && sels.length > 0){
+                        setVal(0, sels[sels.length-1].mean.x);
+                        setVal(1, sels[sels.length-1].mean.y);
+                    }
+                break; case 1: //reset movoff
                     movoff.set(0, 0);
                 break; case 2: //init box select
                     movoff.set(mx, my);
@@ -274,7 +306,7 @@ const EditScreen = () => {
                 case 'g': swapTool(1); break;
                 case 'x': remove_tool(); break;
                 case 'i': insert_tool(); break;
-                case 'p': handleWarning('wahh'); break;
+                case 'p': console.log(camXText.value); break;
                 case 'f': Poly.Draw(true); changeFlag = false; break;
                 case 'm': mergeRegions(); break;
                 case 'y': if(keys.Control && tps.hasTransactionToRedo()) tps.doMulti(); break;
@@ -321,7 +353,7 @@ const EditScreen = () => {
             if(VERSION != store.edit.sesh) return;
             store.edit.focus = false;
             mp.set(e.offsetX, e.offsetY);
-            if(tool == 2){ //init box select FOR REAL
+            if(tool == 2){ //init boxSelect FOR REAL
                 movoff.set(mp.x, mp.y);
             }
         });
@@ -373,13 +405,13 @@ const EditScreen = () => {
                         }
                         movoff.set(0, 0);
                     }
-                    tool = 0;
+                    swapTool(0);
                     Poly.Draw(); //just do this immediately for boxSelect
                 break;
             }else{
                 store.sendTransac(7, -1, -1, -1, null, [camX, camY, camZ]);
             }
-            tool = 0;
+            swapTool(0);
             if(mp.x != e.offsetX || mp.y != e.offsetY) return;
             if(store.edit.l[viewLevel] == undefined) return;
             px = (e.offsetX-HW)/camZ-camX+HW;
@@ -404,13 +436,11 @@ const EditScreen = () => {
                     }
                     if(sel.h) sels.push(sel);
                     else sels.splice(sels.indexOf(sel), 1);
-                    //SETTING PROP MENU:{
-                    let head = sels[sels.length-1];
-                    if(head && head.props){
-                        //store.edit.pk[0] = Object.keys(head.props)[0];
-                        //store.edit.pv[0] = head.props[Object.keys(head.props)[0]];
-                    }
-                    //}
+                    setVal(0, sel.mean.x);
+                    setVal(1, sel.mean.y);
+                    setVal(3, sel.level+1);
+                    setVal(4, sel.group+1);
+                    setVal(5, '-');
                     Poly.Draw();
                 }else if(mode && mel != null){
                     mel.h = !mel.h;
@@ -449,6 +479,11 @@ const EditScreen = () => {
                     }
                     if(mel.h) mels.push(mel);
                     else mels.splice(mels.indexOf(mel), 1);
+                    setVal(0, mel.x);
+                    setVal(1, mel.y);
+                    setVal(3, mode.level+1);
+                    setVal(4, mode.group+1);
+                    setVal(5, '-');
                     Poly.Draw();
                 }
             }
@@ -732,7 +767,7 @@ const EditScreen = () => {
                         var np = new Poly(-1, fileLevel, GN);
                         cr = (c[0].length == 2 ? c : c[0]);
                         for(let i = 0; i < cr.length-1; i++) np.add(new Point(cr[i][0], -cr[i][1]));
-                        console.log(np.points[0], "VS.", np.points[np.points.length-1]);
+                        //console.log(np.points[0], "VS.", np.points[np.points.length-1]);
                         store.edit.l[fileLevel][GN].elems.push(np);
                         store.edit.l[fileLevel][GN].mean.addLocal(np.mean());
                         np.finalize(fileLevel, GN, store.edit.l[fileLevel][GN]);
@@ -745,7 +780,7 @@ const EditScreen = () => {
                     }*/
                     GN++;
                 }
-                console.log(cols);
+                //console.log(cols);
                 console.log(store.edit.l);
                 Poly.Draw();
             };
@@ -798,7 +833,7 @@ const EditScreen = () => {
         var fx, fy, pLast = new Point(0, 0), dx, dy;
         var LOD_SKIP, LOD_STEP, LOD_REF, finSum, li, ni, ci;
         var defCol = "#000", mark, Acc = false;
-        var dots = [], remp, remi;
+        var dots = [], remp, remi, gi, mri;
         const subColRefs = ['#aba99f', '#000', '#000'];
         class Poly{
             static l = [[], [], [], [], []]; //poly struct
@@ -962,27 +997,28 @@ const EditScreen = () => {
                 LOD_SKIP = this.lodRatio * this.lodBound / camZ / camZ;
                 //if(mode && !sigh) LOD_SKIP = 10000000000 * this.lodBound;
                 aFrame = true; bFrame = false;
-                var f = this.points[0]; LOD_REF = f;
-                fx = HW + camZ*(f.x + camX - HW);
-                fy = HH + camZ*(f.y + camY - HH);
+                LOD_REF = this.points[0];
+                fx = HW + camZ*(LOD_REF.x + camX - HW);
+                fy = HH + camZ*(LOD_REF.y + camY - HH);
                 mark = 0;
                 dots = [];
-                if(sigh) dots.push(f);
+                if(sigh) dots.push(LOD_REF);
                 //pLast.set(undefined, undefined); //pLast.set(fx, fy);
                 ctx.moveTo(fx, fy);
-                for(var i = 1; i < this.points.length; i++){ //need to optimize this
+                for(gi = 1; gi < this.points.length; gi++){ //need to optimize this
                     //i % LOD_STEP == 0 && 
-                    if(!Acc && LOD_REF.fastDist(this.points[i]) < LOD_SKIP) continue;
-                    LOD_REF = this.points[i];
+                    if(!Acc && LOD_REF.fastDist(this.points[gi]) < LOD_SKIP) continue;
+                    LOD_REF = this.points[gi];
                     fx = HW+camZ*(LOD_REF.x+camX-HW);
                     fy = HH+camZ*(LOD_REF.y+camY-HH);
                     if((fx < 0 || fx > CW) && (fy < 0 || fy > CH)) continue;
-                    if(sigh) dots.push(this.points[i]);
+                    if(sigh) dots.push(this.points[gi]);
+                    mri = gi;
                     ctx.lineTo(fx, fy);
                 }
-                fx = HW + camZ*(f.x + camX - HW);
-                fy = HH + camZ*(f.y + camY - HH);
-                if(fx > 0 && fx < CW && fy > 0 && fy < CH) ctx.lineTo(fx, fy);
+                fx = HW + camZ*(this.points[0].x + camX - HW);
+                fy = HH + camZ*(this.points[0].y + camY - HH);
+                if(mri == this.points.length-1 || (fx > 0 && fx < CW && fy > 0 && fy < CH)) ctx.lineTo(fx, fy);
                 ctx.stroke();
                 LOD_REF = null;
                 if(dots.length) drawBox(dots[0]);
@@ -1271,20 +1307,15 @@ const EditScreen = () => {
                     </Collapse>
                 </Box>
                 <Box id='inspector' className='traySect' sx={{bgcolor: '#999', borderRadius: 1}}>
-                    <FormGroup sx={{padding: '5%', width: '80%'}}>
-                        <FormControlLabel control={<TextField sx={{width:'60%'}} variant="filled" value="234.65"/>} label="X" />
-                        <FormControlLabel control={<TextField sx={{width:'60%'}} variant="filled" value="643.12"/>} label="Y" />
-                        <FormControlLabel control={<TextField sx={{width:'60%'}} variant="filled" value="1"/>} label="Scale" />
-                    </FormGroup>
+                    <TextField ref={camXTxt} variant="filled" value="0" label="X"/>
+                    <TextField ref={camYTxt} variant="filled" value="0" label="Y"/>
+                    <TextField ref={camZTxt} variant="filled" value="1" label="Scale"/>
                 </Box>
                 <Box sx={{height:'5%'}}></Box>
                 <Box id='inspector2' className='traySect' sx={{bgcolor: '#999', borderRadius: 1}}>
-                    <FormGroup sx={{padding: '5%', width: '80%'}}>
-                        <FormControlLabel control={<TextField disabled sx={{width:'60%'}} variant="filled" value="Subregion"/>} label="Type" />
-                        <FormControlLabel control={<TextField disabled sx={{width:'60%'}} variant="filled" value="1"/>} label="Layer" />
-                        <FormControlLabel control={<TextField disabled sx={{width:'60%'}} variant="filled" value="2"/>} label="Group" />
-                        <FormControlLabel control={<TextField disabled sx={{width:'60%'}} variant="filled" value="75"/>} label="Children" />
-                    </FormGroup>
+                    <TextField ref={layerTxt} variant="filled" label="Layer #" value="-"/>
+                    <TextField ref={groupTxt} variant="filled" label="Subregion #" value="-"/>
+                    <TextField ref={polyTxt} variant="filled" label="Poly #" value="-"/>
                 </Box>
             </div>
         </div>

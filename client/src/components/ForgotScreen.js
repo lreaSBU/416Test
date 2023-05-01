@@ -31,18 +31,9 @@ export default function ForgotScreen() {
             formData.get('email'),
             store
         );
-
-
-
-
-        /*EXAMPLE CALL::::
-        let email = 'some.one@gmail.com'
-        auth.requestRecovery(
-            email
-        );*/
     };
 
-    const handleCodeSubmit = (event) => {
+    const handleCodeSubmit = async (event) => {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
         let password = formData.get('newPass');
@@ -51,7 +42,7 @@ export default function ForgotScreen() {
             setPasswordsMatch(false);
             return;
         }
-        auth.verifyCode(
+        await auth.verifyCode(
             email,
             formData.get('code'),
             formData.get('newPass'),
@@ -62,10 +53,10 @@ export default function ForgotScreen() {
 
     };
 
-    const handleEmailSubmit = (event) => {
+    const handleEmailSubmit = async (event) => {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
-        auth.requestRecovery(
+        await auth.requestRecovery(
             formData.get('email'),
             store
         );

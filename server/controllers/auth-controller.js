@@ -126,19 +126,21 @@ requestRecovery = async (req, res) => {
         const transporter = nodemailer.createTransport({
             service: 'hotmail',
             auth: {
-                user: 'map-central@outlook.com',
-                pass: 'mapcentral123'
+                user: 'map_central@outlook.com',
+                pass: 'Fartyfarts8'
             }
         });
         // Generate a random verification code
         const verificationCode = Math.floor(Math.random() * (999999 - 100000) + 100000);
         console.log("verificationCode: " + verificationCode);
         // Save the verification code to the user
+        const expirationTime = Date.now() + (5 * 100000); // 5 * 1000 = 5 secs from now
         existingUser.verificationCode = verificationCode;
+        existingUser.expiresAt = new Date(expirationTime);
         await existingUser.save();
         // Send the email
         const mailOptions = {
-            from: 'map-central@outlook.com',
+            from: 'map_central@outlook.com',
             to: email,
             subject: 'Password Reset',
             text: `Your verification code is: ${verificationCode}`
@@ -196,6 +198,13 @@ verifyCode = async (req, res) => {
                 .status(401)
                 .json({
                     errorMessage: "Wrong verification code provided."
+                })
+        }
+        if(existingUser.expiresAt <= Date.now()){
+            return res
+                .status(401)
+                .json({
+                    errorMessage: "Time expired"
                 })
         }
         // Verification code matches

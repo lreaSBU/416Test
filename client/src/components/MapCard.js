@@ -31,7 +31,7 @@ function MapCard(props) {
     const { store } = useContext(GlobalStoreContext);
     const [editActive, setEditActive] = useState(false);
     const [text, setText] = useState("");
-    const { idNamePair, selected } = props;
+    const { idNamePair, selected, owned } = props;
     const [open, setOpen] = useState(false);
 
     function handleEditor(e, id) {
@@ -69,6 +69,8 @@ function MapCard(props) {
 
     function handleToggleEdit(event) {
         event.stopPropagation();
+        if(!owned) return;
+        if(idNamePair.copy.published) return console.warn('cannot changed name of a public map');
         toggleEdit();
     }
 
@@ -124,7 +126,7 @@ function MapCard(props) {
     }
 
     let publishButton = '';
-    if (props.idNamePair.copy.published) {
+    if (idNamePair.copy.published) {
         publishButton = <IconButton size='small' color='primary' onClick={(event) => { handleTogglePublic(event, idNamePair._id, false) }} ><PublicIcon></PublicIcon></IconButton>
     }
     else {
@@ -169,38 +171,33 @@ function MapCard(props) {
                     {mapTitleElement}
                 </Box>
             </CardContent>
+            {owned ? (
+                <CardActions>
+                    <Button size='small' color='primary' variant='contained'><Link style={{ textDecoration: 'none' }} onClick={(event) => { handleEditor(event, idNamePair._id) }} to="/edit/">Edit</Link></Button>
+                    {publishButton}
+                    <IconButton size='small' color='primary' onClick={(event) => { handleDialogOpen(event) }} aria-label='delete'><DeleteIcon></DeleteIcon></IconButton>
+                    <Dialog
+                        open={open}
+                        onClose={handleDialogClose}
+                    >
+                        <DialogTitle>
+                            Delete {idNamePair.name}
+                        </DialogTitle>
+                        <DialogContent>
+                            <DialogContentText>
+                                Do you want to delete the map {idNamePair.name}?
+                            </DialogContentText>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button color='error' variant='contained' onClick={(event) => handleDeleteList(event, idNamePair._id)}>Delete</Button>
+                            <Button variant='outlined' onClick={handleDialogClose} autoFocus>
+                                Cancel
+                            </Button>
+                        </DialogActions>
 
-
-            <CardActions>
-                <Button size='small' color='primary' variant='contained'><Link style={{ textDecoration: 'none' }} onClick={(event) => { handleEditor(event, idNamePair._id) }} to="/edit/">Edit</Link></Button>
-                {publishButton}
-                <IconButton size='small' color='primary' onClick={(event) => { handleDialogOpen(event) }} aria-label='delete'><DeleteIcon></DeleteIcon></IconButton>
-
-
-
-
-
-                <Dialog
-                    open={open}
-                    onClose={handleDialogClose}
-                >
-                    <DialogTitle>
-                        Delete {idNamePair.name}
-                    </DialogTitle>
-                    <DialogContent>
-                        <DialogContentText>
-                            Do you want to delete the map {idNamePair.name}?
-                        </DialogContentText>
-                    </DialogContent>
-                    <DialogActions>
-                        <Button color='error' variant='contained' onClick={(event) => handleDeleteList(event, idNamePair._id)}>Delete</Button>
-                        <Button variant='outlined' onClick={handleDialogClose} autoFocus>
-                            Cancel
-                        </Button>
-                    </DialogActions>
-
-                </Dialog>
-            </CardActions>
+                    </Dialog>
+                </CardActions>
+            ) : <></>}
         </Card>
     );
 }

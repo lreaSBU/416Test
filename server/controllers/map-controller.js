@@ -3,10 +3,7 @@ const User = require('../models/user-model');
 const Layer = require('../models/layer-model');
 const SubRegion = require('../models/subregion-model');
 const Poly = require('../models/poly-model');
-const Point = require('../models/point-model');
-const Comment = require('../models/comment-model');
 const Convo = require('../models/convo-model');
-const Message = require('../models/message-model');
 /*
     This is our back-end API. It provides all the data services
     our database needs. Note that this file contains the controller
@@ -75,44 +72,21 @@ deleteMap = async (req, res) => {
     console.log("delete map with id: " + JSON.stringify(req.params.id));
     console.log("delete " + req.params.id);
 
-    Map.findByIdAndDelete({ _id: req.params.id }, (err, map) => {
-        if (err) {
-            res.status(500).json({ error: err });
-        } else {
-            return res.status(200).json({ success: true });
+    Map.findById(req.params.id, async (e, map) => {
+        for(let l of map.l){
+            let layer = await Layer.findById(l);
+            for(let s of layer.groups){
+                let subregion = await SubRegion.findById(s);
+                for(let p of subregion.polys) await Poly.findByIdAndDelete(p);
+                subregion.remove();
+            }
+            layer.remove();
         }
-    })
-
-
-    // Map.findById({ _id: req.params.id }, (err, map) => {
-    //     console.log("Map found: " + JSON.stringify(map));
-    //     if (err) {
-    //         return res.status(404).json({
-    //             errorMessage: 'Map not found!',
-    //         })
-    //     }
-
-    //     // DOES THIS MAP BELONG TO THIS USER?
-    //     async function asyncFindUser(m) {
-    //         User.findOne({ email: m.ownerEmail }, (err, user) => {
-    //             console.log("user._id: " + user._id);
-    //             console.log("req.userId: " + req.userId);
-    //             if (user._id == req.userId) {
-    //                 console.log("correct user!");
-    //                 Playlist.findOneAndDelete({ _id: req.params.id }, () => {
-    //                     return res.status(200).json({});
-    //                 }).catch(err => console.log(err))
-    //             }
-    //             else {
-    //                 console.log("DELETING WITH incorrect user!");
-    //                 return res.status(400).json({ 
-    //                     errorMessage: "authentication error" 
-    //                 });
-    //             }
-    //         }).catch(err => console.log(err));
-    //     }
-    //     asyncFindUser(map);
-    // })
+        let user = await User.findById(map.owner);
+        if(user != null) user.maps.splice(user.maps.indexOf(map._id), 1);
+        map.remove();
+        return res.status(200).json({success: true});
+    });
 }
 getMapById = async (req, res) => {
     console.log("Find Map with id: " + JSON.stringify(req.params.id));
@@ -161,47 +135,38 @@ async function namePairs(nm) {
     }).catch(err => console.log(err))
 }
 getMapPairs = async (req, res) => {
-    // if(req.body.searchMode == 1) return await namePairs(req.body.filter);
-    var tar = req.body.filter == null ? { _id: req.userId } : { firstName: req.body.filter }
-    await User.findOne(tar, (err, user) => {
-        console.log("find user with :->: " + tar);
-        async function asyncFindList(usr) {
-            console.log("find all Maps owned by " + usr);
-            await Map.find({ owner: usr }, (err, maps) => {
-                console.log("found Maps: " + JSON.stringify(maps));
-                if (err) {
-                    console.log("FAIL 15");
-                    return res.status(400).json({ success: false, error: err })
-                }
-                if (!maps) {
-                    console.log("!maps.length");
-                    return res
-                        .status(404)
-                        .json({ success: false, error: 'maps not found' })
-                }
-                else {
-                    console.log("Send the Map pairs");
-                    // PUT ALL THE LISTS INTO ID, NAME PAIRS
-                    let pairs = [];
-                    for (let key in maps) {
-                        let list = maps[key];
-                        let pair = {
-                            _id: list._id,
-                            name: list.name,
-                            copy: {
-                                age: list.age,
-                                owner: list.owner.name,
-                                published: list.published
-                            }
-                        };
-                        pairs.push(pair);
-                    }
-                    return res.status(200).json({ success: true, idNamePairs: pairs })
-                }
-            }).catch(err => console.log(err))
+    let bod = req.body;
+    let maps = [];
+    if(bod.filter == null){ //getting ones own maps
+        maps = await Map.find({owner: req.userId});
+    }else if(!bod.searchMode){ //searching by MAP name
+        maps = await Map.find({name: {$regex : bod.filter, $options: 'i'}, published: true});
+    }else{ //searching by USER name
+        if(!bod.filter.includes(' ')) return res.status(501).json({ success: false, idNamePairs: [] });
+        let fk = bod.filter.split(' ')[0],
+        lk = bod.filter.split(' ')[1];
+        let users = await User.find({firstName: {$regex : fk, $options: 'i'}, lastName: {$regex : lk, $options: 'i'}});
+        if(users == null) return res.status(502).json({ success: false, idNamePairs: [] });
+        for(let user of users) for(let m of user.maps){
+            m = await Map.findById(m);
+            if(!m.published) continue;
+            maps.push(m);
         }
-        asyncFindList(user);
-    }).catch(err => console.log(err))
+    }
+    if(maps == null) return res.status(401).json({success: false});
+    let ret = [];
+    for(let map of maps){
+        ret.push({
+            _id: map._id,
+            name: map.name,
+            copy: {
+                age: map.age,
+                owner: map.owner.name,
+                published: map.published
+            }
+        });
+    }
+    return res.status(200).json({ success: true, idNamePairs: ret });
 }
 // Displays the maps that the user requested
 getMaps = async (req, res) => {

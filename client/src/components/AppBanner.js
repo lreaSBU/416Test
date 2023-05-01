@@ -51,12 +51,8 @@ export default function AppBanner() {
         store.goHome();
     }
 
-    const handleAll = (e) => {
-        store.goSearchByName();
-    }
-
-    const handleUser = (e) => {
-        store.goSearchByUser();
+    const handleAll = async (e) => {
+        await store.goSearchByName();
     }
 
     const handleDM = (e) => {
@@ -118,7 +114,7 @@ export default function AppBanner() {
             open={isMenuOpen}
             onClose={handleMenuClose}
         >
-            <MenuItem href='/' onClick={handleLogout}>Logout</MenuItem>
+            <MenuItem to='/' onClick={handleLogout}>Logout</MenuItem>
         </Menu>
 
     let menu = loggedOutMenu;
