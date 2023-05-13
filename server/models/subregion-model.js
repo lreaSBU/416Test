@@ -5,7 +5,7 @@ const ObjectId = Schema.Types.ObjectId
 const SubRegionSchema = new Schema(
     {
         polys: [{type: ObjectId, ref: 'Poly'}],
-        props: Object
+        props: {type: Object, required: true, default: {}}
     }
 )
 

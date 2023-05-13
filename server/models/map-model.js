@@ -8,7 +8,7 @@ const MapSchema = new Schema(
         age: {type: Number, required: true},
         owner: {type: ObjectId, ref: 'User'},
         published: {type: Boolean, required: true},
-        gd: Object,
+        gd: {type: Object, required: true, default: {}},
         l: [{type: ObjectId, ref: 'Layer'}],
         camX: {type: Number, required: true},
         camY: {type: Number, required: true},

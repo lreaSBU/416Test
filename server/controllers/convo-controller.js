@@ -8,6 +8,7 @@ createConvo = async (req, res) => {
     await User.findById(req.userId, async (err, user) => {
         const convos = user.convos;
         for(let c of convos){
+            c = await Convo.findById(c);
             let user1 = await User.findById(c.user1);
             let user2 = await User.findById(c.user2);
             if(user1._id == req.body.contactId || user2._id == req.body.contactId){

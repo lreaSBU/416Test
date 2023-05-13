@@ -2,6 +2,7 @@ import { useContext, useState } from 'react'
 import React, { useEffect, useRef } from "react";
 import AuthContext from '../auth';
 import { Link } from 'react-router-dom'
+import { HexColorPicker } from "react-colorful";
 
 import api from './edit-request-api'
 import { GlobalStoreContext } from '../store'
@@ -17,6 +18,12 @@ import SplashScreen from './SplashScreen';
 import logo from './Capture.png'
 import colors from './colors.png'
 import Hidden from '@mui/material/Hidden';
+import Fab from '@mui/material/Fab'
+import DownloadIcon from '@mui/icons-material/Download';
+import CameraIndoorIcon from '@mui/icons-material/CameraIndoor';
+import TextureIcon from '@mui/icons-material/Texture';
+import FormatColorTextIcon from '@mui/icons-material/FormatColorText';
+import BorderStyleIcon from '@mui/icons-material/BorderStyle';
 import IconButton from '@mui/material/IconButton';
 import MouseIcon from '@mui/icons-material/Mouse';
 import AddIcon from '@mui/icons-material/Add';
@@ -43,8 +50,10 @@ import Typography from '@mui/material/Typography'
 import Remove_Transaction from '../transactions/Remove_Transaction';
 import Move_Transaction from '../transactions/Move_Transaction';
 import Insert_Transaction from '../transactions/Insert_Transaction';
-import DeletePoly_Transaction from '../transactions/DeletePoly_Transaction';
+import DeleteGroup_Transaction from '../transactions/DeleteGroup_Transaction';
+import MoveGroup_Transaction from '../transactions/MoveGroup_Transaction';
 import ChangeProperty_Transaction from '../transactions/ChangeProperty_Transaction';
+import MakePoly_Transaction from '../transactions/MakePoly_Transaction';
 /*
     This React component lists all the top5 lists in the UI.
     
@@ -54,6 +63,7 @@ const EditScreen = () => {
     const { store } = useContext(GlobalStoreContext);
     const { auth } = useContext(AuthContext);
     const [warning, setWarning] = useState(null);
+    const [hexCol, setHexCol] = useState("#aabbcc");
     const myContainer = useRef(null);
     const fileContainer = useRef(null);
     const propContainer = useRef(null);
@@ -65,12 +75,19 @@ const EditScreen = () => {
     const removeRefer = useRef(null);
     const moveRefer = useRef(null);
     const boxRefer = useRef(null);
+    const graphicsButt = useRef(null);
+    const colTxt = useRef(null);
+    const colTyp1 = useRef(null), colTyp2 = useRef(null), colTyp3 = useRef(null);
+    const lodSlider = useRef(null), textSlider = useRef(null);
+    const centerCamera = useRef(null);
+    const downloadButton = useRef(null), downloadMule = useRef(null);
 
     const tps = new jsTPS();
 
     function handleWarning(m){
         m = "(Warning): " + m;
         console.warn(m);
+        tps.unMark();
         setWarning(m);
         setTimeout(function(){
             setWarning(null);
@@ -99,6 +116,17 @@ const EditScreen = () => {
             moveRefer.current,
             boxRefer.current
         ];
+        var graphButt = graphicsButt.current;
+        var colText = colTxt.current;
+        var colTypes = [
+            colTyp1.current,
+            colTyp2.current,
+            colTyp3.current
+        ];
+        var lodSlide = lodSlider.current.children[2].children[0],
+        textSlide = textSlider.current.children[2].children[0];
+        var centerCam = centerCamera.current;
+        var dlButt = downloadButton.current, dlMule = downloadMule.current;
 
         function cleanVal(n, b, i){
             if(!i && !isNaN(n)) n = n.toFixed(5);
@@ -117,7 +145,7 @@ const EditScreen = () => {
             }
         }
 
-        const CW = canv.width, CH = canv.height, HW = CH/2, HH = CH/2;
+        var CW = canv.width, CH = canv.height, HW = CH/2, HH = CH/2;
         var fi, bytes, camZ = 1, camX = 100, camY = 100;
 
         class Point{
@@ -125,6 +153,9 @@ const EditScreen = () => {
             constructor(x, y){
                 this.x = x; this.y = y;
                 this.h = false;
+            }
+            strip(){
+                return [this.x, -this.y];
             }
             dist(p){
                 return Math.sqrt(Math.pow(p.x-this.x, 2) + Math.pow(p.y-this.y, 2));
@@ -175,35 +206,40 @@ const EditScreen = () => {
             }
         }
         const scrIn = (1 - 1/1.1)/2, scrOut = (1 - 1.1)/2;
-        canv.addEventListener("wheel", function(e){
+        function wheel(e){
             if(VERSION != store.edit.sesh) return;
+            if(aTime != 0) return;
             let scr = e.deltaY < 0 ? 1 : -1, czo = camZ;
             if(scr == 1) camZ *= 1.1;
             else camZ /= 1.1;
             setVal(2, camZ);
             Poly.Draw();
-        });
+        }
+        canv.addEventListener("wheel", wheel);
 
         var mx = 0, my = 0, smx, smy, mcl = false;
         var mel = null;
         const movoff = new Point(0, 0), toolSet = [];
 
-        canv.addEventListener("mousemove", function(e){
+        function mousemove(e){
             if(VERSION != store.edit.sesh) return;
             smx = e.offsetX;
             smy = e.offsetY;
             if((mcl = e.buttons == 1)){
                 switch(tool){
                     case 0: //cam
+                        if(aTime) break;
                         camX += (e.offsetX - mx)/camZ;
                         camY += (e.offsetY - my)/camZ;
                     break; case 1: //move
-                        //movoff.addLocal((e.offsetX - mx)/camZ, (e.offsetY - my)/camZ);
                         movoff.x += (e.offsetX - mx)/camZ;
                         movoff.y += (e.offsetY - my)/camZ;
-                        for(let m of mels){
+                        if(mode) for(let m of mels){
                             m.x += (e.offsetX - mx)/camZ;
                             m.y += (e.offsetY - my)/camZ;
+                        }else for(let s of sels){
+                            s.offset.x += (e.offsetX - mx)/camZ;
+                            s.offset.y += (e.offsetY - my)/camZ;
                         }
                         setVal(0, movoff.x, true);
                         setVal(1, -movoff.y, true);
@@ -226,7 +262,8 @@ const EditScreen = () => {
                 mel = mp;
             }
             mx = smx; my = smy;
-        });
+        }
+        canv.addEventListener("mousemove", mousemove);
         var keys = {}, mode = false, tool = 0, pmode = false;
         function swapMode(){
             let fm = mode;
@@ -244,6 +281,7 @@ const EditScreen = () => {
         const defStyle = 'fontSize:"32pt";color: #444',
         selStyle = 'fontSize:"32pt";color: #fbbd0c';
         function swapTool(t){
+            if(tool == t) return; //avoid overlapping inits
             for(let tool of toolRefs) tool.style = defStyle;
             tool = t;
             switch(tool){
@@ -262,6 +300,11 @@ const EditScreen = () => {
                 break; case 2: //init box select
                     movoff.set(mx, my);
                     toolRefs[4].style = selStyle;
+                break; case 3: //init add trace
+                    //addPoints.push(new Point(mx, my));
+                    movoff.set(mx, my);
+                    console.log("ADDSTART");
+                    //toolRefs[5].style = selStyle; //DONT KNOW YET...
                 break;
             }
         }
@@ -293,13 +336,13 @@ const EditScreen = () => {
             tps.bookMark();
             if(mode && mels.length > 0){
                 if(keys.Alt){ //delete the entire Poly
+                    console.log('ATTEMPTING POLY DELETION');
                     if(mode.elems.length == 1) return handleWarning('Cannot remove all Polys of a Subregion');
                     let par = findParent(mels[0], mode);
                     for(let m of mels) if(findParent(m, mode).p != par.p) return handleWarning('All selected Points must belong to the same Poly');
-                    tps.addTransaction(new DeletePoly_Transaction(store, mode.level, mode.group, par.p, mode.elems[par.p]));
+                    tps.addTransaction(new DeleteGroup_Transaction(store, true, mode.level, mode.group, par.p, mode.elems[par.p]));
                     return;
                 }
-                let rpm = undefined;
                 while(mels.length){
                     let m = mels.splice(0, 1)[0];
                     let par = findParent(m, mode);
@@ -307,33 +350,82 @@ const EditScreen = () => {
                         handleWarning('Aborting point removal; Must maintain minimum Point count');
                         break;
                     }
-                    if(par.i == 0 || par.i == mode.elems[par.p].points.length-1){
-                        handleWarning('Cannot delete Poly origin point');
-                        rpm = m;
-                        continue;
-                    }
-                    tps.addTransaction(new Remove_Transaction(store, true, mode.level, mode.group, par.p, par.i, m));
+                    tps.addTransaction(new Remove_Transaction(store, mode.level, mode.group, par.p, par.i, m));
                 }
-                if(rpm) mels.splice(0, 0, rpm);
             }else if(!mode && sels.length > 0){
-                console.log('deleting subregions later...');
+                for(let s of sels){
+                    tps.addTransaction(new DeleteGroup_Transaction(store, false, viewLevel, s.group, -1, s));
+                }
             }
             tps.unMark();
         }
         function canSel(){
             return (mode && mels.length > 0) || (!mode && sels.length > 0);
         }
-        window.addEventListener("keydown", function(e){
+        var aTime = 0, tarX, tarY, tarZ;
+        function animCam(b = false){
+            if(aTime != 0){
+                camX += (tarX-camX)/50;
+                camY += (tarY-camY)/50;
+                camZ += (tarZ-camZ)/1000;
+                aTime--;
+                Poly.Draw();
+                setVal(0, camX);
+                setVal(1, camY);
+                setVal(2, camZ);
+                setTimeout(animCam, 1);
+            }else if(b){
+                if(aTime != 0) return;
+                let res = autoCam(true);
+                tarX = res[0];
+                tarY = res[1];
+                tarZ = res[2];
+                aTime = 500;
+                setTimeout(animCam, 1);
+            }
+        }
+        function autoCam(b = false){
+            if(store.edit.l[viewLevel].length == 0) return;
+            let minX, minY, maxX, maxY;
+            minX = minY = 100000000;
+            maxX = maxY = -100000000;
+            for(let g of store.edit.l[viewLevel]){
+                if(g.minX < minX) minX = g.minX;
+                if(g.minY < minY) minY = g.minY;
+                if(g.maxX > maxX) maxX = g.maxX;
+                if(g.maxY > maxY) maxY = g.maxY;
+            }
+            if(b) return [HW - (maxX + minX)/2, HH - (maxY + minY)/2, 300/(maxX-minX)];
+            camX = HW - (maxX + minX)/2;
+            camY = HH - (maxY + minY)/2;
+            camZ = 300/(maxX-minX);
+        }
+        function addWrap(){
+            if(addPoints.length < 3){
+                addPoints.length = 0;
+                return handleWarning("Not enough points to make a closed Poly");
+            }
+            let np;
+            if(mode) np = new Poly(null, mode.level, mode.group);
+            else np = new Poly(0, viewLevel, store.edit.l[viewLevel].length);
+            for(let p of addPoints) np.add(p);
+            tps.bookMark();
+            tps.addTransaction(new MakePoly_Transaction(store, mode, viewLevel, np));
+            addPoints.length = 0;
+        }
+        function keydown(e){
             if(VERSION != store.edit.sesh) return;
             if(store.edit.focus) return;
             let changeFlag = !tool;
             if(changeFlag) switch(e.key){
                 case ' ': swapMode(); break;
+                case 'a': if(addPoints.length == 0) swapTool(3); break;
                 case 'b': swapTool(2); break;
                 case 'g': if(canSel()) swapTool(1); break;
                 case 'x': if(canSel()) remove_tool(); break;
                 case 'i': if(canSel()) insert_tool(); break;
-                case 'p': console.log(camXText.value); break;
+                case 'p': autoCam(); break;
+                case 'P': animCam(true); break;
                 case 'f': Poly.Draw(true); changeFlag = false; break;
                 case 'm': mergeRegions(); break;
                 case 'y': if(keys.Control && tps.hasTransactionToRedo()) tps.doMulti(); break;
@@ -343,14 +435,20 @@ const EditScreen = () => {
                 case 'ArrowUp': viewChange(true); break;
                 case 'ArrowDown': viewChange(false); break;
                 default: changeFlag = false; break;
+            }else if(tool == 3 && e.key == 'a'){
+                addWrap();
+                swapTool(0);
+                changeFlag = true;
             }
             keys[e.key] = true;
             if(changeFlag) Poly.Draw();
-        });
-        window.addEventListener("keyup", function(e){
+        }
+        window.addEventListener("keydown", keydown);
+        function keyup(e){
             if(VERSION != store.edit.sesh) return;
             keys[e.key] = false;
-        });
+        }
+        window.addEventListener("keyup", keyup);
 
         function findParent(point, group){
             let ind = -1;
@@ -376,15 +474,22 @@ const EditScreen = () => {
 
         var px, py, mp = new Point(), sel = null, ser;
         var CLC = CW/10;
+        const addPoints = [];
 
-        canv.addEventListener("mousedown", function(e){
+        function mousedown(e){
             if(VERSION != store.edit.sesh) return;
             store.edit.focus = false;
             mp.set(e.offsetX, e.offsetY);
             if(tool == 2){ //init boxSelect FOR REAL
                 movoff.set(mp.x, mp.y);
+            }else if(tool == 3){ //add trace insert new point
+                px = (e.offsetX-HW)/camZ-camX+HW;
+                py = (e.offsetY-HH)/camZ-camY+HH;
+                addPoints.push(new Point(px, py));
+                movoff.set(mp.x, mp.y);
             }
-        });
+        }
+        canv.addEventListener("mousedown", mousedown);
         var sels = [], mels = [];
         function deSel(){
             while(sels.length) (sels.pop()).h = false;
@@ -399,15 +504,37 @@ const EditScreen = () => {
                 saveMel = null;
             }
         }
-        canv.addEventListener("mouseup", function(e){
+        const specPropRef = ["**colorFill", "**borderFill", "**textFill"];
+        function mouseup(e){
             if(VERSION != store.edit.sesh) return;
             if(tool) switch(tool){
                 case 1: //move release
+                    let MC = movoff.copy();
                     tps.bookMark();
-                    for(let m of mels){
-                        let par = findParent(m, mode);
-                        m.subtractLocal(movoff);
-                        tps.addTransaction(new Move_Transaction(store, true, mode.level, mode.group, par.p, par.i, movoff.copy()));
+                    if(mode){ //move points and polys
+                        let pars = [], pc = [];
+                        for(let _ of mode.elems) pc.push(0);
+                        for(let m of mels){
+                            let par = findParent(m, mode);
+                            m.subtractLocal(movoff);
+                            pars.push(par);
+                            pc[par.p]++;
+                        }
+                        for(let i = 0; i < pc.length; i++){
+                            if(pc[i] == mode.elems[i].points.length){
+                                console.log("ATTEMPTING POLY MOVE:", i);
+                                tps.addTransaction(new MoveGroup_Transaction(store, true, mode.level, mode.group, i, MC));
+                                pc[i] = -1;
+                            }
+                        }
+                        for(let par of pars) if(pc[par.p] != -1){
+                            tps.addTransaction(new Move_Transaction(store, mode.level, mode.group, par.p, par.i, MC));
+                        }
+                    }else{ //move subregions
+                        for(let s of sels){
+                            s.offset.set(0, 0);
+                            tps.addTransaction(new MoveGroup_Transaction(store, false, viewLevel, s.group, -1, MC));
+                        }
                     }
                     tps.unMark();
                 break; case 2: //boxSelect release
@@ -436,10 +563,10 @@ const EditScreen = () => {
                     swapTool(0);
                     Poly.Draw(); //just do this immediately for boxSelect
                 break;
-            }else{
-                store.sendTransac(7, -1, -1, -1, null, [camX, camY, camZ]);
-            }
-            swapTool(0);
+            }/*else{
+                store.sendImmediateTransac(7, -1, -1, -1, null, [camX, camY, camZ]);
+            }*/
+            if(tool != 3) swapTool(0);
             if(mp.x != e.offsetX || mp.y != e.offsetY) return;
             if(store.edit.l[viewLevel] == undefined) return;
             px = (e.offsetX-HW)/camZ-camX+HW;
@@ -457,20 +584,30 @@ const EditScreen = () => {
                     }
                 }
                 if(!mode && sel != null){
-                    sel.h = !sel.h;
-                    if(!keys.Shift){
-                        if(!sel.h && sels.length > 1){
-                            sels.splice(sels.indexOf(sel), 1);
-                            sel.h = true;
+                    if(store.edit.graphics){
+                        //console.log(colText.children[1].children[0].value, store.edit.graphics);
+                        tps.bookMark();
+                        tps.addTransaction(new ChangeProperty_Transaction(store, sel.level, sel.group, -1, specPropRef[store.edit.graphics-1], colText.children[1].children[0].value));
+                    }else{
+                        sel.h = !sel.h;
+                        if(!keys.Shift){
+                            if(!sel.h && sels.length > 1){
+                                sels.splice(sels.indexOf(sel), 1);
+                                sel.h = true;
+                            }
+                            deSel();
                         }
-                        deSel();
+                        if(sel.h) sels.push(sel);
+                        else sels.splice(sels.indexOf(sel), 1);
+                        setVal(0, sel.mean.x);
+                        setVal(1, sel.mean.y);
+                        setVal(3, sel.level+1);
+                        setVal(4, sel.group+1);
                     }
-                    if(sel.h) sels.push(sel);
-                    else sels.splice(sels.indexOf(sel), 1);
-                    setVal(0, sel.mean.x);
-                    setVal(1, sel.mean.y);
-                    setVal(3, sel.level+1);
-                    setVal(4, sel.group+1);
+                    if(store.edit.prop){
+                        store.edit.prop = undefined;
+                        store.reduceEdit();
+                    }
                     Poly.Draw();
                 }else if(mode && mel != null){
                     mel.h = !mel.h;
@@ -519,7 +656,8 @@ const EditScreen = () => {
                     Poly.Draw();
                 }
             }
-        })
+        }
+        canv.addEventListener("mouseup", mouseup);
 
         function read(n, e = false){
             let ret = 0;
@@ -670,6 +808,7 @@ const EditScreen = () => {
         }
 
         var diagBound, aFrame, bFrame;
+        const colSave = [];
 
         async function readShapeFile(file){
             //var fl = file.name.split(".");
@@ -708,13 +847,23 @@ const EditScreen = () => {
                     mean: new Point(0, 0),
                     h: false,
                     elems: [],
-                    props: {}
+                    props: {},
+                    offset: new Point(0, 0)
                 });
                 recordRead(count++);
                 console.log("EP: " + fi + " or " + fil);
                 //Poly.Draw();
                 if(isNaN(read(4, true))) break;
                 fi -= 4;
+            }
+            //check if saved data would apply to this:
+            if(colSave[fileLevel]){
+                let cols = colSave[fileLevel];
+                for(var g = 0; g < store.edit.l[fileLevel].length; g++){
+                    for(var c of cols) store.edit.l[fileLevel][g].props[c.name] = c.elems[g];
+                    store.sendTransac(1, fileLevel, g, -1, null, store.edit.l[fileLevel][g].props);
+                }
+                colSave[fileLevel] = undefined;
             }
             Poly.Draw();
             console.log("FINAL COUNT: " + count);
@@ -760,7 +909,10 @@ const EditScreen = () => {
                 fi++;
             }
             console.log(cols);
-            for(var g = 0; g < store.edit.l[fileLevel].length; g++){
+            let clen = store.edit.l[fileLevel].length;
+            if(clen == 0){ //save the data for later
+                colSave[fileLevel] = cols;
+            }else for(var g = 0; g < clen; g++){
                 for(var c of cols) store.edit.l[fileLevel][g].props[c.name] = c.elems[g];
                 store.sendTransac(1, fileLevel, g, -1, null, store.edit.l[fileLevel][g].props);
             }
@@ -770,20 +922,9 @@ const EditScreen = () => {
 
         function readGeoFile(file){
             var reader = new FileReader();
-            var cols = [];
             reader.onload = function(){
                 var data = JSON.parse(reader.result);
-                //console.log(data);
-                //for(var i of data.features) console.log(i);
                 var GN = 0;
-                /*for(var prop in data.features[0].properties){
-                    cols.push({
-                        name: prop,
-                        type: '?',
-                        size: 0,
-                        elems: []
-                    });
-                }*/
                 for(var f of data.features){
                     store.edit.l[fileLevel].push({
                         level: fileLevel,
@@ -791,7 +932,8 @@ const EditScreen = () => {
                         mean: new Point(0, 0),
                         h: false,
                         elems: [],
-                        props: f.properties
+                        props: f.properties,
+                        offset: new Point(0, 0)
                     });
                     store.sendTransac(1, fileLevel, GN, -1, null, f.properties); //send the data entry for this new subregion
                     let cr;
@@ -799,21 +941,13 @@ const EditScreen = () => {
                         var np = new Poly(-1, fileLevel, GN);
                         cr = (c[0].length == 2 ? c : c[0]);
                         for(let i = 0; i < cr.length-1; i++) np.add(new Point(cr[i][0], -cr[i][1]));
-                        //console.log(np.points[0], "VS.", np.points[np.points.length-1]);
                         store.edit.l[fileLevel][GN].elems.push(np);
                         store.edit.l[fileLevel][GN].mean.addLocal(np.mean());
                         np.finalize(fileLevel, GN, store.edit.l[fileLevel][GN]);
                     }
-                    //store.edit.l[fileLevel][GN].mean.divideLocal(store.edit.l[fileLevel][GN].elems.length);
-                    /*var i = 0;
-                    for(var a in f.properties){
-                        cols[i].elems.push(f.properties[a]);
-                        i++;
-                    }*/
                     GN++;
                 }
-                //console.log(cols);
-                console.log(store.edit.l);
+                //console.log(store.edit.l);
                 Poly.Draw();
             };
             reader.readAsText(file); 
@@ -830,6 +964,7 @@ const EditScreen = () => {
         }
         fileIn.onchange = function(){
             for(var f of this.files) readFile(f);
+            colSave.length = 0;
         }
         propHolder.onchange = function(){
             Poly.Draw();
@@ -839,8 +974,57 @@ const EditScreen = () => {
             store.reduceEdit();
             if(sels.length > 0){
                 store.edit.prop = sels[sels.length-1];
+            }else{ //open global prop menu
+                store.edit.prop = {
+                    level: -1,
+                    group: -1,
+                    props: store.edit.gd
+                }
+                console.log(store.edit.prop);
             }
             store.reduceEdit();
+        }
+        graphButt.onclick = function(){
+            if(store.edit.graphics > 0) store.edit.graphics = 0;
+            else store.edit.graphics = 1;
+            if(mode) swapMode();
+            deSel();
+            tps.clearAllTransactions();
+            store.edit.prop = undefined;
+            store.reduceEdit();
+            Poly.Draw();
+        }
+        centerCam.onclick = function(){
+            animCam(true);
+        }
+        dlButt.onclick = function(){
+            let ret = {
+                type: 'FeatureCollection',
+                features: []
+            };
+            for(let g of store.edit.l[viewLevel]){
+                if(ret.features[g.group] == undefined)
+                    ret.features[g.group] = {
+                        type: 'Feature',
+                        properties: {},
+                        geometry: {
+                            type: 'MultiPolygon',
+                            coordinates: []
+                        }
+                    }
+                //fill geoms:
+                let temp = [];
+                for(let p of g.elems) temp.push(p.strip());
+                ret.features[g.group].geometry.coordinates = temp;
+                //fill props:
+                ret.features[g.group].properties = g.props;
+            }
+            console.log(ret);
+            if(!ret.features.length) return;
+            dlMule.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(ret)));
+            dlMule.setAttribute('download', 'mapSave.geo.json');
+            dlMule.style.display = 'none';
+            dlMule.click();
         }
         /*
         var toolRefs = [
@@ -871,13 +1055,14 @@ const EditScreen = () => {
             swapTool(2);
             Poly.Draw();
         }
-        var hBox;
-        function drawBox(p){
-            hBox = (camZ**.4);
-            ctx.strokeStyle = '#ff00ff';
-            ctx.beginPath();
-            ctx.rect(HW+camZ*(p.x+camX-HW)-hBox, HH+camZ*(p.y+camY-HH)-hBox, hBox*2, hBox*2);
-            ctx.stroke();
+        colTypes[0].onclick = function(){
+            store.edit.graphics = 1;
+        }
+        colTypes[1].onclick = function(){
+            store.edit.graphics = 2;
+        }
+        colTypes[2].onclick = function(){
+            store.edit.graphics = 3;
         }
         function drawDot(p, h=false){
             if(h) ctx.strokeStyle = '#ff0000';
@@ -891,8 +1076,29 @@ const EditScreen = () => {
             if(x) return true;
             return false;
         }
+        const OFF = new Point(0, 0);
+        function setOff(o = null){
+            if(o != null) OFF.set(o.x, o.y);
+            else OFF.set(0, 0);
+        }
+        function loc(b, v){
+            return (b ? HW : HH) + camZ*(v+(b ? OFF.x : OFF.y)+(b ? camX-HW : camY-HH));
+        }
+        function sizeCanv(){
+            const { width, height } = canv.getBoundingClientRect();
+            if(canv.width !== width || canv.height !== height){
+                const { devicePixelRatio:ratio=1 } = window;
+                CW = canv.width = width*ratio;
+                CH = canv.height = height*ratio;
+                HW = CW/2;
+                HH = CH/2;
+                ctx.scale(ratio, ratio);
+                return true;
+            }
+            return false;
+        }
         var fx, fy, pLast = new Point(0, 0), dx, dy;
-        var LOD_SKIP, LOD_STEP, LOD_REF, finSum, li, ni, ci;
+        var LOD_RATIO = 5, LOD_SKIP, LOD_STEP, LOD_REF, finSum, li, ni, ci;
         var defCol, fillCol, mark, Acc = false;
         var dots = [], remp, remi, gi, mri;
         const subColRefs = ['#aba99f', '#000', '#000', ''];
@@ -905,14 +1111,17 @@ const EditScreen = () => {
                 defCol = subColRefs[ind];
                 fillCol = subColRefs[ind+3];
                 for(p = 0; p < store.edit.l.length; p++){
-                    if((!ind) == (viewLevel == p)) continue;
+                    //if((!ind) == (viewLevel == p)) continue;
+                    if(viewLevel != p) continue;
                     if(Poly.vis[p]) for(l of store.edit.l[p]){
                         for(g of l.elems) if((ind == 2) == l.h){
-                            g.draw(l.h && !mode, l.h && (l == mode));
+                            if(store.edit.graphics) g.draw(l.h && !mode, l.h && (l == mode), l.offset, l.props['**colorFill'], l.props['**borderFill']);
+                            else g.draw(l.h && !mode, l.h && (l == mode), l.offset, null, null);
                         }
                         if(l.props != null && Object.keys(l.props).length){ //has data
                             l.mean.getLocal();
-                            ctx.fillStyle = l.h ? "#fbbd0c" : '#000';
+                            if(store.edit.graphics && l.props['**textFill'] != null) ctx.fillStyle = l.props['**textFill'];
+                            else ctx.fillStyle = l.h ? "#fbbd0c" : '#000';
                             if(!mode){
                                 if(l.props['name'] != undefined)
                                     ctx.fillText(l.props['name'], Point.Gen.x, Point.Gen.y);
@@ -924,6 +1133,9 @@ const EditScreen = () => {
                 }
             }
             static Draw(af = false){
+                sizeCanv();
+                LOD_RATIO = lodSlide.value;
+                ctx.font = (9 + parseInt(textSlide.value)) + "px Verdana";
                 ctx.clearRect(0, 0, canv.width, canv.height);
                 ctx.fillStyle = '#99b3ff';
                 ctx.fillRect(0, 0, canv.width, canv.height);
@@ -942,20 +1154,27 @@ const EditScreen = () => {
                     ctx.rect(movoff.x, movoff.y, mx-movoff.x, my-movoff.y);
                     ctx.stroke();
                     ctx.setLineDash([]);
+                }else if(tool == 3 && addPoints.length){
+                    for(let p of addPoints) drawDot(p);
                 }
             }
             constructor(id, fl, gn){
-                if(store.edit.l[fl][gn].elems == undefined) this.id = id;
+                if(store.edit.l[fl][gn] == undefined || store.edit.l[fl][gn].elems == undefined) this.id = id;
                 else this.id = store.edit.l[fl][gn].elems.length; //this is the id of the poly in its group!!!!
                 //this.id = id;
                 //this.fl = fl; //file level
                 //this.gn = gn; //group number
-                this.lodRatio = 0.0005;
                 this.lodBound = diagBound;
                 this.points = [];
                 this.clockWise = true;
                 this.minX = this.minY = 100000000;
                 this.maxX = this.maxY = -100000000;
+            }
+            strip(){
+                let ret = [];
+                for(let p of this.points) ret.push(p.strip());
+                if(this.points.length > 0) ret.push(this.points[0].strip());
+                return [ret];
             }
             remove(i){
                 remp = this.points[i];
@@ -1020,6 +1239,8 @@ const EditScreen = () => {
                 if(!parent) return;
                 parent.minX = parent.minY = 100000000;
                 parent.maxX = parent.maxY = -100000000;
+                if(parent.mean == undefined) parent.mean = new Point(0, 0);
+                if(parent.offset == undefined) parent.offset = new Point(0, 0);
                 parent.mean.set(0, 0);
                 for(let p of parent.elems){
                     parent.minX = Math.min(p.minX, parent.minX);
@@ -1039,6 +1260,7 @@ const EditScreen = () => {
                     this.maxX = Math.max(p.x, this.maxX);
                     this.maxY = Math.max(p.y, this.maxY);
                 }
+                this.lodBound = Math.sqrt(Math.pow(this.maxX-this.minX, 2) + Math.pow(this.maxY-this.minY, 2));
             }
             mean(){
                 let m = new Point(0, 0);
@@ -1047,22 +1269,25 @@ const EditScreen = () => {
                 m.y /= this.points.length;
                 return (this._mean = m);
             }
-            draw(high, sigh){ //use camZ for zoom
-                if(HW + camZ*(this.maxX+camX-HW) < 0) return;
-                if(HW + camZ*(this.minX+camX-HW) > CW) return;
-                if(HH + camZ*(this.maxY+camY-HH) < 0) return;
-                if(HH + camZ*(this.minY+camY-HH) > CH) return;
+            draw(high, sigh, off, fillCol, bordCol){ //use camZ for zoom
+                setOff(off);
+                if(loc(true, this.maxX) < 0) return;
+                if(loc(true, this.minX) > CW) return;
+                if(loc(false, this.maxY) < 0) return;
+                if(loc(false, this.minY) > CH) return;
                 //drawDot(this.points[0]);
                 ctx.beginPath();
-                ctx.strokeStyle = mode && !sigh ? "#aba99f" : (high ? "#fbbd0c" : defCol);
+                if(bordCol != null) ctx.strokeStyle = bordCol;
+                else ctx.strokeStyle = mode && !sigh ? "#aba99f" : (high ? "#fbbd0c" : defCol);
                 //accTally = 1;
                 LOD_STEP = 100;
-                LOD_SKIP = this.lodRatio * this.lodBound / camZ / camZ;
+                if(camZ > 10000) LOD_SKIP = 0;
+                else LOD_SKIP = LOD_RATIO * this.lodBound / camZ / camZ;
                 //if(mode && !sigh) LOD_SKIP = 10000000000 * this.lodBound;
                 aFrame = true; bFrame = false;
                 LOD_REF = this.points[0];
-                fx = HW + camZ*(LOD_REF.x + camX - HW);
-                fy = HH + camZ*(LOD_REF.y + camY - HH);
+                fx = loc(true, LOD_REF.x); //HW + camZ*(LOD_REF.x + camX - HW);
+                fy = loc(false, LOD_REF.y); //HH + camZ*(LOD_REF.y + camY - HH);
                 mark = 0;
                 dots = [];
                 if(sigh) dots.push(LOD_REF);
@@ -1072,23 +1297,23 @@ const EditScreen = () => {
                     //i % LOD_STEP == 0 && 
                     if(!Acc && LOD_REF.fastDist(this.points[gi]) < LOD_SKIP) continue;
                     LOD_REF = this.points[gi];
-                    fx = HW+camZ*(LOD_REF.x+camX-HW);
-                    fy = HH+camZ*(LOD_REF.y+camY-HH);
+                    fx = loc(true, LOD_REF.x); //HW+camZ*(LOD_REF.x+camX-HW);
+                    fy = loc(false, LOD_REF.y); //HH+camZ*(LOD_REF.y+camY-HH);
                     if((fx < 0 || fx > CW) && (fy < 0 || fy > CH)) continue;
                     if(sigh) dots.push(this.points[gi]);
                     mri = gi;
                     ctx.lineTo(fx, fy);
                 }
-                fx = HW + camZ*(this.points[0].x + camX - HW);
-                fy = HH + camZ*(this.points[0].y + camY - HH);
+                fx = loc(true, this.points[0].x); //HW + camZ*(this.points[0].x + camX - HW);
+                fy = loc(false, this.points[0].y); //HH + camZ*(this.points[0].y + camY - HH);
                 if(mri == this.points.length-1 || (fx > 0 && fx < CW && fy > 0 && fy < CH)) ctx.lineTo(fx, fy);
                 ctx.stroke();
-                ctx.fillStyle = mode && !sigh ? "#ddffcc" : (high ? "#666600" : '#99ff66');
+                if(fillCol != null) ctx.fillStyle = fillCol;
+                else ctx.fillStyle = mode && !sigh ? "#ddffcc" : (high ? "#666600" : '#99ff66');
                 ctx.fill();
                 LOD_REF = null;
-                if(dots.length) drawBox(dots[0]);
                 for(let d of dots) drawDot(d);
-                //console.log(accTally / this.points.length);
+                setOff();
             }
         }
 
@@ -1177,12 +1402,21 @@ const EditScreen = () => {
         }
 
         function start(){ //translate raw DB data into more robust editing structure
-            ctx.lineWidth = 2;
+            //ctx.lineWidth = 2;
             if(!store.edit.raw) return;
-            console.log('RAW:', store.edit.l);
+            //console.log('RAW:', store.edit.l);
             for(let i = 0; i < store.edit.l.length; i++){
                 for(let n = 0; n < store.edit.l[i].length; n++){
-                    let temp = {level: i, group: n, h: false, mean: new Point(0, 0), elems: [], props: store.edit.l[i][n].props};
+                    let temp = {
+                        level: i,
+                        group: n,
+                        h: false,
+                        mean: new Point(0, 0),
+                        elems: [],
+                        props: store.edit.l[i][n].props,
+                        offset: new Point(0, 0)
+                    };
+                    if(temp.props == undefined) temp.props = {};
                     for(let m = 0; m < store.edit.l[i][n].elems.length; m++){
                         let np = new Poly(m, i, n);
                         for(let p of store.edit.l[i][n].elems[m]) np.add(new Point(p.x, p.y));
@@ -1196,15 +1430,27 @@ const EditScreen = () => {
                 }
             }
             store.edit.raw = false;
-            //camX = store.camX;
-            //camY = store.camY;
-            //camZ = store.camZ;
-            console.log('CLEANED:', store.edit.l);
+            store.edit.graphics = 0;
+            camX = store.edit.camX;
+            camY = store.edit.camY;
+            camZ = store.edit.camZ;
+            //console.log('CLEANED:', store.edit.l);
             Poly.Draw();
         }
 
         fileIn.onLoad = start();
-    }});
+
+        return () => { //cleanup the event listeners!!!
+            console.warn('cleaning!!!!!!!!!!!!!!!!!!!!!!!');
+            store.sendImmediateTransac(7, -1, -1, -1, null, [camX, camY, camZ]);
+            window.removeEventListener("keydown", keydown);
+            window.removeEventListener("keyup", keyup);
+            canv.removeEventListener("mousedown", mousedown);
+            canv.removeEventListener("mouseup", mouseup);
+            canv.removeEventListener("wheel", wheel);
+            canv.removeEventListener("mousemove", mousemove);
+        }
+    }}, [store.tabMode]);
     //if(!auth.loggedIn) return <SplashScreen />;
     //if(store.edit == null) return <></>;
     return (
@@ -1245,13 +1491,14 @@ const EditScreen = () => {
                         <ArrowDownwardIcon style={{fontSize:'32pt'}} />
                     </IconButton>
                     <IconButton variant="contained" component="label" aria-label='upload'>
-                        <input ref={fileContainer} type="file" id="fileIn" name="ShapeUpload" hidden></input>
+                        <input ref={fileContainer} type="file" id="fileIn" name="ShapeUpload" multiple hidden></input>
                         <FileUploadIcon  style={{fontSize:'32pt'}} />
                     </IconButton>
                 </Box>
                 <Box id='displayMenu' ref={propList} className='traySect' sx={{maxHeight: '40%', overflow: 'auto', borderTop: 2, borderBottom: 2, borderColor: '#00ff00'}}>
                     {
                         store.edit && store.edit.prop && store.edit.prop.props ? (<div>
+                            {store.edit.prop.level == -1 ? 'GLOBAL:' : ''}
                             <List sx={{width: '100%', left: '0%'}}>
                             {
                                 Object.keys(store.edit.prop.props).map((key) => (
@@ -1265,8 +1512,8 @@ const EditScreen = () => {
                                                 store.edit.focus = true;
                                                 if(e.key == 'Enter'){
                                                     store.edit.focus = false;
-                                                    //store.edit.prop.props[key] = e.target.value;
-                                                    tps.addTransaction(new ChangeProperty_Transaction(store, store.edit.prop.level, store.edit.prop.group, -1, key, e.target.value));
+                                                    let nt = new ChangeProperty_Transaction(store, store.edit.prop.level, store.edit.prop.group, -1, key, e.target.value);
+                                                    nt.doTransaction();
                                                     propList.current.onchange(null); //force recycle
                                                     store.reduceEdit();
                                                 }
@@ -1274,8 +1521,8 @@ const EditScreen = () => {
                                         />
                                         <IconButton sx={{flex: 1, color: 'red'}} aria-label='remove'
                                             onClick={(e) => {
-                                                //delete store.edit.prop[key];
-                                                tps.addTransaction(new ChangeProperty_Transaction(store, store.edit.prop.level, store.edit.prop.group, -1, key, undefined));
+                                                let nt = new ChangeProperty_Transaction(store, store.edit.prop.level, store.edit.prop.group, -1, key, undefined);
+                                                nt.doTransaction();
                                                 store.reduceEdit();
                                             }}
                                         >
@@ -1297,8 +1544,8 @@ const EditScreen = () => {
                                             if(store.edit.prop.props[e.target.value] != undefined) handleWarning('Property field with that name already exists');
                                             else{
                                                 store.edit.focus = false;
-                                                //store.edit.prop.props[e.target.value] = '';
-                                                tps.addTransaction(new ChangeProperty_Transaction(store, store.edit.prop.level, store.edit.prop.group, -1, e.target.value, ''));
+                                                let nt = new ChangeProperty_Transaction(store, store.edit.prop.level, store.edit.prop.group, -1, e.target.value, '');
+                                                nt.doTransaction();
                                                 propList.current.onchange(null); //force recycle
                                                 store.reduceEdit();
                                             }
@@ -1314,74 +1561,81 @@ const EditScreen = () => {
                         <Box>LOD Bias:</Box>
                         <Slider
                             aria-label="LOD Bias"
-                            defaultValue={0}
-                            max={100}
-                            min={-100}
-                            step={1}
+                            defaultValue={2}
+                            max={5}
+                            min={0}
+                            step={.01}
                             valueLabelDisplay="auto"
                             sx={{width: '80%', left: '5%'}}
+                            ref={lodSlider}
                         />
                     </Box>
                     <Box className='sliderLabel'>
                         <Box>Text Size:</Box>
                         <Slider
                             aria-label="Text Size"
-                            defaultValue={0}
-                            max={100}
-                            min={-100}
-                            step={1}
-                            valueLabelDisplay="auto"
-                            sx={{width: '80%', left: '5%'}}
-                        />
-                        
-                    </Box>
-                    <Box className='sliderLabel'>
-                    <Box>Scrub Size:</Box>
-                        <Slider
-                            aria-label="Scrub Size"
                             defaultValue={1}
-                            max={100}
+                            max={20}
                             min={1}
                             step={1}
                             valueLabelDisplay="auto"
                             sx={{width: '80%', left: '5%'}}
-                        />
-
-                    </Box>
-                    <Box className='sliderLabel' sx={{left: '5%'}}>
-                    <Box>Scroll Speed:</Box>
-                        <Slider
-                            aria-label="Scroll Speed"
-                            defaultValue={1}
-                            max={10}
-                            min={1}
-                            step={1}
-                            valueLabelDisplay="auto"
-                            sx={{width: '80%', left: '5%'}}
+                            ref={textSlider}
                         />
                         
                     </Box>
+                    <IconButton ref={centerCamera} aria-label='Center Camera'>
+                        <CameraIndoorIcon sx={{color: '#5EB120'}} style={{fontSize:'32pt'}} />
+                    </IconButton>
+                    <a id="dlMule" ref={downloadMule} download='testFile'></a>
+                    <IconButton ref={downloadButton} aria-label='Export Map'>
+                        <DownloadIcon sx={{color: '#5EB120'}} style={{fontSize:'32pt'}} />
+                    </IconButton>
                 </Box>
             </div>
-            <Box id='midPar'>
-                <canvas ref={myContainer} id="editView" width="1000" height="850" style={{border: "1px solid #5EB120"}}></canvas>
+            <Box id="midPar">
+                <canvas ref={myContainer} id="editView" style={{border: "1px solid #5EB120"}}></canvas>
             </Box>
             <div id = "rightPar" className='editShelf'>
+                <Box sx={{maxHeight: '5%', display: 'flex'}}>
+                    <Fab
+                        size='medium'
+                        color='primary'
+                        aria-label="GraphicsToggle"
+                        id="graphicsModeButton"
+                        ref={graphicsButt}
+                    > {store.edit && store.edit.graphics ? "Edit Mode" : "Graphics Mode"} </Fab>
+                </Box>
                 <Box sx={{maxHeight: '10%', overflow: 'auto'}}>
                     <Collapse in={(warning != null)}>
                         <Typography sx={{color: '#fbbd0c', bgcolor: '#997a00'}} variant='h6'>{warning}</Typography>
                     </Collapse>
                 </Box>
                 <Box id='inspector' className='traySect' sx={{bgcolor: '#999', borderRadius: 1}}>
-                    <TextField ref={camXTxt} variant="filled" value="0" label="X"/>
-                    <TextField ref={camYTxt} variant="filled" value="0" label="Y"/>
-                    <TextField ref={camZTxt} variant="filled" value="1" label="Scale"/>
+                    <TextField ref={camXTxt} variant="filled" disabled value="0" label="X"/>
+                    <TextField ref={camYTxt} variant="filled" disabled value="0" label="Y"/>
+                    <TextField ref={camZTxt} variant="filled" disabled value="1" label="Scale"/>
                 </Box>
                 <Box sx={{height:'5%'}}></Box>
                 <Box id='inspector2' className='traySect' sx={{bgcolor: '#999', borderRadius: 1}}>
-                    <TextField ref={modeTxt} variant="filled" label="Mode" value="Object"/>
-                    <TextField ref={layerTxt} variant="filled" label="Layer #" value="1"/>
-                    <TextField ref={groupTxt} variant="filled" label="Subregion #" value="-"/>
+                    <TextField ref={modeTxt} variant="filled" disabled label="Mode" value="Object"/>
+                    <TextField ref={layerTxt} variant="filled" disabled label="Layer #" value="1"/>
+                    <TextField ref={groupTxt} variant="filled" disabled label="Subregion #" value="-"/>
+                </Box>
+                <Box sx={{maxHeight:'30%'}}>
+                    <Collapse in={(store.edit && store.edit.graphics)}>
+                        <HexColorPicker color={hexCol} onChange={setHexCol} />
+                        <TextField sx={{bgcolor: '#999', borderRadius: 1}} ref={colTxt} variant="filled" label="Color" onChange={(e) => {setHexCol(e.target.value)}} value={hexCol}/>
+                        <IconButton ref={colTyp1} aria-label='FillColor'>
+                            <TextureIcon style={{fontSize:'32pt'}} />
+                        </IconButton>
+                        <IconButton ref={colTyp2} aria-label='BorderColor'>
+                            <BorderStyleIcon style={{fontSize:'32pt'}} />
+                        </IconButton>
+                        <IconButton ref={colTyp3} aria-label='TextColor'>
+                            <FormatColorTextIcon style={{fontSize:'32pt'}} />
+                        </IconButton>
+                    </Collapse>
                 </Box>
             </div>
         </div>

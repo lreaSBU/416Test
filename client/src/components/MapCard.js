@@ -159,12 +159,6 @@ function MapCard(props) {
 
         <Card className='map-card' style={{ height: 'fit-content' }}>
             <CardActionArea onClick={(event) => { handleLoadList(event, idNamePair._id) }}>
-                <CardMedia
-                    component='img'
-                    src={placeholderimg}
-                >
-
-                </CardMedia>
 
 
             </CardActionArea>

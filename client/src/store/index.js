@@ -3,10 +3,6 @@ import { useHistory } from 'react-router-dom'
 import jsTPS from '../common/jsTPS'
 import api from './store-request-api'
 import epi from '../components/edit-request-api'
-import CreateSong_Transaction from '../transactions/CreateSong_Transaction'
-import MoveSong_Transaction from '../transactions/MoveSong_Transaction'
-import RemoveSong_Transaction from '../transactions/RemoveSong_Transaction'
-import UpdateSong_Transaction from '../transactions/UpdateSong_Transaction'
 import AuthContext from '../auth'
 
 // THIS IS THE CONTEXT WE'LL USE TO SHARE OUR STORE
@@ -263,9 +259,15 @@ function GlobalStoreContextProvider(props) {
         });
         */
     }
-    store.sendTransac = async function (typ, fl, gn, pn, od, nd) {
+    store.sendTransac = async function(typ, fl, gn, pn, od, nd){
         store.edit.syncWait++;
         const resp = await epi.sendEdit(store.currentMap._id, store.edit.transacNum++, typ, fl, gn, pn, od, nd);
+        //console.log('EDIT RESP:', resp);
+        store.edit.syncWait--;
+    }
+    store.sendImmediateTransac = async function(typ, fl, gn, pn, od, nd){
+        store.edit.syncWait++;
+        const resp = await epi.sendEdit(store.currentMap._id, -1, typ, fl, gn, pn, od, nd);
         //console.log('EDIT RESP:', resp);
         store.edit.syncWait--;
     }
