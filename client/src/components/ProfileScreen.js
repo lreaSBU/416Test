@@ -24,7 +24,7 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import PublicIcon from '@mui/icons-material/Public';
 import PublicOffIcon from '@mui/icons-material/PublicOff';
-import placeholderimg from './Capture.png';
+import placeholderimg from './Mappreview.png';
 
 const ProfileScreen = () => {
     const { store } = useContext(GlobalStoreContext);

@@ -72,6 +72,8 @@ export const getStartData = (id) => {
     })
 }
 
+export const findUser = (id) => api.get(`/finduser/${id}`)
+
 const apis = {
     createMap,
     getMapById,
@@ -82,7 +84,8 @@ const apis = {
     getConvoPairs,
     requestBlock,
     sendMessage,
-    getStartData
+    getStartData,
+    findUser
 }
 
 export default apis
