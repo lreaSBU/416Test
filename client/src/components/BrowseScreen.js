@@ -20,7 +20,7 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import PublicIcon from '@mui/icons-material/Public';
 import PublicOffIcon from '@mui/icons-material/PublicOff';
-import placeholderimg from './Capture.png';
+import placeholderimg from './Mappreview.png';
 import PersonIcon from '@mui/icons-material/Person';
 import PeopleIcon from '@mui/icons-material/People';
 
@@ -38,6 +38,7 @@ const BrowseScreen = () => {
     const [openEmail, setOpenEmail] = useState(false);
     const [openPassword, setOpenPassword] = useState(false);
     const [openFriend, setOpenFriend] = useState(false);
+    const [mapOwner, setMapOwner] = useState();
     const isMenuOpen = Boolean(anchorEl);
     const isSortOpen = Boolean(banchor);
 
@@ -79,6 +80,17 @@ const BrowseScreen = () => {
         setOpenFriend(false);
     }
 
+    async function findUser(id){
+        try {
+            const result = await store.findUser(id);
+            setMapOwner(result.firstName + ' ' + result.lastName)
+            console.log('RESULT: ', result)
+          } catch (error) {
+            console.log('Error:', error);
+          }
+        
+    }
+
     let mapCards = "";
     if (store) {
         mapCards =
@@ -102,14 +114,9 @@ const BrowseScreen = () => {
         if (store.currentMap.name) { //After editing store.currentMap is different
             let createdDate = store.currentMap.createdAt
             let sliceDate = createdDate.slice(0, 10)
-
-            // let publish = '';
-            // if (store.currentMap.published) {
-            //     publish = <PublicIcon color='primary'></PublicIcon>
-            // }
-            // else {
-            //     publish = <PublicOffIcon></PublicOffIcon>
-            // }
+      
+            findUser(store.currentMap.owner);
+            // console.log('MAP OWNER ', mapOwner)
 
             inspect =
                 <Box>
@@ -117,7 +124,8 @@ const BrowseScreen = () => {
                         {store.currentMap.name}
                     </Typography>
                     <Typography variant='h5'>
-                        {'Created by: ' + auth.getAccountDetails().firstName + ' ' + auth.getAccountDetails().lastName}
+                        {/* {'Created by: ' + auth.getAccountDetails().firstName + ' ' + auth.getAccountDetails().lastName} */}
+                        {'Created by: ' + mapOwner}
                         <br></br>
                         {'Created on: ' + sliceDate}
                         <br></br>
@@ -159,22 +167,21 @@ const BrowseScreen = () => {
         <div>
             <div id="list-selector-list">
                 <div id='profileScreenSortHeader'>
-                    <Box sx={{ display: { xs: 'none', md: 'flex', width: '80%'} }}>
+                    <Box sx={{ margin: 1, display: 'flex', width: '90%' }}>
                         <IconButton
                             size="large"
-                            // edge="end"
                             aria-label="sort mode"
                             aria-controls={'primary-search-account-menu'}
                             aria-haspopup="true"
                             onClick={handleSortMenuOpen}
-                            // color="inherit"
-                            sx={{p: '10x'}}
+                            sx={{mr: 1}}
+
                         ><SortIcon /></IconButton>
-                        <TextField sx={{marginTop: 1}} variant='outlined' fullWidth onKeyDown={handleSearchKey} label={store.searchMode ? 'Search By User Name' : 'Search By Map Name'}></TextField>
+                        <TextField sx={{mr: 1 }} variant='outlined' fullWidth onKeyDown={handleSearchKey} label={store.searchMode ? 'Search By User Name' : 'Search By Map Name'}></TextField>
                         {
                             (store.searchMode ?
-                            <IconButton size='small' onClick={(event) => { handleChangeSearchMode(0) }}><PersonIcon/></IconButton>
-                            : <IconButton size='small' onClick={(event) => { handleChangeSearchMode(1) }}><PeopleIcon/></IconButton>)
+                            <IconButton onClick={(event) => { handleChangeSearchMode(0) }}><PersonIcon/></IconButton>
+                            : <IconButton onClick={(event) => { handleChangeSearchMode(1) }}><PeopleIcon/></IconButton>)
                         }
                     </Box>
                 </div>

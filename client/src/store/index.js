@@ -68,7 +68,7 @@ function GlobalStoreContextProvider(props) {
             page: 0
         });
     }
-    store.goHelp = function(){
+    store.goHelp = function () {
         store.loadIdNamePairs({
             browseMode: 4,
             currentConvo: null,
@@ -112,7 +112,7 @@ function GlobalStoreContextProvider(props) {
             page: 0
         });
     }
-    store.changeSearchMode = async function(sm){
+    store.changeSearchMode = async function (sm) {
         await store.loadIdNamePairs({
             searchMode: sm,
             page: 0
@@ -135,12 +135,12 @@ function GlobalStoreContextProvider(props) {
     }
 
     store.changePublished = function (id, pb) {
-        store.updateMapById(id, {published: pb});
+        store.updateMapById(id, { published: pb });
     }
 
     store.updateMapById = async function (id, p) {
         const response = await api.updateMapById(id, p);
-        if(response.data.success) await store.loadIdNamePairs();
+        if (response.data.success) await store.loadIdNamePairs();
         else console.log("FAILED TO UPDATE!?!?!?");
     }
 
@@ -259,13 +259,13 @@ function GlobalStoreContextProvider(props) {
         });
         */
     }
-    store.sendTransac = async function(typ, fl, gn, pn, od, nd){
+    store.sendTransac = async function (typ, fl, gn, pn, od, nd) {
         store.edit.syncWait++;
         const resp = await epi.sendEdit(store.currentMap._id, store.edit.transacNum++, typ, fl, gn, pn, od, nd);
         //console.log('EDIT RESP:', resp);
         store.edit.syncWait--;
     }
-    store.sendImmediateTransac = async function(typ, fl, gn, pn, od, nd){
+    store.sendImmediateTransac = async function (typ, fl, gn, pn, od, nd) {
         store.edit.syncWait++;
         const resp = await epi.sendEdit(store.currentMap._id, -1, typ, fl, gn, pn, od, nd);
         //console.log('EDIT RESP:', resp);
@@ -316,6 +316,25 @@ function GlobalStoreContextProvider(props) {
             // IF IT'S A VALID LIST THEN LET'S START EDITING IT
             //history.push("/playlist/" + newMap._id);
         } else console.log("API FAILED TO CREATE A NEW LIST");
+    }
+
+    store.findUser = async function (id) {
+        try {
+          const response = await api.findUser(id);
+          if (response.data.status) {
+            console.log('SUCCESS FIND', response.data.user);
+            return response.data.user;
+          } else {
+            console.log('Failed to find user')
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      };
+      
+
+    store.copyMap = async function (id) {
+        console.log('COPY MAP')
     }
 
     return (

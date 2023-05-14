@@ -100,6 +100,23 @@ getMapById = async (req, res) => {
         return res.status(200).json({ success: true, map: list });
     }).catch(err => console.log(err))
 }
+
+getUserById = async (req, res) => {
+    // console.log('Find User: !!!!!!!!!!!!!!!!!!!!!' + JSON.stringify(req.params.id));
+    await User.findById({_id: req.params.id}, (err, user) =>{
+        if(err){
+            console.log('Find User Failed')
+            return res.status(400).json({success: false, error: err});
+        }
+        // console.log('USER?????', user)
+        return res.status(200).json({status: true, user: user});
+    }).catch(err => console.log(err))
+}
+
+// copyMap = async (req, res) => {
+
+// }
+
 async function namePairs(nm) {
     await Map.find({ name: nm, published: true }, (err, maps) => {
         console.log("found maps by name: " + JSON.stringify(maps));
@@ -349,5 +366,7 @@ module.exports = {
     getMapById,
     getMapPairs,
     getMaps,
-    updateMap
+    updateMap,
+    getUserById,
+
 }
