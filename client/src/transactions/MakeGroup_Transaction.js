@@ -1,6 +1,6 @@
 import jsTPS_Transaction from "../common/jsTPS.js"
 
-export default class MakePoly_Transaction extends jsTPS_Transaction {
+export default class MakeGroup_Transaction extends jsTPS_Transaction {
     constructor(store, scope, fl, d1) {
         super();
         this.store = store;
@@ -13,10 +13,10 @@ export default class MakePoly_Transaction extends jsTPS_Transaction {
     doTransaction() {
         if(this.scope){ //push Poly
             this.store.edit.l[this.fl][this.scope.group].elems.push(this.d1);
-            this.d1.finalize(this.fl, this.scope.group, this.scope);
-            //this.store.sendTransac(0, this.fl, this.scope.group, this.d1.id, null, this.d1.points);
+            this.d1.finalize(this.fl, this.scope.group, this.scope); //this sends the transac
         }else{ //push SubRegion
             let gn = this.store.edit.l[this.fl].length;
+            console.log('GN ==>', gn);
             let temp = {
                 level: this.fl,
                 group: gn,
@@ -28,10 +28,10 @@ export default class MakePoly_Transaction extends jsTPS_Transaction {
             };
             this.store.edit.l[this.fl].push(temp);
             this.store.sendTransac(11, this.fl, -1, -1, null, gn);
+            //console.log("D1 IS THE PROBLEM???", this.d1);
             temp.elems.push(this.d1);
-            this.d1.finalize(this.fl, gn, temp);
+            this.d1.finalize(this.fl, gn, temp); //this sends the transac
             this.d2 = gn;
-            //this.store.sendTransac(0, this.fl, gn, 0, null, this.d1.points);
         }
     }
     

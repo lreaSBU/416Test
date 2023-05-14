@@ -19,6 +19,10 @@ import logo from './Capture.png'
 import colors from './colors.png'
 import Hidden from '@mui/material/Hidden';
 import Fab from '@mui/material/Fab'
+import Tooltip from '@mui/material/Tooltip';
+import PolylineIcon from '@mui/icons-material/Polyline';
+import ContentCutIcon from '@mui/icons-material/ContentCut';
+import HubIcon from '@mui/icons-material/Hub';
 import DownloadIcon from '@mui/icons-material/Download';
 import CameraIndoorIcon from '@mui/icons-material/CameraIndoor';
 import TextureIcon from '@mui/icons-material/Texture';
@@ -53,7 +57,7 @@ import Insert_Transaction from '../transactions/Insert_Transaction';
 import DeleteGroup_Transaction from '../transactions/DeleteGroup_Transaction';
 import MoveGroup_Transaction from '../transactions/MoveGroup_Transaction';
 import ChangeProperty_Transaction from '../transactions/ChangeProperty_Transaction';
-import MakePoly_Transaction from '../transactions/MakePoly_Transaction';
+import MakeGroup_Transaction from '../transactions/MakeGroup_Transaction';
 /*
     This React component lists all the top5 lists in the UI.
     
@@ -154,6 +158,15 @@ const EditScreen = () => {
                 this.x = x; this.y = y;
                 this.h = false;
             }
+            static cross(a, b){
+                return a.x*b.y - a.y*b.x;
+            }
+            sub(p){
+                return new Point(this.x - p.x, this.y - p.y);
+            }
+            add(p){
+                return new Point(this.x + p.x, this.y + p.y);
+            }
             strip(){
                 return [this.x, -this.y];
             }
@@ -185,6 +198,7 @@ const EditScreen = () => {
             }
             divideLocal(n){
                 this.x /= n; this.y /= n;
+                return this;
             }
             getLocal(){
                 Point.Gen.x = HW + camZ*(this.x+camX-HW);
@@ -208,7 +222,7 @@ const EditScreen = () => {
         const scrIn = (1 - 1/1.1)/2, scrOut = (1 - 1.1)/2;
         function wheel(e){
             if(VERSION != store.edit.sesh) return;
-            if(aTime != 0) return;
+            if(aTime != 0) animCancel();
             let scr = e.deltaY < 0 ? 1 : -1, czo = camZ;
             if(scr == 1) camZ *= 1.1;
             else camZ /= 1.1;
@@ -228,7 +242,7 @@ const EditScreen = () => {
             if((mcl = e.buttons == 1)){
                 switch(tool){
                     case 0: //cam
-                        if(aTime) break;
+                        if(aTime) animCancel();
                         camX += (e.offsetX - mx)/camZ;
                         camY += (e.offsetY - my)/camZ;
                     break; case 1: //move
@@ -253,13 +267,21 @@ const EditScreen = () => {
             }else if(e.buttons == 0 && mode){
                 var d, md = 100000000000000, mp = null, ref = new Point(e.offsetX, e.offsetY);
                 ref.makeGlobal();
-                for(var e of mode.elems) for(var p of e.points) if((d = ref.dist(p)) < md){
-                    md = d;
-                    mp = p;
-                }
-                Poly.Draw();
-                if(mp != null) drawDot(mp, true);
-                mel = mp;
+                if(mode){
+                    for(var e of mode.elems) for(var p of e.points) if((d = ref.dist(p)) < md){
+                        md = d;
+                        mp = p;
+                    }
+                    Poly.Draw();
+                    if(mp != null) drawDot(mp, true);
+                    mel = mp;
+                }/*else if(tool == 3){
+                    ctx.strokeStyle = '#fbbd0c';
+                    ctx.beginPath();
+                    ctx.moveTo(movoff.x, movoff.y);
+                    ctx.lineTo(ref.x, ref.y);
+                    ctx.stroke();
+                }*/
             }
             mx = smx; my = smy;
         }
@@ -305,6 +327,9 @@ const EditScreen = () => {
                     movoff.set(mx, my);
                     console.log("ADDSTART");
                     //toolRefs[5].style = selStyle; //DONT KNOW YET...
+                break; case 4:
+                    movoff.set(0, 0);
+                    console.log('CUTSTART'); //idk if u have to do anything here actually
                 break;
             }
         }
@@ -363,6 +388,12 @@ const EditScreen = () => {
             return (mode && mels.length > 0) || (!mode && sels.length > 0);
         }
         var aTime = 0, tarX, tarY, tarZ;
+        function animCancel(){
+            aTime = 0;
+            tarX = camX;
+            tarZ = camY;
+            tarZ = camZ;
+        }
         function animCam(b = false){
             if(aTime != 0){
                 camX += (tarX-camX)/50;
@@ -385,7 +416,7 @@ const EditScreen = () => {
             }
         }
         function autoCam(b = false){
-            if(store.edit.l[viewLevel].length == 0) return;
+            if(store.edit.l[viewLevel].length == 0) return [100, 100, 1];
             let minX, minY, maxX, maxY;
             minX = minY = 100000000;
             maxX = maxY = -100000000;
@@ -410,7 +441,7 @@ const EditScreen = () => {
             else np = new Poly(0, viewLevel, store.edit.l[viewLevel].length);
             for(let p of addPoints) np.add(p);
             tps.bookMark();
-            tps.addTransaction(new MakePoly_Transaction(store, mode, viewLevel, np));
+            tps.addTransaction(new MakeGroup_Transaction(store, mode, viewLevel, np));
             addPoints.length = 0;
         }
         function keydown(e){
@@ -427,15 +458,16 @@ const EditScreen = () => {
                 case 'p': autoCam(); break;
                 case 'P': animCam(true); break;
                 case 'f': Poly.Draw(true); changeFlag = false; break;
-                case 'm': mergeRegions(); break;
+                case 'm': merge_tool(); break;
+                case 'k': swapTool(4); break;
                 case 'y': if(keys.Control && tps.hasTransactionToRedo()) tps.doMulti(); break;
                 case 'z': if(keys.Control && tps.hasTransactionToUndo()) tps.undoMulti(); break;
-                case 'Y': if(keys.Control && tps.hasTransactionToRedo()) tps.doTransaction(); break;
-                case 'Z': if(keys.Control && tps.hasTransactionToUndo()) tps.undoTransaction(); break;
+                case 'Y': if(mode && keys.Control && tps.hasTransactionToRedo()) tps.doTransaction(); break;
+                case 'Z': if(mode && keys.Control && tps.hasTransactionToUndo()) tps.undoTransaction(); break;
                 case 'ArrowUp': viewChange(true); break;
                 case 'ArrowDown': viewChange(false); break;
                 default: changeFlag = false; break;
-            }else if(tool == 3 && e.key == 'a'){
+            }else if(tool == 3 && (e.key == 'a' || e.key == ' ' || e.key == 'Enter')){
                 addWrap();
                 swapTool(0);
                 changeFlag = true;
@@ -480,13 +512,24 @@ const EditScreen = () => {
             if(VERSION != store.edit.sesh) return;
             store.edit.focus = false;
             mp.set(e.offsetX, e.offsetY);
-            if(tool == 2){ //init boxSelect FOR REAL
-                movoff.set(mp.x, mp.y);
-            }else if(tool == 3){ //add trace insert new point
-                px = (e.offsetX-HW)/camZ-camX+HW;
-                py = (e.offsetY-HH)/camZ-camY+HH;
-                addPoints.push(new Point(px, py));
-                movoff.set(mp.x, mp.y);
+            switch(tool){
+                case 2:
+                    movoff.set(mp.x, mp.y);
+                break; case 3:
+                    px = (e.offsetX-HW)/camZ-camX+HW;
+                    py = (e.offsetY-HH)/camZ-camY+HH;
+                    addPoints.push(new Point(px, py));
+                    movoff.set(mp.x, mp.y);
+                    Poly.Draw();
+                break; case 2:
+                    movoff.set(mp.x, mp.y);
+                break; case 4:
+                    if(mode && mel) if(movoff.x == 0) movoff.set(mel.x, mel.y);
+                    else{ //Actually do the cut
+                        cut_tool(movoff, mel);
+                        swapTool(0);
+                    }
+                break;
             }
         }
         canv.addEventListener("mousedown", mousedown);
@@ -547,6 +590,7 @@ const EditScreen = () => {
                             if(!pp.h && (pp.x > start.x && pp.x < end.x) && (pp.y > start.y && pp.y < end.y)){
                                 pp.h = true;
                                 mels.push(pp);
+                                console.log(pp);
                             }
                         }
                     }else{
@@ -566,7 +610,7 @@ const EditScreen = () => {
             }/*else{
                 store.sendImmediateTransac(7, -1, -1, -1, null, [camX, camY, camZ]);
             }*/
-            if(tool != 3) swapTool(0);
+            if(tool != 3 && tool != 4) swapTool(0);
             if(mp.x != e.offsetX || mp.y != e.offsetY) return;
             if(store.edit.l[viewLevel] == undefined) return;
             px = (e.offsetX-HW)/camZ-camX+HW;
@@ -965,6 +1009,7 @@ const EditScreen = () => {
         fileIn.onchange = function(){
             for(var f of this.files) readFile(f);
             colSave.length = 0;
+            //animCam(true);
         }
         propHolder.onchange = function(){
             Poly.Draw();
@@ -1064,6 +1109,14 @@ const EditScreen = () => {
         colTypes[2].onclick = function(){
             store.edit.graphics = 3;
         }
+        var hBox;
+        function drawBox(p){
+            hBox = 2*(camZ**.2);
+            ctx.strokeStyle = '#ff00ff';
+            ctx.beginPath();
+            ctx.rect(HW+camZ*(p.x+camX-HW)-hBox, HH+camZ*(p.y+camY-HH)-hBox, hBox*2, hBox*2);
+            ctx.stroke();
+        }
         function drawDot(p, h=false){
             if(h) ctx.strokeStyle = '#ff0000';
             else ctx.fillStyle = p.h ? "#fbbd0c" : "#000";
@@ -1155,11 +1208,29 @@ const EditScreen = () => {
                     ctx.stroke();
                     ctx.setLineDash([]);
                 }else if(tool == 3 && addPoints.length){
-                    for(let p of addPoints) drawDot(p);
+                    if(addPoints.length > 1){
+                        ctx.strokeStyle = '#fbbd0c';
+                        ctx.beginPath();
+                        ctx.moveTo(loc(true, addPoints[0].x), loc(false, addPoints[0].y));
+                        for(let p of addPoints) ctx.lineTo(loc(true, p.x), loc(false, p.y));
+                        ctx.stroke();
+                        for(let p of addPoints) drawDot(p);
+                    }
+                }else if(tool == 4){
+                    drawBox(mel);
+                    if(movoff.x != 0){
+                        ctx.strokeStyle = '#ff00ff';
+                        ctx.setLineDash([5, 15]);
+                        ctx.beginPath();
+                        ctx.moveTo(loc(true, movoff.x), loc(false, movoff.y));
+                        ctx.lineTo(loc(true, mel.x), loc(false, mel.y));
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                    }
                 }
             }
-            constructor(id, fl, gn){
-                if(store.edit.l[fl][gn] == undefined || store.edit.l[fl][gn].elems == undefined) this.id = id;
+            constructor(id, fl, gn, copy = false){
+                if(copy || store.edit.l[fl][gn] == undefined || store.edit.l[fl][gn].elems == undefined) this.id = id;
                 else this.id = store.edit.l[fl][gn].elems.length; //this is the id of the poly in its group!!!!
                 //this.id = id;
                 //this.fl = fl; //file level
@@ -1169,6 +1240,19 @@ const EditScreen = () => {
                 this.clockWise = true;
                 this.minX = this.minY = 100000000;
                 this.maxX = this.maxY = -100000000;
+            }
+            copy(){
+                let ret = new Poly(this.id, -1, -1, true);
+                ret.id = this.id; //just in case
+                ret.lodBound = this.lodBound;
+                ret.clockWise = this.clockWise;
+                ret.minX = this.minX;
+                ret.maxX = this.maxX;
+                ret.minY = this.minY;
+                ret.maxY = this.maxY;
+                ret._mean = this._mean;
+                for(let p of this.points) ret.points.push(p.copy());
+                return ret;
             }
             strip(){
                 let ret = [];
@@ -1198,9 +1282,11 @@ const EditScreen = () => {
                 for(var i = 0; i < this.points.length; i++) if(this.points[i].eq(p)) return i;
                 return -1;
             }
+            static interval(min1, max1, min2, max2){
+                return max1 >= min2 && max2 >= min1;
+            }
             isOverlapping(p){
-                return (p.minX >= this.minX && p.minX <= this.maxX && p.minY >= this.minY && p.minY <= this.minY)
-                    || (p.maxX >= this.minX && p.maxX <= this.maxX && p.maxY >= this.minY && p.maxY <= this.minY);
+                return Poly.interval(p.minX, p.maxX, this.minX, this.maxX) && Poly.interval(p.minY, p.maxY, this.minY, this.maxY);
             }
             isNeighbor(p){
                 if(!this.isOverlapping(p)) return false; //avoid lengthy calls
@@ -1224,9 +1310,8 @@ const EditScreen = () => {
                 //console.log("xBounds: (" + this.minX + " to " + this.maxX + ")");
                 //console.log("yBounds: (" + this.minY + " to " + this.maxY + ")");
                 finSum = 0;
-                for(var i = 0; i < this.points.length-1; i++){
+                for(var i = 0; i < this.points.length-1; i++)
                     finSum += (this.points[i+1].x-this.points[i].x) * (this.points[i].y+this.points[i+1].y);
-                }
                 this.clockWise = finSum < 0;
                 this.reCalc(par);
                 if(fl != null){
@@ -1293,9 +1378,9 @@ const EditScreen = () => {
                 if(sigh) dots.push(LOD_REF);
                 //pLast.set(undefined, undefined); //pLast.set(fx, fy);
                 ctx.moveTo(fx, fy);
-                for(gi = 1; gi < this.points.length; gi++){ //need to optimize this
+                for(gi = 1; gi < this.points.length; gi++){
                     //i % LOD_STEP == 0 && 
-                    if(!Acc && LOD_REF.fastDist(this.points[gi]) < LOD_SKIP) continue;
+                    if(!Acc && !this.points[gi].h && LOD_REF.fastDist(this.points[gi]) < LOD_SKIP) continue;
                     LOD_REF = this.points[gi];
                     fx = loc(true, LOD_REF.x); //HW+camZ*(LOD_REF.x+camX-HW);
                     fy = loc(false, LOD_REF.y); //HH+camZ*(LOD_REF.y+camY-HH);
@@ -1312,6 +1397,7 @@ const EditScreen = () => {
                 else ctx.fillStyle = mode && !sigh ? "#ddffcc" : (high ? "#666600" : '#99ff66');
                 ctx.fill();
                 LOD_REF = null;
+                //if(dots.length) drawBox(dots[0]);
                 for(let d of dots) drawDot(d);
                 setOff();
             }
@@ -1342,7 +1428,7 @@ const EditScreen = () => {
                 first = p;
             }*/
             //ACTUALLY BUILD MERGED POLY:::
-            var ret = new Poly(parseInt(A.id) + parseInt(B.id) / 1000, level, group);
+            var ret = new Poly(A.id, level, group);
             var wh = B, ind;
             ret.add(first);
             p = B.get(ind = B.indexOf(first)+1); //joint B1
@@ -1354,17 +1440,37 @@ const EditScreen = () => {
                 ret.add(p);
                 p = wh.get(++ind);
             }
-            ret.add(first);
+            //ret.add(first);
             ret.mean();
-            ret.finalize(null, null, store.l[level][group]);
+            ret.finalize(null, null, store.edit.l[level][group]);
             return ret;
         }
-
-        function mergeRegions(){
-            if(sels.length != 2) return;
+        function cleanString(s){
+            while(s[0] == ' ') s = s.slice(1);
+            while(s[s.length-1] == ' ') s = s.slice(0, s.length-1);
+            return s;
+        }
+        function copyRegion(reg){
+            let ret = {
+                level: reg.level,
+                group: reg.group,
+                h: false,
+                mean: reg.mean.copy(),
+                elems: [],
+                props: structuredClone(reg.props),
+                offset: new Point(0, 0)
+            };
+            for(let p of reg.elems) ret.elems.push(p.copy());
+            return ret;
+        }
+        function merge_tool(){
+            if(mode) return;
+            if(sels.length != 2) return handleWarning('Must be selecting only two SubRegions at a time');
             console.log(sels[0]);
             console.log(sels[1]);
-            var rx = sels[1].level, ry = sels[1].group;
+            let save1 = copyRegion(sels[0]);
+            let save2 = copyRegion(sels[1]);
+            //var rx = sels[1].level, ry = sels[1].group;
             while(true){
                 var pass = true;
                 for(var i = 0; i < sels[0].elems.length; i++){
@@ -1383,24 +1489,98 @@ const EditScreen = () => {
                 if(pass) break;
             }
             for(var e of sels[1].elems) sels[0].elems.push(e); //make sure to save the islands
-            store.edit.l[rx].splice(ry, 1);
-            //if(store.edit.d[rx][4] != undefined) store.edit.d[rx][4].elems[sels[0].group] += "/" + store.edit.d[rx][4].elems[ry]; //merge names
             for(var i of Object.keys(sels[1].props)){
                 if(sels[0].props[i] == undefined){
                     sels[0].props[i] = sels[1].props[i];
                 }else{
-                    if(isNaN(sels[0].props[i])) sels[0].props[i] += "/" + sels[1].props[i];
+                    if(isNaN(sels[0].props[i])) sels[0].props[i] = cleanString(sels[0].props[i]) + "/" + cleanString(sels[1].props[i]);
                     else sels[0].props[i] += sels[1].props[i];
                 }
             }
-            sels.splice(1, 1);
+            let ret = copyRegion(sels[0]);
+            //SANITIZE THE INDICES{{{
+            for(let i = 0; i < ret.elems.length; i++) ret.elems[i].id = i;
+            //}}}
+            console.log('RET:', ret);
+            tps.bookMark();
+            tps.addTransaction(new DeleteGroup_Transaction(store, false, sels[0].level, sels[0].group, -1, save1));
+            tps.addTransaction(new DeleteGroup_Transaction(store, false, sels[1].level, sels[1].group, -1, save2));
+            tps.addTransaction(new MakeGroup_Transaction(store, false, ret.level, ret.elems[0]));
+            for(let i = 1; i < ret.elems.length; i++){
+                //console.log("EXTRA???");
+                tps.addTransaction(new MakeGroup_Transaction(store, store.edit.l[ret.level][store.edit.l[ret.level].length-1], ret.level, ret.elems[i]));
+            }
+            for(let p of store.edit.l[ret.level][store.edit.l[ret.level].length-1].elems)
+                console.log(p.id);
+            //sels.pop();
             Poly.Draw();
         }
-
-        function autoFrame(){
+        function onSegment(p, q, r){
+            if(q.x <= Math.max(p.x, r.x) && q.x >= Math.min(p.x, r.x) && q.y <= Math.max(p.y, r.y) && q.y >= Math.min(p.y, r.y))
+                return true;
+            return false;
+        }
+        function orientation(p, q, r){
+            let val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+            if (val == 0) return 0;
+            return (val > 0) ? 1 : 2;
+        }
+        function doIntersect(p1, q1, p2, q2){
+            let o1 = orientation(p1, q1, p2);
+            let o2 = orientation(p1, q1, q2);
+            let o3 = orientation(p2, q2, p1);
+            let o4 = orientation(p2, q2, q1);
+            if (o1 != o2 && o3 != o4) return true;
+            if (o1 == 0 && onSegment(p1, p2, q1)) return true;
+            if (o2 == 0 && onSegment(p1, q2, q1)) return true;
+            if (o3 == 0 && onSegment(p2, p1, q2)) return true;
+            if (o4 == 0 && onSegment(p2, q1, q2)) return true;
+            return false;
+        }
+        function cut_tool(a, b){
+            console.log('ATTEMPT CUT BETWEEN:', a, b);
+            let aPar = findParent(a, mode),
+            bPar = findParent(b, mode);
+            if(aPar.p != bPar.p) return handleWarning('Cut endpoints must belong to the same Poly');
+            let dif = Math.abs(aPar.i - bPar.i),
+            par = mode.elems[aPar.p],
+            len = par.points.length; 
+            if(dif == 1 || dif == len-1) return handleWarning('Cut enpoints cannot be neighboring');
+            //deMel();
+            for(let i = 0; i < len-1; i++){
+                if(doIntersect(a, b, par.points[i], par.points[i+1])){
+                    console.log(a, b, par.points[i], par.points[i+1]);
+                    let dif1 = Math.abs(i - aPar.i),
+                    dif2 = Math.abs(i - bPar.i);
+                    console.log('else', i, aPar.i, bPar.i, '->', dif1, dif2);
+                    if(dif1 < 2 || dif1 == len || dif2 < 2 || dif2 == len) continue;
+                    return handleWarning('Cut overlaps with Poly border');
+                }
+            }
+            let avg = a.add(b).divideLocal(2),
+            start = Point.cross(par.points[0].sub(par.points[len-1]), avg.sub(par.points[len-1])) > 0;
+            for(let i = 0; i < len-1; i++){
+                if((Point.cross(par.points[i+1].sub(par.points[i]), avg.sub(par.points[i])) > 0) != start)
+                    return handleWarning("Cut leaves Poly border");
+            }
+            let save = par.copy(),
+            np1 = new Poly(null, mode.level, mode.group),
+            np2 = new Poly(null, mode.level, mode.group),
+            i = aPar.i-1;
+            while((i = ++i%len) != bPar.i) np1.add(par.points[i].copy());
+            np1.add(par.points[bPar.i].copy());
+            i = bPar.i-1;
+            while((i = ++i%len) != aPar.i) np2.add(par.points[i].copy());
+            np2.add(par.points[aPar.i].copy());
+            //for(let i = 0; i < mode.elems.length; i++) mode.elems[i].id = i; //sanitize (needed?)
+            tps.bookMark();
+            tps.addTransaction(new DeleteGroup_Transaction(store, true, mode.level, mode.group, aPar.p, save));
+            np1.id = mode.elems.length;
+            tps.addTransaction(new MakeGroup_Transaction(store, mode, mode.level, np1));
+            np2.id = mode.elems.length;
+            tps.addTransaction(new MakeGroup_Transaction(store, mode, mode.level, np2));
 
         }
-
         function start(){ //translate raw DB data into more robust editing structure
             //ctx.lineWidth = 2;
             if(!store.edit.raw) return;
@@ -1434,6 +1614,7 @@ const EditScreen = () => {
             camX = store.edit.camX;
             camY = store.edit.camY;
             camZ = store.edit.camZ;
+            viewLevel = store.edit.viewLevel;
             //console.log('CLEANED:', store.edit.l);
             Poly.Draw();
         }
@@ -1442,7 +1623,7 @@ const EditScreen = () => {
 
         return () => { //cleanup the event listeners!!!
             console.warn('cleaning!!!!!!!!!!!!!!!!!!!!!!!');
-            store.sendImmediateTransac(7, -1, -1, -1, null, [camX, camY, camZ]);
+            store.sendImmediateTransac(7, -1, -1, -1, null, [camX, camY, camZ, viewLevel]);
             window.removeEventListener("keydown", keydown);
             window.removeEventListener("keyup", keyup);
             canv.removeEventListener("mousedown", mousedown);
@@ -1457,43 +1638,67 @@ const EditScreen = () => {
         <div id='editParent'>
             <div id = "leftPar" className='editShelf'>
                 <Box id='toolTray' className='traySect' sx={{bgcolor: '#999', borderRadius: 3}}>
-                    <IconButton ref={selectRefer} aria-label='select'>
-                        <MouseIcon style={{fontSize:'32pt'}} />
-                    </IconButton>
-                    <IconButton ref={addRefer} aria-label='add'>
-                        <AddIcon style={{fontSize:'32pt'}} />
-                    </IconButton>
-                    <IconButton ref={removeRefer} aria-label='remove'>
-                        <ClearIcon style={{fontSize:'32pt'}} />
-                    </IconButton>
-                    <IconButton ref={moveRefer} aria-label='move'>
-                        <PanToolIcon style={{fontSize:'32pt'}} />
-                    </IconButton>
-                    <IconButton ref={boxRefer} aria-label='box select'>
-                        <HighlightAltIcon style={{fontSize:'32pt'}} />
-                    </IconButton>
-                    <IconButton aria-label='duplicate'>
-                        <CallMergeIcon style={{fontSize:'32pt'}} />
-                    </IconButton>
-                    <IconButton aria-label='merge'>
-                        <CallSplitIcon style={{fontSize:'32pt'}} />
-                    </IconButton>
-                    <IconButton aria-label='properties'>
-                        <MenuIcon ref={propContainer} style={{fontSize:'32pt'}} />
-                    </IconButton>
-                    <IconButton aria-label='duplicate'>
-                        <ContentCopyIcon style={{fontSize:'32pt'}} />
-                    </IconButton>
-                    <IconButton aria-label='traverse up layer'>
-                        <ArrowUpwardIcon style={{fontSize:'32pt'}} />
-                    </IconButton>
-                    <IconButton aria-label='traverse down layer'>
-                        <ArrowDownwardIcon style={{fontSize:'32pt'}} />
-                    </IconButton>
-                    <IconButton variant="contained" component="label" aria-label='upload'>
-                        <input ref={fileContainer} type="file" id="fileIn" name="ShapeUpload" multiple hidden></input>
-                        <FileUploadIcon  style={{fontSize:'32pt'}} />
-                    </IconButton>
+                    <Tooltip title='Select (left click)'>
+                        <IconButton ref={selectRefer} aria-label='select'>
+                            <MouseIcon style={{fontSize:'32pt'}} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title='Insert Point (i)'>
+                        <IconButton ref={addRefer} aria-label='add'>
+                            <AddIcon style={{fontSize:'32pt'}} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title='Remove (x)'>
+                        <IconButton ref={removeRefer} aria-label='remove'>
+                            <ClearIcon style={{fontSize:'32pt'}} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title='Drag (g)'>
+                        <IconButton ref={moveRefer} aria-label='move'>
+                            <PanToolIcon style={{fontSize:'32pt'}} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title='Box Select (b)'>
+                        <IconButton ref={boxRefer} aria-label='box select'>
+                            <HighlightAltIcon style={{fontSize:'32pt'}} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title='Merge (m)'>
+                        <IconButton aria-label='merge'>
+                            <CallMergeIcon style={{fontSize:'32pt'}} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title='Split (l)'>
+                        <IconButton aria-label='split'>
+                            <CallSplitIcon style={{fontSize:'32pt'}} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title='Properties Menu'>
+                        <IconButton aria-label='properties'>
+                            <MenuIcon ref={propContainer} style={{fontSize:'32pt'}} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title='Poly Draw (a)'>
+                        <IconButton aria-label='draw'> 
+                            <PolylineIcon style={{fontSize:'32pt'}} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title='Cut (k)'>
+                        <IconButton aria-label='cut'>
+                            <ContentCutIcon style={{fontSize:'32pt'}} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title='Consolidate (c)'>
+                        <IconButton aria-label='equate'>
+                            <HubIcon style={{fontSize:'32pt'}} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title='File Upload'>
+                        <IconButton variant="contained" component="label" aria-label='upload'>
+                            <input ref={fileContainer} type="file" id="fileIn" name="ShapeUpload" multiple hidden></input>
+                            <FileUploadIcon  style={{fontSize:'32pt'}} />
+                        </IconButton>
+                    </Tooltip>
                 </Box>
                 <Box id='displayMenu' ref={propList} className='traySect' sx={{maxHeight: '40%', overflow: 'auto', borderTop: 2, borderBottom: 2, borderColor: '#00ff00'}}>
                     {
@@ -1561,8 +1766,8 @@ const EditScreen = () => {
                         <Box>LOD Bias:</Box>
                         <Slider
                             aria-label="LOD Bias"
-                            defaultValue={2}
-                            max={5}
+                            defaultValue={3}
+                            max={10}
                             min={0}
                             step={.01}
                             valueLabelDisplay="auto"
@@ -1594,7 +1799,7 @@ const EditScreen = () => {
                 </Box>
             </div>
             <Box id="midPar">
-                <canvas ref={myContainer} id="editView" style={{border: "1px solid #5EB120"}}></canvas>
+                <canvas ref={myContainer} id="editView"></canvas>
             </Box>
             <div id = "rightPar" className='editShelf'>
                 <Box sx={{maxHeight: '5%', display: 'flex'}}>

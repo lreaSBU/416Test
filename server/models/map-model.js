@@ -13,6 +13,7 @@ const MapSchema = new Schema(
         camX: {type: Number, required: true},
         camY: {type: Number, required: true},
         camZ: {type: Number, required: true},
+        viewLevel: {type: Number, required: true, default: 0},
         sesh: {type: Number, required: true, default: 0}
     },
     { timestamps: true },
