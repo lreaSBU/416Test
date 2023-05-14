@@ -20,6 +20,11 @@ body {
   font-size: '32pt'
 }
 
+#miscSwitches{
+  display: flex;
+  flex-direction: row;
+}
+
 #editParent {
   width: 100%;
   height: 93%;

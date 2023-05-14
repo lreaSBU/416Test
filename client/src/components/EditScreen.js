@@ -9,6 +9,7 @@ import { GlobalStoreContext } from '../store'
 import Popper, { PopperPlacementType } from '@mui/material/Popper';
 import List from '@mui/material/List';
 import Box from '@mui/material/Box';
+import Switch from '@mui/material/Switch';
 import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Collapse from '@mui/material/Collapse';
@@ -85,6 +86,7 @@ const EditScreen = () => {
     const lodSlider = useRef(null), textSlider = useRef(null);
     const centerCamera = useRef(null);
     const downloadButton = useRef(null), downloadMule = useRef(null);
+    const centerToggle = useRef(null);
 
     const tps = new jsTPS();
 
@@ -131,6 +133,7 @@ const EditScreen = () => {
         textSlide = textSlider.current.children[2].children[0];
         var centerCam = centerCamera.current;
         var dlButt = downloadButton.current, dlMule = downloadMule.current;
+        var centerButt = centerToggle.current;
 
         function cleanVal(n, b, i){
             if(!i && !isNaN(n)) n = n.toFixed(5);
@@ -156,7 +159,7 @@ const EditScreen = () => {
             static Gen = new Point(0, 0);
             constructor(x, y){
                 this.x = x; this.y = y;
-                this.h = false;
+                //this.h = false;
             }
             static cross(a, b){
                 return a.x*b.y - a.y*b.x;
@@ -328,7 +331,7 @@ const EditScreen = () => {
                     console.log("ADDSTART");
                     //toolRefs[5].style = selStyle; //DONT KNOW YET...
                 break; case 4:
-                    movoff.set(0, 0);
+                    cutRef = null;
                     console.log('CUTSTART'); //idk if u have to do anything here actually
                 break;
             }
@@ -343,6 +346,7 @@ const EditScreen = () => {
                     let adj = store.edit.l[mode.level][mode.group].elems[ps[i].p].isAdj(ps[i].i, ps[i+1].i);
                     if(adj != null){
                         let np = new Point((mels[i].x+mels[i+1].x)/2, (mels[i].y+mels[i+1].y)/2);
+                        np.p = mels[0].p;
                         tps.addTransaction(new Insert_Transaction(store, mode.level, mode.group, ps[i].p, adj, np));
                     }
                 }
@@ -455,10 +459,11 @@ const EditScreen = () => {
                 case 'g': if(canSel()) swapTool(1); break;
                 case 'x': if(canSel()) remove_tool(); break;
                 case 'i': if(canSel()) insert_tool(); break;
-                case 'p': autoCam(); break;
-                case 'P': animCam(true); break;
+                case 'p': if(mode) for(let m of mode.elems) console.log(m); break;
                 case 'f': Poly.Draw(true); changeFlag = false; break;
                 case 'm': merge_tool(); break;
+                case 'l': lift_tool(); break;
+                case 'c': con_tool(); break;
                 case 'k': swapTool(4); break;
                 case 'y': if(keys.Control && tps.hasTransactionToRedo()) tps.doMulti(); break;
                 case 'z': if(keys.Control && tps.hasTransactionToUndo()) tps.undoMulti(); break;
@@ -483,12 +488,17 @@ const EditScreen = () => {
         window.addEventListener("keyup", keyup);
 
         function findParent(point, group){
+            if(point.p) return {i: point.p.indexOf(point), p: point.p.id};
+            //backup search???
             let ind = -1;
             for(let po of group.elems){
                 if((ind = po.indexOf(point)) != -1){
-                    return {i: ind, p: group.elems.indexOf(po)};
+                    let ret = {i: ind, p: group.elems.indexOf(po)};
+                    console.log("BACKUP FIND:", ret);
+                    return ret;
                 }
             }
+            //*/
             return {i: -1, p: null};
         }
         function viewChange(dir){
@@ -507,6 +517,7 @@ const EditScreen = () => {
         var px, py, mp = new Point(), sel = null, ser;
         var CLC = CW/10;
         const addPoints = [];
+        var cutRef;
 
         function mousedown(e){
             if(VERSION != store.edit.sesh) return;
@@ -524,11 +535,13 @@ const EditScreen = () => {
                 break; case 2:
                     movoff.set(mp.x, mp.y);
                 break; case 4:
-                    if(mode && mel) if(movoff.x == 0) movoff.set(mel.x, mel.y);
-                    else{ //Actually do the cut
-                        cut_tool(movoff, mel);
-                        swapTool(0);
-                    }
+                    if(mode && mel)
+                        if(cutRef == null) cutRef = mel;
+                        else{ //Actually do the cut
+                            cut_tool(cutRef, mel);
+                            cutRef = null;
+                            swapTool(0);
+                        }
                 break;
             }
         }
@@ -663,32 +676,35 @@ const EditScreen = () => {
                         deMel(keys.Control);
                     }
                     if(mels.length && keys.Control){ //connect
-                        let ind1 = -1, ind2 = -1, p1 = null, p2 = null;
-                        for(let i of mode.elems) if((ind1 = i.indexOf(mels[mels.length-1])) != -1){p1 = i; break;}
-                        for(let i of mode.elems) if((ind2 = i.indexOf(mel)) != -1){p2 = i; break;}
-                        if(p1 == p2 && ind1 != -1 && ind2 != -1){ //belong to the same Poly
-                            let dif = ind2-ind1;
-                            let dir = (dif > 0) ? 1 : -1;
-                            let lim = Math.abs(dif);
-                            if(lim > parseInt(p1.points.length/2)){ //flip
-                                dif -= dir*parseInt(p1.points.length/2);
-                                dir *= -1;
-                                lim = p1.points.length-lim;
-                            }
-                            ind1+=dir;
-                            while(--lim){
-                                ind2 = ind1;
-                                if(ind2 < 0) ind2 += p1.points.length;
-                                else if(ind2 >= p1.points.length) ind2 -= p1.points.length;
-                                if(mels.indexOf(p1.points[ind2] != -1)) mels.push(p1.points[ind2]);
-                                mels[mels.length-1].h = true;
-                                ind1 += dir;
+                        if(mel != mels[mels.length-1]){
+                            let ind1 = -1, ind2 = -1, p1 = null, p2 = null;
+                            for(let i of mode.elems) if((ind1 = i.indexOf(mels[mels.length-1])) != -1){p1 = i; break;}
+                            for(let i of mode.elems) if((ind2 = i.indexOf(mel)) != -1){p2 = i; break;}
+                            if(p1 == p2 && ind1 != -1 && ind2 != -1){ //belong to the same Poly
+                                let dif = ind2-ind1;
+                                let dir = (dif > 0) ? 1 : -1;
+                                let lim = Math.abs(dif);
+                                if(lim > parseInt(p1.points.length/2)){ //flip
+                                    dif -= dir*parseInt(p1.points.length/2);
+                                    dir *= -1;
+                                    lim = p1.points.length-lim;
+                                }
+                                ind1+=dir;
+                                while(--lim){
+                                    ind2 = ind1;
+                                    if(ind2 < 0) ind2 += p1.points.length;
+                                    else if(ind2 >= p1.points.length) ind2 -= p1.points.length;
+                                    if(mels.indexOf(p1.points[ind2] != -1)) mels.push(p1.points[ind2]);
+                                    mels[mels.length-1].h = true;
+                                    ind1 += dir;
+                                }
                             }
                         }
                     }else if(keys.Alt){ //whole poly
                         let par = findParent(mel, mode);
+                        console.log(par, mode.elems.length);
                         for(let p of mode.elems[par.p].points) if(!p.h){
-                            mels.push(p); p.h = true;
+                            p.h = true; if(p != mel) mels.push(p); 
                         }
                     }
                     if(mel.h) mels.push(mel);
@@ -783,13 +799,6 @@ const EditScreen = () => {
         npc, nppc, finsv, npl, npi;
 
         var safeCount, fileLevel, viewLevel = 0, transacNum = 0, syncWait = 0;
-
-        /*async function sendTransac(typ, fl, gn, pn, od, nd){
-            store.edit.syncWait++;
-            const resp = await api.sendEdit(store.currentMap._id, store.edit.transacNum++, typ, fl, gn, pn, od, nd);
-            //console.log('EDIT RESP:', resp);
-            store.edit.syncWait--;
-        }*/
 
         function recordRead(count){
             var fiBase = fi;
@@ -964,7 +973,7 @@ const EditScreen = () => {
             //reconcileData(fileLevel);
         }
 
-        function readGeoFile(file){
+        async function readGeoFile(file){
             var reader = new FileReader();
             reader.onload = function(){
                 var data = JSON.parse(reader.result);
@@ -994,22 +1003,22 @@ const EditScreen = () => {
                 //console.log(store.edit.l);
                 Poly.Draw();
             };
-            reader.readAsText(file); 
+            await reader.readAsText(file); 
         }
-        function readFile(f){
+        async function readFile(f){
             var fl = f.name.split(".");
             viewLevel = fileLevel = parseInt(fl[0].split("_adm")[1]);
             if(isNaN(fileLevel)) viewLevel = fileLevel = 0;
             switch(fl[fl.length-1]){
-                case "shp": readShapeFile(f); break;
-                case "dbf": readDBaseFile(f); break;
-                case "json": readGeoFile(f); break;
+                case "shp": await readShapeFile(f); break;
+                case "dbf": await readDBaseFile(f); break;
+                case "json": await readGeoFile(f); break;
             }
         }
-        fileIn.onchange = function(){
-            for(var f of this.files) readFile(f);
+        fileIn.onchange = async function(){
+            for(var f of this.files) await readFile(f);
             colSave.length = 0;
-            //animCam(true);
+            animCam(true);
         }
         propHolder.onchange = function(){
             Poly.Draw();
@@ -1042,6 +1051,10 @@ const EditScreen = () => {
         centerCam.onclick = function(){
             animCam(true);
         }
+        centerButt.onclick = function(){
+            conType = !conType;
+            console.log(conType);
+        }
         dlButt.onclick = function(){
             let ret = {
                 type: 'FeatureCollection',
@@ -1067,7 +1080,7 @@ const EditScreen = () => {
             console.log(ret);
             if(!ret.features.length) return;
             dlMule.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(ret)));
-            dlMule.setAttribute('download', 'mapSave.geo.json');
+            dlMule.setAttribute('download', 'mapSave_'+(viewLevel)+'.geo.json');
             dlMule.style.display = 'none';
             dlMule.click();
         }
@@ -1150,6 +1163,11 @@ const EditScreen = () => {
             }
             return false;
         }
+        function pSan(l){
+            let ret = [];
+            for(let p of l) ret.push(p.copy());
+            return ret;
+        }
         var fx, fy, pLast = new Point(0, 0), dx, dy;
         var LOD_RATIO = 5, LOD_SKIP, LOD_STEP, LOD_REF, finSum, li, ni, ci;
         var defCol, fillCol, mark, Acc = false;
@@ -1216,13 +1234,13 @@ const EditScreen = () => {
                         ctx.stroke();
                         for(let p of addPoints) drawDot(p);
                     }
-                }else if(tool == 4){
+                }else if(tool == 4 && mel){
                     drawBox(mel);
-                    if(movoff.x != 0){
+                    if(cutRef != null){
                         ctx.strokeStyle = '#ff00ff';
                         ctx.setLineDash([5, 15]);
                         ctx.beginPath();
-                        ctx.moveTo(loc(true, movoff.x), loc(false, movoff.y));
+                        ctx.moveTo(loc(true, cutRef.x), loc(false, cutRef.y));
                         ctx.lineTo(loc(true, mel.x), loc(false, mel.y));
                         ctx.stroke();
                         ctx.setLineDash([]);
@@ -1251,7 +1269,11 @@ const EditScreen = () => {
                 ret.minY = this.minY;
                 ret.maxY = this.maxY;
                 ret._mean = this._mean;
-                for(let p of this.points) ret.points.push(p.copy());
+                for(let p of this.points){
+                    let np = p.copy();
+                    np.p = ret;
+                    ret.points.push(np);
+                }
                 return ret;
             }
             strip(){
@@ -1271,6 +1293,7 @@ const EditScreen = () => {
                 this.minY = Math.min(p.y, this.minY);
                 this.maxX = Math.max(p.x, this.maxX);
                 this.maxY = Math.max(p.y, this.maxY);
+                p.p = this;
                 this.points.push(p);
             }
             get(i){ //circular treatment!!!
@@ -1288,9 +1311,16 @@ const EditScreen = () => {
             isOverlapping(p){
                 return Poly.interval(p.minX, p.maxX, this.minX, this.maxX) && Poly.interval(p.minY, p.maxY, this.minY, this.maxY);
             }
-            isNeighbor(p){
+            isNeighbor(p, l = 1, b = false){
+                let last = null;
                 if(!this.isOverlapping(p)) return false; //avoid lengthy calls
-                for(var i of p.points) if(this.indexOf(i) != -1) return true;
+                for(var i of p.points) if(this.indexOf(i) != -1){
+                    l--;
+                    if(b){
+                        if(last == null) last = i;
+                        else if(!i.eq(last) && l <= 0) return true;
+                    }else if(l <= 0) return true;
+                }
                 return false;
             }
             isAdj(a, b){
@@ -1315,7 +1345,7 @@ const EditScreen = () => {
                 this.clockWise = finSum < 0;
                 this.reCalc(par);
                 if(fl != null){
-                    store.sendTransac(0, fl, gn, this.id, null, this.points); //type, fl, gn, pn, od, nd
+                    store.sendTransac(0, fl, gn, this.id, null, pSan(this.points)); //type, fl, gn, pn, od, nd
                 }
             }
             reCalc(parent = null){
@@ -1463,6 +1493,20 @@ const EditScreen = () => {
             for(let p of reg.elems) ret.elems.push(p.copy());
             return ret;
         }
+        /*function merge_tool(){
+            let tom = [];
+            for(let s of sels){
+                s.h = false;
+                tom.push(s);
+            }
+            while(tom.length > 1){
+                sels.length = 0;
+                sels.push(tom.pop());
+                sels.push(tom.pop());
+                tom.push(mergeRegions());
+            }
+            sels.length = 0;
+        }*/
         function merge_tool(){
             if(mode) return;
             if(sels.length != 2) return handleWarning('Must be selecting only two SubRegions at a time');
@@ -1475,7 +1519,7 @@ const EditScreen = () => {
                 var pass = true;
                 for(var i = 0; i < sels[0].elems.length; i++){
                     for(var n = 0; n < sels[1].elems.length; n++){
-                        if(sels[0].elems[i].isNeighbor(sels[1].elems[n])){
+                        if(sels[0].elems[i].isNeighbor(sels[1].elems[n], 2, true)){
                             var m = merge(sels[0].elems[i], sels[1].elems[n], sels[0].level, sels[0].group);
                             console.log(m);
                             sels[0].elems.splice(i, 1);
@@ -1512,8 +1556,9 @@ const EditScreen = () => {
             }
             for(let p of store.edit.l[ret.level][store.edit.l[ret.level].length-1].elems)
                 console.log(p.id);
-            //sels.pop();
+            sels.length = 0;
             Poly.Draw();
+            //return ret;
         }
         function onSegment(p, q, r){
             if(q.x <= Math.max(p.x, r.x) && q.x >= Math.min(p.x, r.x) && q.y <= Math.max(p.y, r.y) && q.y >= Math.min(p.y, r.y))
@@ -1537,10 +1582,52 @@ const EditScreen = () => {
             if (o4 == 0 && onSegment(p2, q1, q2)) return true;
             return false;
         }
+        class line{
+            constructor(p1,p2){
+                this.p1=p1;
+                this.p2=p2;
+            }
+        };
+        function onLine(l1, p){
+            if(p.x <= Math.max(l1.p1.x, l1.p2.x) && p.x <= Math.min(l1.p1.x, l1.p2.x)
+            && (p.y <= Math.max(l1.p1.y, l1.p2.y) && p.y <= Math.min(l1.p1.y, l1.p2.y)))
+                return true;
+            return false;
+        }
+        function isIntersect(l1, l2){
+            let dir1 = orientation(l1.p1, l1.p2, l2.p1);
+            let dir2 = orientation(l1.p1, l1.p2, l2.p2);
+            let dir3 = orientation(l2.p1, l2.p2, l1.p1);
+            let dir4 = orientation(l2.p1, l2.p2, l1.p2);
+            if (dir1 != dir2 && dir3 != dir4) return true;
+            if (dir1 == 0 && onLine(l1, l2.p1)) return true;
+            if (dir2 == 0 && onLine(l1, l2.p2)) return true;
+            if (dir3 == 0 && onLine(l2, l1.p1)) return true;
+            if (dir4 == 0 && onLine(l2, l1.p2)) return true;
+            return false;
+        }
+        function checkInside(poly, p){
+            let n = poly.length;
+            let tmp=new Point(Number.MAX_SAFE_INTEGER, p.y);
+            let exline = new line(p, tmp );
+            let count = 0;
+            let i = 0;
+            do{
+                let side = new line( poly[i], poly[(i + 1) % n] );
+                if(isIntersect(side, exline)){
+                    if(orientation(side.p1, p, side.p2) == 0)
+                        return onLine(side, p);
+                    count++;
+                }
+                i = (i + 1) % n;
+            }while(i != 0);
+            return count & 1;
+        }
         function cut_tool(a, b){
             console.log('ATTEMPT CUT BETWEEN:', a, b);
             let aPar = findParent(a, mode),
             bPar = findParent(b, mode);
+            console.log(aPar, bPar);
             if(aPar.p != bPar.p) return handleWarning('Cut endpoints must belong to the same Poly');
             let dif = Math.abs(aPar.i - bPar.i),
             par = mode.elems[aPar.p],
@@ -1557,12 +1644,8 @@ const EditScreen = () => {
                     return handleWarning('Cut overlaps with Poly border');
                 }
             }
-            let avg = a.add(b).divideLocal(2),
-            start = Point.cross(par.points[0].sub(par.points[len-1]), avg.sub(par.points[len-1])) > 0;
-            for(let i = 0; i < len-1; i++){
-                if((Point.cross(par.points[i+1].sub(par.points[i]), avg.sub(par.points[i])) > 0) != start)
-                    return handleWarning("Cut leaves Poly border");
-            }
+            let avg = a.add(b).divideLocal(2);
+            if(!checkInside(par.points, avg)) return handleWarning("Cut leaves Poly border");
             let save = par.copy(),
             np1 = new Poly(null, mode.level, mode.group),
             np2 = new Poly(null, mode.level, mode.group),
@@ -1572,14 +1655,59 @@ const EditScreen = () => {
             i = bPar.i-1;
             while((i = ++i%len) != aPar.i) np2.add(par.points[i].copy());
             np2.add(par.points[aPar.i].copy());
-            //for(let i = 0; i < mode.elems.length; i++) mode.elems[i].id = i; //sanitize (needed?)
             tps.bookMark();
             tps.addTransaction(new DeleteGroup_Transaction(store, true, mode.level, mode.group, aPar.p, save));
             np1.id = mode.elems.length;
             tps.addTransaction(new MakeGroup_Transaction(store, mode, mode.level, np1));
             np2.id = mode.elems.length;
             tps.addTransaction(new MakeGroup_Transaction(store, mode, mode.level, np2));
-
+            for(let i = 0; i < mode.elems.length; i++) mode.elems[i].id = i; //sanitize (needed? -> i think so...)
+        }
+        function lift_tool(){
+            if(!mode || !mels.length) return;
+            let pc = [];
+            for(let _ of mode.elems) pc.push(0);
+            for(let m of mels) pc[findParent(m, mode).p]++;
+            let lc = false;
+            for(let i = 0; i < pc.length; i++) if((lc = (pc[i] != mode.elems[i].points.length))) break;
+            if(!lc) return handleWarning('Cannot split all Polys from a SubRegion');
+            lc = 0;
+            tps.bookMark();
+            console.log(pc.length, 'vs', mode.elems.length, ':', pc);
+            for(let i = 0; i < pc.length; i++){
+                console.log(i, mode.elems[i-lc]);
+                if(pc[i] == mode.elems[i-lc].points.length){
+                    console.log("ATTEMPTING POLY LIFT:", i);
+                    let lift = mode.elems[i-lc];
+                    tps.addTransaction(new DeleteGroup_Transaction(store, true, mode.level, mode.group, i-lc, lift.copy()));
+                    lift.id = 0;
+                    tps.addTransaction(new MakeGroup_Transaction(store, false, mode.level, lift));
+                    pc[i] = -1; lc++;
+                }
+            }
+            tps.unMark();
+            if(lc == 0) return handleWarning('Must select entire Polys to split from current SubRegion');
+            
+        }
+        var conType = false;
+        function con_tool(){
+            if(!mode || !mels.length) return;
+            let ref = new Point(0, 0), save;
+            if(!conType){
+                ref = mels[mels.length-1];
+                save = mels.pop();
+            }else{
+                for(let m of mels) ref.addLocal(m);
+                ref.divideLocal(mels.length);
+            }
+            tps.bookMark();
+            let par;
+            for(let m of mels){
+                par = findParent(m, mode);
+                tps.addTransaction(new Move_Transaction(store, mode.level, mode.group, par.p, par.i, ref.sub(m)));
+            }
+            tps.unMark();
+            if(!conType) mels.push(save);
         }
         function start(){ //translate raw DB data into more robust editing structure
             //ctx.lineWidth = 2;
@@ -1600,9 +1728,12 @@ const EditScreen = () => {
                     for(let m = 0; m < store.edit.l[i][n].elems.length; m++){
                         let np = new Poly(m, i, n);
                         for(let p of store.edit.l[i][n].elems[m]) np.add(new Point(p.x, p.y));
+                        //console.log(m, 'PAR??:', np.points[0].p);
+                        np.id = m;
                         temp.mean.addLocal(np.mean());
                         temp.elems.push(np);
                         np.finalize(null, null, temp);
+                        np.id = m;
                     }
                     //temp.mean.divideLocal(temp.elems.length);
                     //store.edit.l[i][n] = temp;
@@ -1789,6 +1920,8 @@ const EditScreen = () => {
                         />
                         
                     </Box>
+                </Box>
+                <Box id='miscTools' className='traySect'>
                     <IconButton ref={centerCamera} aria-label='Center Camera'>
                         <CameraIndoorIcon sx={{color: '#5EB120'}} style={{fontSize:'32pt'}} />
                     </IconButton>
@@ -1796,6 +1929,11 @@ const EditScreen = () => {
                     <IconButton ref={downloadButton} aria-label='Export Map'>
                         <DownloadIcon sx={{color: '#5EB120'}} style={{fontSize:'32pt'}} />
                     </IconButton>
+                </Box>
+                <Box id='miscSwitches' className='traySect'>
+                    <FormGroup>
+                        <FormControlLabel control={<Switch ref={centerToggle} />} label="Center Consolidation" />
+                    </FormGroup>
                 </Box>
             </div>
             <Box id="midPar">

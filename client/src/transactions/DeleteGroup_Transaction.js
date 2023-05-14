@@ -11,35 +11,41 @@ export default class DeleteGroup_Transaction extends jsTPS_Transaction {
         this.d1 = d1;
     }
 
+    clean(){
+        if(!this.scope) for(let i = 0; i < this.store.edit.l[this.fl].length; i++)
+            this.store.edit.l[this.fl][i].group = i;
+        else for(let i = 0; i < this.store.edit.l[this.fl][this.gn].elems.length; i++)
+            this.store.edit.l[this.fl][this.gn].elems[i].po = i;
+    }
+
+    pSan(l){
+        let ret = [];
+        for(let p of l) ret.push(p.copy());
+        return ret;
+    }
+
     doTransaction() {
         if(this.scope){ //delete Poly
             this.store.edit.l[this.fl][this.gn].elems.splice(this.po, 1);
-            for(let i = this.po; i < this.store.edit.l[this.fl][this.gn].elems.length; i++)
-                this.store.edit.l[this.fl][this.gn].elems[i].po--;
             this.store.sendTransac(6, this.fl, this.gn, -1, null, this.po);
         }else{ //delete Subregion
             this.store.edit.l[this.fl].splice(this.gn, 1);
-            for(let i = this.gn; i < this.store.edit.l[this.fl].length; i++)
-                this.store.edit.l[this.fl][i].group--;
             this.store.sendTransac(8, this.fl, -1, -1, null, this.gn);
         }
+        this.clean();
     }
     
     undoTransaction() {
         if(this.scope){ //restore Poly
-            for(let i = this.po; i < this.store.edit.l[this.fl][this.gn].elems.length; i++)
-                this.store.edit.l[this.fl][this.gn].elems[i].po++;
             this.store.edit.l[this.fl][this.gn].elems.splice(this.po, 0, this.d1);
-            this.store.sendTransac(10, this.fl, this.gn, this.po, null, this.d1.points);
+            this.store.sendTransac(10, this.fl, this.gn, this.po, null, this.pSan(this.d1.points));
         }else{ //restore SubRegion
-            for(let i = this.gn; i < this.store.edit.l[this.fl].length; i++)
-                this.store.edit.l[this.fl][i].group++;
             this.store.edit.l[this.fl].splice(this.gn, 0, this.d1);
             this.store.sendTransac(11, this.fl, -1, -1, null, this.gn);
-            for(let i = 0; i < this.d1.elems.length; i++){
-                this.store.sendTransac(10, this.fl, this.gn, i, null, this.d1.elems[i].points);
-            }
+            for(let i = 0; i < this.d1.elems.length; i++)
+                this.store.sendTransac(10, this.fl, this.gn, i, null, this.pSan(this.d1.elems[i].points));
             this.store.sendTransac(1, this.fl, this.gn, -1, null, this.d1.props);
         }
+        this.clean();
     }
 }

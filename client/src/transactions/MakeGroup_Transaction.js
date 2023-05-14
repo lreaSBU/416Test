@@ -16,7 +16,6 @@ export default class MakeGroup_Transaction extends jsTPS_Transaction {
             this.d1.finalize(this.fl, this.scope.group, this.scope); //this sends the transac
         }else{ //push SubRegion
             let gn = this.store.edit.l[this.fl].length;
-            console.log('GN ==>', gn);
             let temp = {
                 level: this.fl,
                 group: gn,
