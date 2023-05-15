@@ -126,7 +126,7 @@ requestRecovery = async (req, res) => {
         const transporter = nodemailer.createTransport({
             service: 'hotmail',
             auth: {
-                user: 'map_central@outlook.com',
+                user: 'mapCentral1@outlook.com',
                 pass: 'Fartyfarts8'
             }
         });
@@ -140,7 +140,7 @@ requestRecovery = async (req, res) => {
         await existingUser.save();
         // Send the email
         const mailOptions = {
-            from: 'map_central@outlook.com',
+            from: 'mapCentral1@outlook.com',
             to: email,
             subject: 'Password Reset',
             text: `Your verification code is: ${verificationCode}`

@@ -3,14 +3,6 @@ const User = require('../models/user-model');
 const Layer = require('../models/layer-model');
 const SubRegion = require('../models/subregion-model');
 const Poly = require('../models/poly-model');
-const Convo = require('../models/convo-model');
-/*
-    This is our back-end API. It provides all the data services
-    our database needs. Note that this file contains the controller
-    functions for each endpoint.
-    
-    @author McKilla Gorilla
-*/
 createMap = async (req, res) => {
     const body = req.body;
     console.log("createPlaylist body: " + JSON.stringify(body));
@@ -73,119 +65,63 @@ deleteMap = async (req, res) => {
     console.log("delete " + req.params.id);
 
     Map.findById(req.params.id, async (e, map) => {
-        for (let l of map.l) {
+        for(let l of map.l){
             let layer = await Layer.findById(l);
-            for (let s of layer.groups) {
+            for(let s of layer.groups){
                 let subregion = await SubRegion.findById(s);
-                for (let p of subregion.polys) await Poly.findByIdAndDelete(p);
+                for(let p of subregion.polys) await Poly.findByIdAndDelete(p);
                 subregion.remove();
             }
             layer.remove();
         }
         let user = await User.findById(map.owner);
-        if (user != null) user.maps.splice(user.maps.indexOf(map._id), 1);
+        if(user != null) user.maps.splice(user.maps.indexOf(map._id), 1);
         map.remove();
-        return res.status(200).json({ success: true });
+        return res.status(200).json({success: true});
     });
 }
 getMapById = async (req, res) => {
-    console.log("Find Map with id: " + JSON.stringify(req.params.id));
-
-    await Map.findById({ _id: req.params.id }, (err, list) => {
-        if (err) {
-            console.log("FAIL 13");
-            return res.status(400).json({ success: false, error: err });
+    let map = await Map.findById(req.params.id);
+    if(map == null) return res.status(400).json({success: false});
+    console.log('Speicific Map Found:', map);
+    let owner = await User.findById(map.owner);
+    if(owner == null) return res.status(401).json({success: false});
+    let ret = {
+        name: map.name,
+        createdAt: map.createdAt,
+        updatedAt: map.updatedAt,
+        published: map.published,
+        owner: {
+            name: (owner.firstName + ' ' + owner.lastName),
+            contactId: owner._id
         }
-        console.log("Found list: " + JSON.stringify(list));
-        return res.status(200).json({ success: true, map: list });
-    }).catch(err => console.log(err))
-}
-
-getUserById = async (req, res) => {
-    // console.log('Find User: !!!!!!!!!!!!!!!!!!!!!' + JSON.stringify(req.params.id));
-    await User.findById({ _id: req.params.id }, (err, user) => {
-        if (err) {
-            console.log('Find User Failed')
-            return res.status(400).json({ success: false, error: err });
-        }
-        // console.log('USER?????', user)
-        return res.status(200).json({ status: true, user: user });
-    }).catch(err => console.log(err))
-}
-
-copyMap = async (req, res) => {
-    console.log('COPY MAP ~~~~~~~~~~~~~~~', req.params)
-    Map.findOne({ _id: req.params.id }, (err, map) => {
-        console.log("map found: " + JSON.stringify(map));
-        if (err) {
-            return res.status(404).json({
-                err,
-                message: 'map not found!',
-            })
-        }
-
-
-
-    }).catch(err => console.log(err));
-}
-
-async function namePairs(nm) {
-    await Map.find({ name: nm, published: true }, (err, maps) => {
-        console.log("found maps by name: " + JSON.stringify(maps));
-        if (err) {
-            console.log("FAIL 15");
-            return res.status(400).json({ success: false, error: err })
-        }
-        if (!maps) {
-            console.log("!maps.length");
-            return res
-                .status(404)
-                .json({ success: false, error: 'maps not found' })
-        }
-        else {
-            console.log("Send the Map pairs");
-            // PUT ALL THE LISTS INTO ID, NAME PAIRS
-            let pairs = [];
-            for (let key in maps) {
-                let list = maps[key];
-                let pair = {
-                    _id: list._id,
-                    name: list.name,
-                    copy: {
-                        age: list.age,
-                        owner: list.owner.name,
-                        published: list.published
-                    }
-                };
-                pairs.push(pair);
-            }
-            return res.status(200).json({ success: true, idNamePairs: pairs })
-        }
-    }).catch(err => console.log(err))
+    }
+    return res.status(200).json({ success: true, map: ret });
 }
 getMapPairs = async (req, res) => {
     let bod = req.body;
     let maps = [];
-    if (bod.filter == '') return res.status(200).json({ success: true, idNamePairs: [] });
-    if (bod.filter == null) { //getting ones own maps
-        maps = await Map.find({ owner: req.userId });
-    } else if (!bod.searchMode) { //searching by MAP name
-        maps = await Map.find({ name: { $regex: bod.filter, $options: 'i' }, published: true });
-    } else { //searching by USER name
-        if (!bod.filter.includes(' ')) return res.status(501).json({ success: false, idNamePairs: [] });
+    if(bod.filter == '') return res.status(200).json({ success: true, idNamePairs: [] });
+    if(bod.filter == null){ //getting ones own maps
+        maps = await Map.find({owner: req.userId});
+    }else if(!bod.searchMode){ //searching by MAP name
+        maps = await Map.find({name: {$regex : bod.filter, $options: 'i'}, published: true});
+    }else{ //searching by USER name
+        if(!bod.filter.includes(' ')) return res.status(501).json({ success: false, idNamePairs: [] });
         let fk = bod.filter.split(' ')[0],
-            lk = bod.filter.split(' ')[1];
-        let users = await User.find({ firstName: { $regex: fk, $options: 'i' }, lastName: { $regex: lk, $options: 'i' } });
-        if (users == null) return res.status(502).json({ success: false, idNamePairs: [] });
-        for (let user of users) for (let m of user.maps) {
+        lk = bod.filter.split(' ')[1];
+        let users = await User.find({firstName: {$regex : fk, $options: 'i'}, lastName: {$regex : lk, $options: 'i'}});
+        if(users == null) return res.status(502).json({ success: false, idNamePairs: [] });
+        for(let user of users) for(let m of user.maps){
             m = await Map.findById(m);
-            if (!m.published) continue;
+            if(!m.published) continue;
             maps.push(m);
         }
     }
-    if (maps == null) return res.status(401).json({ success: false });
+    if(maps == null) return res.status(401).json({success: false});
     let ret = [];
-    for (let map of maps) {
+    console.log('RETTING PAIRS:', maps);
+    for(let map of maps){
         ret.push({
             _id: map._id,
             name: map.name,
@@ -306,6 +242,93 @@ likePlaylist = async (req, res) => {
             })
     }).catch(err => console.log(err));
 }
+var _fl = 0, _gn = 0, _po = 0;
+async function getLayer(id){
+    let ret = [];
+    let l = await Layer.findById(id);
+    console.log(_fl, '{');
+    for(let i = 0; i < l.groups.length; i++){
+        let v = await getSubRegion(l.groups[i]);
+        _gn++;
+        ret.push(v);
+    }
+    console.log('}');
+    return ret;
+}
+async function getSubRegion(id){
+    let ret = {elems: [], props: null};
+    let l = await SubRegion.findById(id);
+    console.log(" ", _gn, '(');
+    ret.props = l.props;
+    for(let i = 0; i < l.polys.length; i++){
+        let v = await getPoly(l.polys[i]);
+        _po++;
+        ret.elems.push(v);
+    }
+    console.log('  ),');
+    return ret;
+}
+async function getPoly(id){
+    let ret = await Poly.findById(id);
+    console.log("   ", _po);
+    return ret.points;
+}
+
+function cloneProps(obj){
+    let ret = {};
+    for(let k of Object.keys(obj)) ret[k] = obj[k];
+    return ret;
+}
+function clonePoints(pl){
+    let ret = [];
+    for(let p of pl) ret.push({x: p.x, y: p.y});
+    return ret;
+} 
+
+getMapCopy = async (req, res) => {
+    let map = await Map.findById(req.params.id);
+    if(!map) return res.status(400).json({success: false});
+    if(!map.published) return res.status(401).json({success: false});
+    if(map.owner == req.userId) return res.status(402).json({success: false});
+
+    const nm = new Map();
+    nm.name = map.name + ' (copy)';
+    nm.age = Date.now();
+    nm.published = false;
+    nm.gd = cloneProps(map.gd);
+    nm.l = [];
+    for(let lay of map.l){
+        let ol = await getLayer(lay);
+        let nl = new Layer();
+        for(let g of ol){
+            let ng = new SubRegion();
+            for(let p of g.elems){
+                let np = new Poly();
+                np.points = clonePoints(p);
+                np.markModified('points');
+                await np.save().then(() => {ng.polys.push(np)});
+            }
+            ng.props = cloneProps(g.props);
+            ng.markModified('polys');
+            ng.markModified('props');
+            await ng.save().then(() => {nl.groups.push(ng)});
+        }
+        nl.markModified('groups');
+        await nl.save().then(() => {
+            nm.l.push(nl);
+        });
+    }
+    nm.camX = 100;
+    nm.camY = 100;
+    nm.camZ = 1;
+
+    let user = await User.findById(req.userId);
+    user.maps.push(nm._id);
+    await user.save();
+    nm.owner = user._id;
+    await nm.save();
+    return res.status(200).json({success: true, map: nm});
+}
 
 updateMap = async (req, res) => {
     const body = req.body
@@ -379,7 +402,5 @@ module.exports = {
     getMapPairs,
     getMaps,
     updateMap,
-    getUserById,
-    copyMap
-
+    getMapCopy
 }

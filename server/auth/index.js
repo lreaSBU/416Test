@@ -52,7 +52,7 @@ function authManager() {
 
     trivial = (req, res, next) => {
         //no verification, no user information needed on the controller side
-        console.log('trivially passing: ' + req);
+        //console.log('trivially passing: ' + req);
         next();
     }
 

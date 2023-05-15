@@ -3,7 +3,6 @@ const User = require('../models/user-model');
 const Layer = require('../models/layer-model');
 const SubRegion = require('../models/subregion-model');
 const Poly = require('../models/poly-model');
-const Point = require('../models/point-model');
 
 const EditQueue = [];
 var _fl, _gn, _po;
@@ -76,6 +75,7 @@ startData = async (req, res) => {
     await Map.findById(req.body.id, async (err, map) => {
         if(map.owner != req.userId) return res.status(400).json({success: false});
         let ret = ({
+            mid: map._id,
             gd: map.gd,
             l: [],
             camX: map.camX,

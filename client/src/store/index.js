@@ -62,13 +62,15 @@ function GlobalStoreContextProvider(props) {
     }
 
     store.goMessages = function () {
+        //store.currentConvo = null;
+        //store.convoPairs = [];
         store.loadConvoPairs({
             browseMode: 3,
             currentConvo: null,
             page: 0
         });
     }
-    store.goHelp = function () {
+    store.goHelp = function(){
         store.loadIdNamePairs({
             browseMode: 4,
             currentConvo: null,
@@ -76,6 +78,7 @@ function GlobalStoreContextProvider(props) {
         });
     }
     store.goHome = async function () {
+        store.currentMap = null;
         await store.loadIdNamePairs({
             idNamePairs: [],
             currentMap: null,
@@ -88,6 +91,7 @@ function GlobalStoreContextProvider(props) {
         });
     }
     store.goSearchByName = async function () {
+        store.currentMap = null;
         await store.loadIdNamePairs({
             idNamePairs: [],
             currentMap: null,
@@ -112,7 +116,7 @@ function GlobalStoreContextProvider(props) {
             page: 0
         });
     }
-    store.changeSearchMode = async function (sm) {
+    store.changeSearchMode = async function(sm){
         await store.loadIdNamePairs({
             searchMode: sm,
             page: 0
@@ -120,6 +124,7 @@ function GlobalStoreContextProvider(props) {
     }
 
     store.switchTab = async function (newTab) {
+        console.log("6");
         await store.loadIdNamePairs({
             tabMode: newTab
         });
@@ -135,12 +140,12 @@ function GlobalStoreContextProvider(props) {
     }
 
     store.changePublished = function (id, pb) {
-        store.updateMapById(id, { published: pb });
+        store.updateMapById(id, {published: pb});
     }
 
     store.updateMapById = async function (id, p) {
         const response = await api.updateMapById(id, p);
-        if (response.data.success) await store.loadIdNamePairs();
+        if(response.data.success) await store.loadIdNamePairs();
         else console.log("FAILED TO UPDATE!?!?!?");
     }
 
@@ -155,6 +160,12 @@ function GlobalStoreContextProvider(props) {
 
         }
         asyncUpdate();
+    }
+
+    store.duplicateMapById = async function(id){
+        const resp = await api.duplicateMapById(id);
+        if(resp.data.success) await store.loadIdNamePairs();
+        else console.log("FAILED TO DUPLICATE");
     }
 
     // THIS FUNCTION LOADS ALL THE ID, NAME PAIRS SO WE CAN LIST ALL THE LISTS
@@ -175,6 +186,7 @@ function GlobalStoreContextProvider(props) {
             //console.log(store.filter, '==>', p.filter);
             storeReducer(p);
             const response = await api.getMapPairs(!p.browseMode ? null : p.filter, p.searchMode, p.sortMode, p.page);
+            console.log("PAIRS RESP:::", response);
             p.idNamePairs = response.data.idNamePairs;
 
             switch (p.sortMode) {
@@ -198,39 +210,40 @@ function GlobalStoreContextProvider(props) {
     }
 
     store.createConvo = async function (id) {
+        console.log("5");
         const response = await api.makeConvo(id);
         console.log(response);
         if (response.success) store.loadConvoPairs(); //it worked, now get the pairs again
     }
 
-    store.loadConvoPairs = function (p = {}) {
-        async function asyncLoadConvoPairs() {
-            try {
-                let readFlag = false;
-                if (p.browseMode == undefined) p.browseMode = store.browseMode;
-                if (p.modalMode == undefined) p.modalMode = store.modalMode;
-                if (p.tabMode == undefined) p.tabMode = store.tabMode;
-                p.idNamePairs = [];
-                p.edit = null;
-                if (p.currentMap == undefined) p.currentMap = store.currentMap;
-                if (p.sortMode == undefined) p.sortMode = store.sortMode;
-                if (p.searchMode == undefined) p.searchMode = store.searchMode;
-                if (p.filter == undefined) p.filter = store.filter;
-                if (p.page == undefined) p.page = store.page;
-                if (p.editingName == undefined) p.editingName = store.editingName;
-                if (p.currentConvo == undefined) p.currentConvo = store.currentConvo;
-                else readFlag = true;
-                const response = await api.getConvoPairs(p.page, readFlag);
-                console.log("GOT RESPONSE!!! --> ", response.data);
-                p.convoPairs = response.data.convoPairs;
-                storeReducer(p);
-            } catch (err) {
-                console.log("caught logout error for convo");
-            }
+    store.loadConvoPairs = async function (p = {}) {
+        try {
+            let readFlag = false;
+            if (p.browseMode == undefined) p.browseMode = store.browseMode;
+            if (p.modalMode == undefined) p.modalMode = store.modalMode;
+            if (p.tabMode == undefined) p.tabMode = store.tabMode;
+            p.idNamePairs = [];
+            p.edit = null;
+            if (p.currentMap == undefined) p.currentMap = store.currentMap;
+            if (p.sortMode == undefined) p.sortMode = store.sortMode;
+            if (p.searchMode == undefined) p.searchMode = store.searchMode;
+            if (p.filter == undefined) p.filter = store.filter;
+            if (p.page == undefined) p.page = store.page;
+            if (p.editingName == undefined) p.editingName = store.editingName;
+            if (p.currentConvo == undefined) p.currentConvo = store.currentConvo;
+            else readFlag = true;
+            storeReducer(p);
+            const response = await api.getConvoPairs(p.page, readFlag);
+            console.log("GOT RESPONSE!!! --> ", response.data);
+            p.convoPairs = response.data.convoPairs;
+            store.convoPairs = response.data.convoPairs;
+            storeReducer(p);
+        } catch (err) {
+            console.log("caught logout error for convo");
         }
-        asyncLoadConvoPairs();
     }
     store.sendMessage = async function (text) {
+        console.log("4");
         const response = await api.sendMessage(store.currentConvo._id, text);
         console.log("send msg resp", response);
         if (response.success) store.loadConvoPairs(); //lets just refresh the entire thing for now
@@ -259,31 +272,33 @@ function GlobalStoreContextProvider(props) {
         });
         */
     }
-    store.sendTransac = async function (typ, fl, gn, pn, od, nd) {
+    store.sendTransac = async function(typ, fl, gn, pn, od, nd){
         store.edit.syncWait++;
-        const resp = await epi.sendEdit(store.currentMap._id, store.edit.transacNum++, typ, fl, gn, pn, od, nd);
+        const resp = await epi.sendEdit(store.edit.mid, store.edit.transacNum++, typ, fl, gn, pn, od, nd);
         //console.log('EDIT RESP:', resp);
         store.edit.syncWait--;
     }
-    store.sendImmediateTransac = async function (typ, fl, gn, pn, od, nd) {
+    store.sendImmediateTransac = async function(typ, fl, gn, pn, od, nd){
         store.edit.syncWait++;
-        const resp = await epi.sendEdit(store.currentMap._id, -1, typ, fl, gn, pn, od, nd);
+        const resp = await epi.sendEdit(store.edit.mid, -1, typ, fl, gn, pn, od, nd);
         //console.log('EDIT RESP:', resp);
         store.edit.syncWait--;
     }
     store.reduceEdit = function () {
+        console.log("1");
         storeReducer({
             edit: store.edit
         });
     }
     store.editTabSwitch = function () {
+        console.log("2");
         storeReducer({
-            currentMap: null,
             tabMode: store.tabMode == 2 ? 3 : 2
         });
     }
 
     store.setCurrentMap = function (id) {
+        console.log("SETTING NEW MAP!!!!!!");
         async function asyncSetCurrentMap(id) {
             let response = await api.getMapById(id);
             if (response.data.success) {
@@ -317,30 +332,6 @@ function GlobalStoreContextProvider(props) {
             // IF IT'S A VALID LIST THEN LET'S START EDITING IT
             //history.push("/playlist/" + newMap._id);
         } else console.log("API FAILED TO CREATE A NEW LIST");
-    }
-
-    store.findUser = async function (id) {
-        try {
-            const response = await api.findUser(id);
-            if (response.data.status) {
-                console.log('SUCCESS FIND', response.data.user);
-                return response.data.user;
-            } else {
-                console.log('Failed to find user')
-            }
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
-
-    store.copyMap = async function (id) {
-        console.log('COPY MAP')
-        try {
-            const response = await api.copyMap(id);
-        } catch (error) {
-            console.error(error);
-        }
     }
 
     return (

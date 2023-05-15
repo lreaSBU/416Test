@@ -20,13 +20,3 @@ const MapSchema = new Schema(
 )
 
 module.exports = mongoose.model('Map', MapSchema)
-/*
-var ret = ({
-            gd: [],
-            d: [[], [], [], [], []],
-            l: [[], [], [], [], []],
-            camX: 100,
-            camY: 102,
-            camZ: 1.69
-        });
-*/

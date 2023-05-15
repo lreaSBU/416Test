@@ -12,7 +12,7 @@ import Typography from '@mui/material/Typography'
 import IconButton from '@mui/material/IconButton';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SortIcon from '@mui/icons-material/Menu';
-import { Avatar, InputAdornment, InputBase, ListItem, ListItemText, TextField } from '@mui/material';
+import { Avatar, InputBase, ListItem, ListItemText, TextField } from '@mui/material';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -20,10 +20,9 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import PublicIcon from '@mui/icons-material/Public';
 import PublicOffIcon from '@mui/icons-material/PublicOff';
-import placeholderimg from './Mappreview.png';
+import placeholderimg from './Capture.png';
 import PersonIcon from '@mui/icons-material/Person';
 import PeopleIcon from '@mui/icons-material/People';
-import SearchIcon from '@mui/icons-material/Search';
 
 
 const BrowseScreen = () => {
@@ -39,7 +38,6 @@ const BrowseScreen = () => {
     const [openEmail, setOpenEmail] = useState(false);
     const [openPassword, setOpenPassword] = useState(false);
     const [openFriend, setOpenFriend] = useState(false);
-    const [mapOwner, setMapOwner] = useState();
     const isMenuOpen = Boolean(anchorEl);
     const isSortOpen = Boolean(banchor);
 
@@ -62,6 +60,10 @@ const BrowseScreen = () => {
         setBanchor(null);
     };
 
+    function handleCopy(code) {
+        navigator.clipboard.writeText(code);
+    }
+
     function handleSort(type) {
         console.log("MENU_EVENT: " + type);
         handleMenuClose();
@@ -79,17 +81,6 @@ const BrowseScreen = () => {
         setOpenEmail(false);
         setOpenPassword(false);
         setOpenFriend(false);
-    }
-
-    async function findUser(id){
-        try {
-            const result = await store.findUser(id);
-            setMapOwner(result.firstName + ' ' + result.lastName)
-            console.log('RESULT: ', result)
-          } catch (error) {
-            console.log('Error:', error);
-          }
-        
     }
 
     let mapCards = "";
@@ -115,9 +106,6 @@ const BrowseScreen = () => {
         if (store.currentMap.name) { //After editing store.currentMap is different
             let createdDate = store.currentMap.createdAt
             let sliceDate = createdDate.slice(0, 10)
-      
-            findUser(store.currentMap.owner);
-            // console.log('MAP OWNER ', mapOwner)
 
             inspect =
                 <Box>
@@ -125,12 +113,14 @@ const BrowseScreen = () => {
                         {store.currentMap.name}
                     </Typography>
                     <Typography variant='h5'>
-                        {/* {'Created by: ' + auth.getAccountDetails().firstName + ' ' + auth.getAccountDetails().lastName} */}
-                        {'Created by: ' + mapOwner}
+                        {'Created by: ' + store.currentMap.owner.name}
                         <br></br>
                         {'Created on: ' + sliceDate}
                         <br></br>
-                        {/* {publish} */}
+                        {'ContactID: ' + store.currentMap.owner.contactId}
+                        <IconButton size='small' color='primary' variant='outlined' aria-label='copy'>
+                            <ContentCopyIcon onClick={(event) => { handleCopy(auth.getAccountDetails().userId) }} />
+                        </IconButton>
                     </Typography>
                     <Box component='img' sx={{ height: '80%', width: '80%' }} src={placeholderimg}></Box>
                 </Box>
@@ -168,21 +158,22 @@ const BrowseScreen = () => {
         <div>
             <div id="list-selector-list">
                 <div id='profileScreenSortHeader'>
-                    <Box sx={{ margin: 1, display: 'flex', width: '90%' }}>
+                    <Box sx={{ display: { xs: 'none', md: 'flex', width: '80%'} }}>
                         <IconButton
                             size="large"
+                            // edge="end"
                             aria-label="sort mode"
                             aria-controls={'primary-search-account-menu'}
                             aria-haspopup="true"
                             onClick={handleSortMenuOpen}
-                            sx={{mr: 1}}
-
+                            // color="inherit"
+                            sx={{p: '10x'}}
                         ><SortIcon /></IconButton>
-                        <TextField sx={{mr: 1 }} InputProps={{startAdornment: <InputAdornment><SearchIcon/></InputAdornment>}} variant='outlined' fullWidth onKeyDown={handleSearchKey} label={store.searchMode ? 'Search By User Name' : 'Search By Map Name'}></TextField>
+                        <TextField sx={{marginTop: 1}} variant='outlined' fullWidth onKeyDown={handleSearchKey} label={store.searchMode ? 'Search By User Name' : 'Search By Map Name'}></TextField>
                         {
                             (store.searchMode ?
-                            <IconButton onClick={(event) => { handleChangeSearchMode(0) }}><PersonIcon/></IconButton>
-                            : <IconButton onClick={(event) => { handleChangeSearchMode(1) }}><PeopleIcon/></IconButton>)
+                            <IconButton size='small' onClick={(event) => { handleChangeSearchMode(0) }}><PersonIcon/></IconButton>
+                            : <IconButton size='small' onClick={(event) => { handleChangeSearchMode(1) }}><PeopleIcon/></IconButton>)
                         }
                     </Box>
                 </div>

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState, useRef } from 'react'
 import AuthContext from '../auth';
 
 import { GlobalStoreContext } from '../store'
@@ -28,9 +28,15 @@ const MessageScreen = () => {
     const { auth } = useContext(AuthContext);
     const [someVar, setSomeVar] = useState(null);
     const [contactID, setContactID] = useState("");
+    const messagesEndRef = useRef(null)
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    }
 
     useEffect(() => {
-        store.loadIdNamePairs();
+        store.loadConvoPairs();
+        scrollToBottom();
     }, []);
 
     let modalJSX = "";
@@ -98,7 +104,7 @@ const MessageScreen = () => {
             )
             event.target.value = "";
             inspect =
-                <List sx={{ width: '100%', left: '0%', bgcolor: '#fff' }}>
+                <List scrollBottom='100' sx={{ width: '100%', left: '0%', bgcolor: '#fff' }}>
                     {
                         store.currentConvo.copy.msgs.map((msg) => (
                             <MessageCard
@@ -107,7 +113,7 @@ const MessageScreen = () => {
                                 dir={(msg.dir == store.currentConvo.copy.dir)}
                             />
                         ))
-                    }
+                    }{<div ref={messagesEndRef} />}
                 </List>;
             setSomeVar(!someVar);
             // sendMessage(auth, store.currentConvo._id, event.target.value);
@@ -142,6 +148,7 @@ const MessageScreen = () => {
             <div id="contact-inspector">
                 <Box id="messageList" sx={{ p: 1, height: '90%', width: '100%', color: 'red', bgColor: 'red' }}>
                     {inspect}
+                    
                 </Box>
                 {store.currentConvo ?
                     <TextField sx={{ width: '100%' }} label="Message" onKeyDown={handleMessageSent} InputProps={{ endAdornment: <InputAdornment position='end'><IconButton onClick={handleMessageSent}><SendIcon color='primary' /></IconButton></InputAdornment> }}></TextField>

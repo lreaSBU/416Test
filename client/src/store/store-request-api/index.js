@@ -31,9 +31,8 @@ export const updateMapById = (id, map) => {
     })
 }
 export const deleteMapById = (id) => api.delete(`/map/${id}`)
+export const duplicateMapById = (id) => api.get(`/copy/${id}`)
 export const getMapPairs = (filter, searchMode, sortMode, page) => {
-    console.log("TYPE: " + searchMode);
-    //if(type == null || type == undefined) return {data: {success: false}};
     return api.put(`/mappairs/`, {
         filter: filter,
         searchMode: searchMode,
@@ -72,27 +71,18 @@ export const getStartData = (id) => {
     })
 }
 
-export const findUser = (id) => api.get(`/finduser/${id}`)
-
-export const copyMap = (id) => {
-    return api.put(`/copymap/${id}`, {
-        id: id
-    })
-}
-
 const apis = {
     createMap,
     getMapById,
     updateMapById,
     deleteMapById,
+    duplicateMapById,
     getMapPairs,
     makeConvo,
     getConvoPairs,
     requestBlock,
     sendMessage,
-    getStartData,
-    findUser,
-    copyMap
+    getStartData
 }
 
 export default apis

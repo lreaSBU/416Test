@@ -9,16 +9,16 @@ import Button from '@mui/material/Button';
 import ListItem from '@mui/material/ListItem';
 import TextField from '@mui/material/TextField';
 import List from '@mui/material/List';
+import FileCopyIcon from '@mui/icons-material/FileCopy';
 import LikeIcon from '@mui/icons-material/ThumbUp';
 import DislikeIcon from '@mui/icons-material/ThumbDown';
 import LikeIconOff from '@mui/icons-material/ThumbUpOffAlt';
 import DislikeIconOff from '@mui/icons-material/ThumbDownOffAlt';
 import MenuIcon from '@mui/icons-material/Menu';
 
-import placeholderimg from './Mappreview.png';
+import placeholderimg from './Capture.png';
 
-import { Container, Typography, Grid, Card, CardActionArea, CardMedia, CardContent, CardActions, InputLabel } from '@mui/material';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import { Container, Typography, Grid, Card, CardActionArea, CardMedia, CardContent, CardActions } from '@mui/material';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -34,7 +34,8 @@ function MapCard(props) {
     const [text, setText] = useState("");
     const { idNamePair, selected, owned } = props;
     const [open, setOpen] = useState(false);
-    const [copyOpen, setCopyOpen] = useState(false);
+    const [dupe, setDupe] = useState(false);
+    const [wait, setWait] = useState(false);
 
     function handleEditor(e, id) {
         store.goToEditor(id);
@@ -71,8 +72,8 @@ function MapCard(props) {
 
     function handleToggleEdit(event) {
         event.stopPropagation();
-        if (!owned) return;
-        if (idNamePair.copy.published) return console.warn('cannot changed name of a public map');
+        if(!owned) return;
+        if(idNamePair.copy.published) return console.warn('cannot changed name of a public map');
         toggleEdit();
     }
 
@@ -84,12 +85,17 @@ function MapCard(props) {
         setEditActive(newActive);
     }
 
+    async function handleDuplicateMap(e, id){
+        setDupe(true);
+        console.log('DUPLICATING ID ', id);
+        setWait(true);
+        await store.duplicateMapById(id);
+        setWait(false);
+        setDupe(false);
+    }
+
     async function handleDeleteList(event, id) {
         setOpen(true);
-        // event.stopPropagation();
-        // let _id = event.target.id;
-        // _id = ("" + _id).substring("delete-list-".length);
-
         console.log('DELETING ID ', id);
         store.deleteMapById(id);
         setOpen(false);
@@ -109,25 +115,20 @@ function MapCard(props) {
     function handleDialogOpen(event) {
         setOpen(true);
     }
-
     function handleDialogClose() {
         setOpen(false);
-        setCopyOpen(false);
+    }
+
+    function handleDialog2Open(event) {
+        setDupe(true);
+    }
+    function handleDialog2Close() {
+        setDupe(false);
     }
 
     function handleTogglePublic(event, id, flag) {
         store.changePublished(id, flag);
     }
-
-    function handleCopyMap(id) {
-        store.copyMap(id);
-        handleDialogClose();
-    }
-
-    function handleCopyDialogOpen() {
-        setCopyOpen(true);
-    }
-
 
     let selectClass = "unselected-list-card";
     if (selected) {
@@ -146,7 +147,7 @@ function MapCard(props) {
         publishButton = <IconButton size='small' onClick={(event) => { handleTogglePublic(event, idNamePair._id, true) }} ><PublicOffIcon></PublicOffIcon></IconButton>
     }
     let editButton = <></>;
-    if (!idNamePair.copy.published) editButton = <Link style={{ textDecoration: 'none' }} onClick={(event) => { handleEditor(event, idNamePair._id) }} to="/edit/"><Button size='small' color='primary' variant='contained'>Edit</Button></Link>
+    if(!idNamePair.copy.published) editButton = <Button size='small' color='primary' variant='contained'><Link style={{ textDecoration: 'none' }} onClick={(event) => { handleEditor(event, idNamePair._id) }} to="/edit/">Edit</Link></Button>
 
     let mapTitleElement = <Box sx={{ width: 'fit-content' }} onClick={handleToggleEdit}>{idNamePair.name}</Box>;
     if (editActive) {
@@ -170,27 +171,23 @@ function MapCard(props) {
 
     return (
 
-        <Card className='map-card' style={{ height: 'fit-content' }} >
+        <Card className='map-card' style={{ height: 'fit-content' }}>
             <CardActionArea onClick={(event) => { handleLoadList(event, idNamePair._id) }}>
                 <CardMedia
-                    component='img'
-                    src={placeholderimg}
-                >
+                        component='img'
+                        src={placeholderimg}
+                        sx={{width: 100, height: 100}}
+                    >
                 </CardMedia>
-
             </CardActionArea>
             <CardContent>
-                {owned ? <Box >
+                <Box >
                     {mapTitleElement}
-                </Box> :
-                    <>{idNamePair.name}</>
-                }
-
+                </Box>
             </CardContent>
             {owned ? (
                 <CardActions>
                     {editButton}
-
                     {publishButton}
                     <IconButton size='small' color='primary' onClick={(event) => { handleDialogOpen(event) }} aria-label='delete'><DeleteIcon></DeleteIcon></IconButton>
                     <Dialog
@@ -215,29 +212,31 @@ function MapCard(props) {
                     </Dialog>
                 </CardActions>
             ) : <CardActions>
+                    <IconButton size='small' color='primary' onClick={(event) => { handleDialog2Open(event) }} aria-label='delete'><FileCopyIcon></FileCopyIcon></IconButton>
+                    <Dialog
+                        open={dupe}
+                        onClose={handleDialog2Close}
+                    >
+                        <DialogTitle>
+                            Duplicate {idNamePair.name}
+                        </DialogTitle>
+                        <DialogContent>
+                            {wait ? <DialogContentText>
+                                        Please wait.
+                                    </DialogContentText>
+                                : <DialogContentText>
+                                        Make private copy of {idNamePair.name}?
+                                  </DialogContentText>}
+                        </DialogContent>
+                        <DialogActions>
+                            <Button color='primary' variant='contained' onClick={(event) => handleDuplicateMap(event, idNamePair._id)}>Duplicate</Button>
+                            <Button variant='outlined' onClick={handleDialog2Close} autoFocus>
+                                Cancel
+                            </Button>
+                        </DialogActions>
 
-                <IconButton onClick={(event) => { handleCopyDialogOpen(event) }}><ContentCopyIcon color='primary'/></IconButton>
-                <Dialog
-                    open={copyOpen}
-                    onClose={handleDialogClose}
-                >
-                    <DialogTitle>
-                        Copy {idNamePair.name}
-                    </DialogTitle>
-                    <DialogContent>
-                        <DialogContentText>
-                            Do you want to copy the map {idNamePair.name}?
-                        </DialogContentText>
-                    </DialogContent>
-                    <DialogActions>
-                        <Button variant='contained' onClick={() => handleCopyMap(idNamePair._id)}>Copy</Button>
-                        <Button variant='outlined' onClick={handleDialogClose} autoFocus>
-                            Cancel
-                        </Button>
-                    </DialogActions>
-
-                </Dialog>
-            </CardActions>}
+                    </Dialog>
+                </CardActions>}
         </Card>
     );
 }
