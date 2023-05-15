@@ -74,6 +74,12 @@ export const getStartData = (id) => {
 
 export const findUser = (id) => api.get(`/finduser/${id}`)
 
+export const copyMap = (id) => {
+    return api.put(`/copymap/${id}`, {
+        id: id
+    })
+}
+
 const apis = {
     createMap,
     getMapById,
@@ -85,7 +91,8 @@ const apis = {
     requestBlock,
     sendMessage,
     getStartData,
-    findUser
+    findUser,
+    copyMap
 }
 
 export default apis

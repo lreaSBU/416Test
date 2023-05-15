@@ -120,7 +120,8 @@ function MapCard(props) {
     }
 
     function handleCopyMap(id) {
-        //store.handlecopy map
+        store.copyMap(id);
+        handleDialogClose();
     }
 
     function handleCopyDialogOpen() {
@@ -229,7 +230,7 @@ function MapCard(props) {
                         </DialogContentText>
                     </DialogContent>
                     <DialogActions>
-                        <Button variant='contained' onClick={(event) => handleCopyMap(event, idNamePair._id)}>Copy</Button>
+                        <Button variant='contained' onClick={() => handleCopyMap(idNamePair._id)}>Copy</Button>
                         <Button variant='outlined' onClick={handleDialogClose} autoFocus>
                             Cancel
                         </Button>

@@ -320,21 +320,26 @@ function GlobalStoreContextProvider(props) {
 
     store.findUser = async function (id) {
         try {
-          const response = await api.findUser(id);
-          if (response.data.status) {
-            console.log('SUCCESS FIND', response.data.user);
-            return response.data.user;
-          } else {
-            console.log('Failed to find user')
-          }
+            const response = await api.findUser(id);
+            if (response.data.status) {
+                console.log('SUCCESS FIND', response.data.user);
+                return response.data.user;
+            } else {
+                console.log('Failed to find user')
+            }
         } catch (error) {
-          console.error(error);
+            console.error(error);
         }
-      };
-      
+    };
+
 
     store.copyMap = async function (id) {
         console.log('COPY MAP')
+        try {
+            const response = await api.copyMap(id);
+        } catch (error) {
+            console.error(error);
+        }
     }
 
     return (

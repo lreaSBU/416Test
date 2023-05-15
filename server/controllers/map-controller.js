@@ -73,19 +73,19 @@ deleteMap = async (req, res) => {
     console.log("delete " + req.params.id);
 
     Map.findById(req.params.id, async (e, map) => {
-        for(let l of map.l){
+        for (let l of map.l) {
             let layer = await Layer.findById(l);
-            for(let s of layer.groups){
+            for (let s of layer.groups) {
                 let subregion = await SubRegion.findById(s);
-                for(let p of subregion.polys) await Poly.findByIdAndDelete(p);
+                for (let p of subregion.polys) await Poly.findByIdAndDelete(p);
                 subregion.remove();
             }
             layer.remove();
         }
         let user = await User.findById(map.owner);
-        if(user != null) user.maps.splice(user.maps.indexOf(map._id), 1);
+        if (user != null) user.maps.splice(user.maps.indexOf(map._id), 1);
         map.remove();
-        return res.status(200).json({success: true});
+        return res.status(200).json({ success: true });
     });
 }
 getMapById = async (req, res) => {
@@ -103,19 +103,31 @@ getMapById = async (req, res) => {
 
 getUserById = async (req, res) => {
     // console.log('Find User: !!!!!!!!!!!!!!!!!!!!!' + JSON.stringify(req.params.id));
-    await User.findById({_id: req.params.id}, (err, user) =>{
-        if(err){
+    await User.findById({ _id: req.params.id }, (err, user) => {
+        if (err) {
             console.log('Find User Failed')
-            return res.status(400).json({success: false, error: err});
+            return res.status(400).json({ success: false, error: err });
         }
         // console.log('USER?????', user)
-        return res.status(200).json({status: true, user: user});
+        return res.status(200).json({ status: true, user: user });
     }).catch(err => console.log(err))
 }
 
-// copyMap = async (req, res) => {
+copyMap = async (req, res) => {
+    console.log('COPY MAP ~~~~~~~~~~~~~~~', req.params)
+    Map.findOne({ _id: req.params.id }, (err, map) => {
+        console.log("map found: " + JSON.stringify(map));
+        if (err) {
+            return res.status(404).json({
+                err,
+                message: 'map not found!',
+            })
+        }
 
-// }
+
+
+    }).catch(err => console.log(err));
+}
 
 async function namePairs(nm) {
     await Map.find({ name: nm, published: true }, (err, maps) => {
@@ -154,26 +166,26 @@ async function namePairs(nm) {
 getMapPairs = async (req, res) => {
     let bod = req.body;
     let maps = [];
-    if(bod.filter == '') return res.status(200).json({ success: true, idNamePairs: [] });
-    if(bod.filter == null){ //getting ones own maps
-        maps = await Map.find({owner: req.userId});
-    }else if(!bod.searchMode){ //searching by MAP name
-        maps = await Map.find({name: {$regex : bod.filter, $options: 'i'}, published: true});
-    }else{ //searching by USER name
-        if(!bod.filter.includes(' ')) return res.status(501).json({ success: false, idNamePairs: [] });
+    if (bod.filter == '') return res.status(200).json({ success: true, idNamePairs: [] });
+    if (bod.filter == null) { //getting ones own maps
+        maps = await Map.find({ owner: req.userId });
+    } else if (!bod.searchMode) { //searching by MAP name
+        maps = await Map.find({ name: { $regex: bod.filter, $options: 'i' }, published: true });
+    } else { //searching by USER name
+        if (!bod.filter.includes(' ')) return res.status(501).json({ success: false, idNamePairs: [] });
         let fk = bod.filter.split(' ')[0],
-        lk = bod.filter.split(' ')[1];
-        let users = await User.find({firstName: {$regex : fk, $options: 'i'}, lastName: {$regex : lk, $options: 'i'}});
-        if(users == null) return res.status(502).json({ success: false, idNamePairs: [] });
-        for(let user of users) for(let m of user.maps){
+            lk = bod.filter.split(' ')[1];
+        let users = await User.find({ firstName: { $regex: fk, $options: 'i' }, lastName: { $regex: lk, $options: 'i' } });
+        if (users == null) return res.status(502).json({ success: false, idNamePairs: [] });
+        for (let user of users) for (let m of user.maps) {
             m = await Map.findById(m);
-            if(!m.published) continue;
+            if (!m.published) continue;
             maps.push(m);
         }
     }
-    if(maps == null) return res.status(401).json({success: false});
+    if (maps == null) return res.status(401).json({ success: false });
     let ret = [];
-    for(let map of maps){
+    for (let map of maps) {
         ret.push({
             _id: map._id,
             name: map.name,
@@ -368,5 +380,6 @@ module.exports = {
     getMaps,
     updateMap,
     getUserById,
+    copyMap
 
 }
