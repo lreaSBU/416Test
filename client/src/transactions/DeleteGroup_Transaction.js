@@ -12,10 +12,14 @@ export default class DeleteGroup_Transaction extends jsTPS_Transaction {
     }
 
     clean(){
-        if(!this.scope) for(let i = 0; i < this.store.edit.l[this.fl].length; i++)
-            this.store.edit.l[this.fl][i].group = i;
-        else for(let i = 0; i < this.store.edit.l[this.fl][this.gn].elems.length; i++)
-            this.store.edit.l[this.fl][this.gn].elems[i].po = i;
+        if(!this.scope){
+            for(let i = 0; i < this.store.edit.l[this.fl].length; i++)
+                this.store.edit.l[this.fl][i].group = i;
+        }
+        else{
+            for(let i = 0; i < this.store.edit.l[this.fl][this.gn].elems.length; i++)
+                this.store.edit.l[this.fl][this.gn].elems[i].id = i;
+        }
     }
 
     pSan(l){

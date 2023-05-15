@@ -10,6 +10,17 @@ export default class MakeGroup_Transaction extends jsTPS_Transaction {
         this.d2 = undefined;
     }
 
+    clean(){
+        if(!this.scope){
+            for(let i = 0; i < this.store.edit.l[this.fl].length; i++)
+                this.store.edit.l[this.fl][i].group = i;
+        }
+        else{
+            for(let i = 0; i < this.scope.elems.length; i++)
+                this.scope.elems[i].id = i;
+        }
+    }
+
     doTransaction() {
         if(this.scope){ //push Poly
             this.store.edit.l[this.fl][this.scope.group].elems.push(this.d1);
@@ -32,6 +43,7 @@ export default class MakeGroup_Transaction extends jsTPS_Transaction {
             this.d1.finalize(this.fl, gn, temp); //this sends the transac
             this.d2 = gn;
         }
+        this.clean();
     }
     
     undoTransaction() {
@@ -42,5 +54,6 @@ export default class MakeGroup_Transaction extends jsTPS_Transaction {
             this.store.edit.l[this.fl].pop();
             this.store.sendTransac(8, this.fl, -1, -1, null, this.d2);
         }
+        this.clean();
     }
 }

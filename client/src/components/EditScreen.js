@@ -86,7 +86,7 @@ const EditScreen = () => {
     const lodSlider = useRef(null), textSlider = useRef(null);
     const centerCamera = useRef(null);
     const downloadButton = useRef(null), downloadMule = useRef(null);
-    const centerToggle = useRef(null);
+    const centerToggle = useRef(null), shpToggle = useRef(null);
 
     const tps = new jsTPS();
 
@@ -133,7 +133,7 @@ const EditScreen = () => {
         textSlide = textSlider.current.children[2].children[0];
         var centerCam = centerCamera.current;
         var dlButt = downloadButton.current, dlMule = downloadMule.current;
-        var centerButt = centerToggle.current;
+        var centerButt = centerToggle.current, shpButt = shpToggle.current;
 
         function cleanVal(n, b, i){
             if(!i && !isNaN(n)) n = n.toFixed(5);
@@ -154,6 +154,7 @@ const EditScreen = () => {
 
         var CW = canv.width, CH = canv.height, HW = CH/2, HH = CH/2;
         var fi, bytes, camZ = 1, camX = 100, camY = 100;
+        const eqRound = 0.0000000000001; //play around with this...
 
         class Point{
             static Gen = new Point(0, 0);
@@ -181,7 +182,7 @@ const EditScreen = () => {
             }
             eq(p){
                 if(p == null) return false;
-                return this.x == p.x && this.y == p.y;
+                return Math.abs(this.x - p.x) < eqRound && Math.abs(this.y - p.y) < eqRound;
             }
             set(p){
                 this.x = p.x; this.y = p.y;
@@ -345,23 +346,40 @@ const EditScreen = () => {
                     if(ps[i].p != ps[i+1].p) continue;
                     let adj = store.edit.l[mode.level][mode.group].elems[ps[i].p].isAdj(ps[i].i, ps[i+1].i);
                     if(adj != null){
-                        let np = new Point((mels[i].x+mels[i+1].x)/2, (mels[i].y+mels[i+1].y)/2);
+                        let np = mels[i].add(mels[i+1]).divideLocal(2);
                         np.p = mels[0].p;
                         tps.addTransaction(new Insert_Transaction(store, mode.level, mode.group, ps[i].p, adj, np));
+                        if(effectSHP){
+                            let sh1 = shared(mels[0], mode),
+                            sh2 = shared(mels[1], mode);
+                            for(let s1 of sh1) for(let s2 of sh2) if(s1.p == s2.p){
+                                let adj = s1.p.isAdj(findParent(s1).i, findParent(s2).i);
+                                if(adj != null){
+                                    let snp = np.copy(); //s1.add(s2).divideLocal(2);
+                                    snp.p = s1.p;
+                                    let fg = findGroup(s1.p, viewLevel);
+                                    let spar = findParent(s1, fg, true);
+                                    tps.addTransaction(new Insert_Transaction(store, viewLevel, fg.group, spar.p, adj, snp));
+                                }
+                                break;
+                            }
+                        }
                     }
                 }
             }
             tps.unMark();
         }
+        function shared(o, mpar){ 
+            let ret = [], own = o.p;
+            for(let g of store.edit.l[viewLevel]) for(let p of g.elems) if(p === own || own.isNeighbor(p)){
+                for(let pp of p.points) if(pp !== o && o.eq(pp)){
+                    if(p === own) console.log(pp, o);
+                    ret.push(pp);
+                }
+            }
+            return ret;
+        }
         function remove_tool(){
-            /* //ITERATOR FOR SHARED POINT REMOVAL:::
-            for(var l of store.edit.l) for(var g of l) for(var e of g.elems)
-                if(e.minX <= mel.x && e.maxX >= mel.x && e.minY <= mel.y && e.maxY >= mel.y)
-                    for(var i = 0; i < e.points.length; i++) if(mel.eq(e.points[i])){
-                        e.points.splice(i, 1);
-                        break;
-                    }
-            */
             tps.bookMark();
             if(mode && mels.length > 0){
                 if(keys.Alt){ //delete the entire Poly
@@ -380,6 +398,11 @@ const EditScreen = () => {
                         break;
                     }
                     tps.addTransaction(new Remove_Transaction(store, mode.level, mode.group, par.p, par.i, m));
+                    if(effectSHP) for(let sh of shared(m, mode)){
+                        let fg = findGroup(sh.p, viewLevel);
+                        let spar = findParent(sh, fg, true);
+                        tps.addTransaction(new Remove_Transaction(store, viewLevel, fg.group, spar.p, spar.i, sh));
+                    }
                 }
             }else if(!mode && sels.length > 0){
                 for(let s of sels){
@@ -459,7 +482,13 @@ const EditScreen = () => {
                 case 'g': if(canSel()) swapTool(1); break;
                 case 'x': if(canSel()) remove_tool(); break;
                 case 'i': if(canSel()) insert_tool(); break;
-                case 'p': if(mode) for(let m of mode.elems) console.log(m); break;
+                case 'p':
+                    if(mode){
+                        console.log('P-PRINT{');
+                        for(let m of mode.elems) console.log(m);
+                        console.log('}');
+                    }
+                break;
                 case 'f': Poly.Draw(true); changeFlag = false; break;
                 case 'm': merge_tool(); break;
                 case 'l': lift_tool(); break;
@@ -467,8 +496,8 @@ const EditScreen = () => {
                 case 'k': swapTool(4); break;
                 case 'y': if(keys.Control && tps.hasTransactionToRedo()) tps.doMulti(); break;
                 case 'z': if(keys.Control && tps.hasTransactionToUndo()) tps.undoMulti(); break;
-                case 'Y': if(mode && keys.Control && tps.hasTransactionToRedo()) tps.doTransaction(); break;
-                case 'Z': if(mode && keys.Control && tps.hasTransactionToUndo()) tps.undoTransaction(); break;
+                //case 'Y': if(mode && keys.Control && tps.hasTransactionToRedo()) tps.doTransaction(); break;
+                //case 'Z': if(mode && keys.Control && tps.hasTransactionToUndo()) tps.undoTransaction(); break;
                 case 'ArrowUp': viewChange(true); break;
                 case 'ArrowDown': viewChange(false); break;
                 default: changeFlag = false; break;
@@ -487,15 +516,21 @@ const EditScreen = () => {
         }
         window.addEventListener("keyup", keyup);
 
-        function findParent(point, group){
-            if(point.p) return {i: point.p.indexOf(point), p: point.p.id};
+        function findGroup(poly, lvl){
+            for(let g of store.edit.l[lvl]) for(let p of g.elems) if(p == poly) return g;
+            return null;
+        }
+        function findParent(point, group = null, exact = false){
+            if(point.p) return {i: point.p.indexOf(point, exact), p: point.p.id};
             //backup search???
-            let ind = -1;
-            for(let po of group.elems){
-                if((ind = po.indexOf(point)) != -1){
-                    let ret = {i: ind, p: group.elems.indexOf(po)};
-                    console.log("BACKUP FIND:", ret);
-                    return ret;
+            if(group != null){
+                let ind = -1;
+                for(let po of group.elems){
+                    if((ind = po.indexOf(point, exact)) != -1){
+                        let ret = {i: ind, p: group.elems.indexOf(po)};
+                        console.log("BACKUP FIND:", ret);
+                        return ret;
+                    }
                 }
             }
             //*/
@@ -510,7 +545,7 @@ const EditScreen = () => {
                 deSel();
             }
             tps.clearAllTransactions();
-            setVal(3, viewLevel);
+            setVal(3, viewLevel+1);
             Poly.Draw();
         }
 
@@ -560,6 +595,11 @@ const EditScreen = () => {
                 saveMel = null;
             }
         }
+        function selPoint(){
+            for(var g of store.edit.l[viewLevel]) for(var p of g.elems)
+                if(checkInside(p.points, mp)) return g;
+            return null;
+        }
         const specPropRef = ["**colorFill", "**borderFill", "**textFill"];
         function mouseup(e){
             if(VERSION != store.edit.sesh) return;
@@ -584,6 +624,11 @@ const EditScreen = () => {
                             }
                         }
                         for(let par of pars) if(pc[par.p] != -1){
+                            if(effectSHP) for(let sh of shared(mode.elems[par.p].points[par.i], mode)){
+                                let fg = findGroup(sh.p, viewLevel);
+                                let spar = findParent(sh, fg, true);
+                                tps.addTransaction(new Move_Transaction(store, viewLevel, fg.group, spar.p, spar.i, MC));
+                            }
                             tps.addTransaction(new Move_Transaction(store, mode.level, mode.group, par.p, par.i, MC));
                         }
                     }else{ //move subregions
@@ -632,14 +677,8 @@ const EditScreen = () => {
             sel = null;
             ser = 1000000000;
             //console.log("(" + px + ", " + py + ")");
-            var gen;
             if(!tool){ //selecting
-                for(var g of store.edit.l[viewLevel]) for(var p of g.elems){
-                    if((gen = p._mean.dist(mp)) < CLC*camZ && gen < ser && p.minX < px && px < p.maxX && p.minY < py && py < p.maxY){
-                        sel = g;
-                        ser = gen;
-                    }
-                }
+                sel = selPoint();
                 if(!mode && sel != null){
                     if(store.edit.graphics){
                         //console.log(colText.children[1].children[0].value, store.edit.graphics);
@@ -1008,6 +1047,11 @@ const EditScreen = () => {
         async function readFile(f){
             var fl = f.name.split(".");
             viewLevel = fileLevel = parseInt(fl[0].split("_adm")[1]);
+            if(isNaN(fileLevel)){
+                let nm = fl[0].split("_");
+                viewLevel = fileLevel = parseInt(nm[nm.length-1]);
+                console.log('VIEW:::::', viewLevel)
+            }
             if(isNaN(fileLevel)) viewLevel = fileLevel = 0;
             switch(fl[fl.length-1]){
                 case "shp": await readShapeFile(f); break;
@@ -1018,6 +1062,7 @@ const EditScreen = () => {
         fileIn.onchange = async function(){
             for(var f of this.files) await readFile(f);
             colSave.length = 0;
+            //console.log(viewLevel, store.edit.l[viewLevel].length);
             animCam(true);
         }
         propHolder.onchange = function(){
@@ -1053,7 +1098,10 @@ const EditScreen = () => {
         }
         centerButt.onclick = function(){
             conType = !conType;
-            console.log(conType);
+        }
+        shpButt.onclick = function(){
+            effectSHP = !effectSHP;
+            console.log('-->', effectSHP);
         }
         dlButt.onclick = function(){
             let ret = {
@@ -1301,8 +1349,8 @@ const EditScreen = () => {
                 while(i >= this.points.length) i -= this.points.length;
                 return this.points[i];
             }
-            indexOf(p){
-                for(var i = 0; i < this.points.length; i++) if(this.points[i].eq(p)) return i;
+            indexOf(p, e = false){
+                for(var i = 0; i < this.points.length; i++) if((e ? (this.points[i] === p) : (this.points[i].eq(p)))) return i;
                 return -1;
             }
             static interval(min1, max1, min2, max2){
@@ -1318,8 +1366,8 @@ const EditScreen = () => {
                     l--;
                     if(b){
                         if(last == null) last = i;
-                        else if(!i.eq(last) && l <= 0) return true;
-                    }else if(l <= 0) return true;
+                        else if(!i.eq(last) && l <= 0) return i;
+                    }else if(l <= 0) return i;
                 }
                 return false;
             }
@@ -1424,11 +1472,12 @@ const EditScreen = () => {
                 if(mri == this.points.length-1 || (fx > 0 && fx < CW && fy > 0 && fy < CH)) ctx.lineTo(fx, fy);
                 ctx.stroke();
                 if(fillCol != null) ctx.fillStyle = fillCol;
-                else ctx.fillStyle = mode && !sigh ? "#ddffcc" : (high ? "#666600" : '#99ff66');
+                else ctx.fillStyle = mode && !sigh ? "#dcdcdc" : (high ? "#666600" : '#99ff66');
                 ctx.fill();
                 LOD_REF = null;
                 //if(dots.length) drawBox(dots[0]);
-                for(let d of dots) drawDot(d);
+                for(let d of dots) if(!d.h) drawDot(d);
+                for(let d of dots) if(d.h) drawDot(d);
                 setOff();
             }
         }
@@ -1476,6 +1525,8 @@ const EditScreen = () => {
             return ret;
         }
         function cleanString(s){
+            if(s == null || s == undefined) return '';
+            if(!s.length) return '';
             while(s[0] == ' ') s = s.slice(1);
             while(s[s.length-1] == ' ') s = s.slice(0, s.length-1);
             return s;
@@ -1661,7 +1712,7 @@ const EditScreen = () => {
             tps.addTransaction(new MakeGroup_Transaction(store, mode, mode.level, np1));
             np2.id = mode.elems.length;
             tps.addTransaction(new MakeGroup_Transaction(store, mode, mode.level, np2));
-            for(let i = 0; i < mode.elems.length; i++) mode.elems[i].id = i; //sanitize (needed? -> i think so...)
+            for(let i = 0; i < mode.elems.length; i++) mode.elems[i].id = i; //sanitize
         }
         function lift_tool(){
             if(!mode || !mels.length) return;
@@ -1680,6 +1731,7 @@ const EditScreen = () => {
                     console.log("ATTEMPTING POLY LIFT:", i);
                     let lift = mode.elems[i-lc];
                     tps.addTransaction(new DeleteGroup_Transaction(store, true, mode.level, mode.group, i-lc, lift.copy()));
+                    for(let i = 0; i < mode.elems.length; i++) mode.elems[i].id = i; //sanitize
                     lift.id = 0;
                     tps.addTransaction(new MakeGroup_Transaction(store, false, mode.level, lift));
                     pc[i] = -1; lc++;
@@ -1689,7 +1741,7 @@ const EditScreen = () => {
             if(lc == 0) return handleWarning('Must select entire Polys to split from current SubRegion');
             
         }
-        var conType = false;
+        var conType = true, effectSHP = true;
         function con_tool(){
             if(!mode || !mels.length) return;
             let ref = new Point(0, 0), save;
@@ -1704,6 +1756,11 @@ const EditScreen = () => {
             let par;
             for(let m of mels){
                 par = findParent(m, mode);
+                if(effectSHP) for(let sh of shared(m, mode)){
+                    let fg = findGroup(sh.p, viewLevel);
+                    let spar = findParent(sh, fg, true);
+                    tps.addTransaction(new Move_Transaction(store, viewLevel, fg.group, spar.p, spar.i, ref.sub(sh)));
+                }
                 tps.addTransaction(new Move_Transaction(store, mode.level, mode.group, par.p, par.i, ref.sub(m)));
             }
             tps.unMark();
@@ -1746,6 +1803,7 @@ const EditScreen = () => {
             camY = store.edit.camY;
             camZ = store.edit.camZ;
             viewLevel = store.edit.viewLevel;
+            setVal(3, viewLevel+1);
             //console.log('CLEANED:', store.edit.l);
             Poly.Draw();
         }
@@ -1932,7 +1990,8 @@ const EditScreen = () => {
                 </Box>
                 <Box id='miscSwitches' className='traySect'>
                     <FormGroup>
-                        <FormControlLabel control={<Switch ref={centerToggle} />} label="Center Consolidation" />
+                        <FormControlLabel control={<Switch ref={shpToggle} defaultChecked />} label="Effect Shared Points" />
+                        <FormControlLabel control={<Switch ref={centerToggle} defaultChecked />} label="Center Consolidation" />
                     </FormGroup>
                 </Box>
             </div>
