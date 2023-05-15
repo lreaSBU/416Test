@@ -278,6 +278,7 @@ function GlobalStoreContextProvider(props) {
     }
     store.editTabSwitch = function () {
         storeReducer({
+            currentMap: null,
             tabMode: store.tabMode == 2 ? 3 : 2
         });
     }

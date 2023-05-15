@@ -123,8 +123,8 @@ const MessageScreen = () => {
         <div id="playlist-selector">
             <div id="contact-selector-list">
                 <div id="messageHeader">
-                    <Box sx={{ height: 'fit-content' }}>
-                        <TextField label="Add Contact" onChange={handleChangeContact} onKeyPress={handleSub}></TextField>
+                    <Box sx={{ height: 'fit-content', display: 'flex', justifyContent: 'space-between'}}>
+                        <TextField label="Add Contact" sx={{width: '80%'}} onChange={handleChangeContact} onKeyPress={handleSub}></TextField>
                         <Fab
                             sx={{alignItems: 'right'}}
                             size='medium'
@@ -132,7 +132,7 @@ const MessageScreen = () => {
                             aria-label="add"
                             id="addContactButton"
                             onClick={handleNewContact}
-                        > <AddIcon /> </Fab>
+                        > <AddIcon/> </Fab>
                     </Box>
                 </div>
                 {convoCards}

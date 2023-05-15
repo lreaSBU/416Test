@@ -16,13 +16,13 @@ export default function HelpScreen() {
             </Box>
             <Link id='helpL' to='/login/'>here.</Link>
             <Box className='helpD'>
-                - You can visit the Browse or Users screens to search for published maps my title or owner username
+                - You can visit the Browse screen to search for published maps my title or owner username
             </Box>
             <Box className='helpD'>
-                - If you are logged in you can also visit the Chat screen to directly message other users, otherwise you can always reach out through map comments
+                - If you are logged in you can also visit the Chat screen to directly message other users
             </Box>
             <Box className='helpD'>
-                - From the Home screen you can change the name of your maps, publish them, make them private or begin editing them
+                - From the Home screen you can change the name of your maps, publish them, or make them private and begin editing them
             </Box>
         </div>
     )
