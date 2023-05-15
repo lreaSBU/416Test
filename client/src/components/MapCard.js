@@ -16,7 +16,7 @@ import LikeIconOff from '@mui/icons-material/ThumbUpOffAlt';
 import DislikeIconOff from '@mui/icons-material/ThumbDownOffAlt';
 import MenuIcon from '@mui/icons-material/Menu';
 
-import placeholderimg from './Capture.png';
+import placeholderimg from './Mappreview.png';
 
 import { Container, Typography, Grid, Card, CardActionArea, CardMedia, CardContent, CardActions } from '@mui/material';
 import Dialog from '@mui/material/Dialog';
@@ -224,12 +224,12 @@ function MapCard(props) {
                             {wait ? <DialogContentText>
                                         Please wait.
                                     </DialogContentText>
-                                : <DialogContentText>
+                                :   <DialogContentText>
                                         Make private copy of {idNamePair.name}?
-                                  </DialogContentText>}
+                                    </DialogContentText>}
                         </DialogContent>
                         <DialogActions>
-                            <Button color='primary' variant='contained' onClick={(event) => handleDuplicateMap(event, idNamePair._id)}>Duplicate</Button>
+                            {wait ? <></> : <Button color='primary' variant='contained' onClick={(event) => handleDuplicateMap(event, idNamePair._id)}>Duplicate</Button>}
                             <Button variant='outlined' onClick={handleDialog2Close} autoFocus>
                                 Cancel
                             </Button>

@@ -43,17 +43,17 @@ getConvoPairs = async (req, res) => {
             list = await Convo.findById(list);
             let user1 = await User.findById(list.user1);
             let user2 = await User.findById(list.user2);
-            if(!(user1._id == req.userId ? list.block1 : list.block2)) recents = list.msgs;
-            else recents = [];
             var dir = user1._id == req.userId;
-            if(req.body.read){
+            var block = dir ? list.block1 : list.block2;
+            var buddy = dir ? user2.firstName+" "+user2.lastName : user1.firstName+" "+user1.lastName;
+            var unr = dir ? list.unread1 : list.unread2;
+            if(!block) recents = list.msgs;
+            else recents = [], unr = 0;
+            if(req.body.read && !block){
                 if(dir) list.unread1 = 0;
                 else list.unread2 = 0;
                 await list.save();
             }
-            var buddy = dir ? user2.firstName+" "+user2.lastName : user1.firstName+" "+user1.lastName;
-            var unr = dir ? list.unread1 : list.unread2;
-            var block = dir ? list.block1 : list.block2;
             let pair = {
                 _id: list._id,
                 name: buddy,
@@ -73,25 +73,16 @@ getConvoPairs = async (req, res) => {
 
 // Blocks the conversation with another user in the chat
 blockConvo = async (req, res) => {
-    console.log("block Convo!");
-    await User.findOne({_id : req.userId}, (err, user) => {
-        console.log("found user!");
-        const convos = user.convos;
-        for(let key in convos) if(convos[key]._id == req.body.id){
-            const dir = req.userId == convos[key].user1._id;
-            if(dir) convos[key].block1 = req.body.flag;
-            else convos[key].block2 = req.body.flag;
-            convos[key].save().then(() => {
-                console.log("success!");
-                return res.status(200).json({success: true})
-            }).catch(error => {
-                console.log("failure!", error);
-                return res.status(401).json({success: false})
-            });
-        }
-        console.log("couldnt find convo with id");
-        return res.status(400).json({ success: false })
-    }).catch(err => console.log(err))
+    const bod = req.body;
+    let convo = await Convo.findById(bod.id);
+    if(!convo) return res.status(400).json({success: false});
+    if(convo.user1 == req.userId) convo.block1 = bod.flag;
+    else if(convo.user2 == req.userId) convo.block2 = bod.flag;
+    else return res.status(401).json({success: false});
+    convo.markModified('block1');
+    convo.markModified('block2');
+    await convo.save();
+    return res.status(200).json({success: true});
 }
 
 // Sends a message to another user in the chat

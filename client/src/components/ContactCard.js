@@ -33,9 +33,9 @@ function ContactCard(props) {
         store.setCurrentConv(id);
     }
 
-    function handleBlock(e, id){
+    function handleBlock(e, id, f){
         e.stopPropagation();
-        console.log("BLOCKING", id);
+        store.blockConvo(id, f);
     }
 
     let selectClass = "unselected-list-card";
@@ -46,6 +46,7 @@ function ContactCard(props) {
     if (store.isListNameEditActive) {
         cardStatus = true;
     }
+    console.log('BLOCK:', idNamePair.copy.block);
     let ldl = '';
     let cardElement =
         <ListItem
@@ -55,8 +56,8 @@ function ContactCard(props) {
         style={{ width: '98%', height: '100%', fontSize: 'x-large', outline: 'solid', borderRadius: '5px', marginLeft: 'auto', marginRight: 'auto' }}
         onClick={(e) => {handleLoadConvo(e, idNamePair._id)}}
         button>
-            <IconButton onClick={(e) => {handleBlock(e, idNamePair._id)}}>
-                <BlockIcon sx={{color: (idNamePair.block ? 'red' : '#aaa')}}/>
+            <IconButton onClick={(e) => {handleBlock(e, idNamePair._id, !idNamePair.copy.block)}}>
+                <BlockIcon sx={{color: (idNamePair.copy.block ? '#ff0000' : '#aaa')}}/>
             </IconButton>
             <Box>{idNamePair.name}</Box>
             <Box sx={{flexGrow: 1}}></Box>

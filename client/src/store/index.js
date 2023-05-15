@@ -246,7 +246,12 @@ function GlobalStoreContextProvider(props) {
         console.log("4");
         const response = await api.sendMessage(store.currentConvo._id, text);
         console.log("send msg resp", response);
-        if (response.success) store.loadConvoPairs(); //lets just refresh the entire thing for now
+        if (response.data.success) await store.loadConvoPairs(); //lets just refresh the entire thing for now
+    }
+    store.blockConvo = async function(id, flag){
+        const resp  = await api.requestBlock(id, flag);
+        if(resp.data.success) await store.loadConvoPairs();
+        else console.log("FAILED TO BLOCK");
     }
 
     store.loadEditorData = function (id) {
