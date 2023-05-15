@@ -94,7 +94,7 @@ export default function AppBanner() {
             open={isMenuOpen}
             onClose={handleMenuClose}
         >
-            <MenuItem onClick={handleMenuClose}><Link to='/login/'>Login</Link></MenuItem>
+            <MenuItem onClick={handleMenuClose}><Link to='/login/' >Login</Link></MenuItem>
             <MenuItem onClick={handleMenuClose}><Link to='/register/'>Create New Account</Link></MenuItem>
         </Menu>
     );
@@ -114,7 +114,7 @@ export default function AppBanner() {
             open={isMenuOpen}
             onClose={handleMenuClose}
         >
-            <MenuItem to='/' onClick={handleLogout}>Logout</MenuItem>
+            <MenuItem to='/' onClick={handleLogout} ><Typography color='error'>Logout</Typography></MenuItem>
         </Menu>
 
     let menu = loggedOutMenu;

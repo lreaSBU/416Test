@@ -12,7 +12,7 @@ import Typography from '@mui/material/Typography'
 import IconButton from '@mui/material/IconButton';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SortIcon from '@mui/icons-material/Menu';
-import { Avatar, InputBase, ListItem, ListItemText, TextField } from '@mui/material';
+import { Avatar, InputAdornment, InputBase, ListItem, ListItemText, TextField } from '@mui/material';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -23,6 +23,7 @@ import PublicOffIcon from '@mui/icons-material/PublicOff';
 import placeholderimg from './Mappreview.png';
 import PersonIcon from '@mui/icons-material/Person';
 import PeopleIcon from '@mui/icons-material/People';
+import SearchIcon from '@mui/icons-material/Search';
 
 
 const BrowseScreen = () => {
@@ -177,7 +178,7 @@ const BrowseScreen = () => {
                             sx={{mr: 1}}
 
                         ><SortIcon /></IconButton>
-                        <TextField sx={{mr: 1 }} variant='outlined' fullWidth onKeyDown={handleSearchKey} label={store.searchMode ? 'Search By User Name' : 'Search By Map Name'}></TextField>
+                        <TextField sx={{mr: 1 }} InputProps={{startAdornment: <InputAdornment><SearchIcon/></InputAdornment>}} variant='outlined' fullWidth onKeyDown={handleSearchKey} label={store.searchMode ? 'Search By User Name' : 'Search By Map Name'}></TextField>
                         {
                             (store.searchMode ?
                             <IconButton onClick={(event) => { handleChangeSearchMode(0) }}><PersonIcon/></IconButton>

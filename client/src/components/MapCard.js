@@ -216,7 +216,7 @@ function MapCard(props) {
                 </CardActions>
             ) : <CardActions>
 
-                <IconButton onClick={(event) => { handleCopyDialogOpen(event) }}><ContentCopyIcon /></IconButton>
+                <IconButton onClick={(event) => { handleCopyDialogOpen(event) }}><ContentCopyIcon color='primary'/></IconButton>
                 <Dialog
                     open={copyOpen}
                     onClose={handleDialogClose}

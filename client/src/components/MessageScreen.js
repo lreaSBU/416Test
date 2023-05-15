@@ -13,9 +13,10 @@ import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import AddIcon from '@mui/icons-material/Add';
 import Fab from '@mui/material/Fab'
-
+import SendIcon from '@mui/icons-material/Send';
 import List from '@mui/material/List';
 import Typography from '@mui/material/Typography'
+import { IconButton, InputAdornment } from '@mui/material';
 
 /*
     This React component lists all the top5 lists in the UI.
@@ -28,7 +29,7 @@ const MessageScreen = () => {
     const [someVar, setSomeVar] = useState(null);
     const [contactID, setContactID] = useState("");
 
-    useEffect(() => {        
+    useEffect(() => {
         store.loadIdNamePairs();
     }, []);
 
@@ -37,77 +38,77 @@ const MessageScreen = () => {
         case 1: modalJSX = <MUIDeleteModal />; break;
         case 2: modalJSX = <MUIPublishModal />; break;
     }*/
-    function handleSub(e){
-        if(e.key == "Enter"){
+    function handleSub(e) {
+        if (e.key == "Enter") {
             handleChangeContact(e);
             handleNewContact(null);
         }
     }
-    function handleChangeContact(e){
+    function handleChangeContact(e) {
         setContactID(e.target.value);
     }
-    function handleNewContact(e){
+    function handleNewContact(e) {
         store.createConvo(contactID);
     }
 
     let convoCards = "";
-    if(store){
+    if (store) {
         //console.log("!!!!!!!!!!!RENDERING FOR CONVOS NOW -- !!GOOD...");
         //console.log("AMOUNT:: " + store.convoPairs.length);
         //console.log("CURRENT:: " + store.currentConvo);
-        convoCards = 
-        <List sx={{ width: '100%', left: '0%', bgcolor: 'background.paper' }}>
-        {
-            store.convoPairs.map((pair) => (
-                <ContactCard
-                    sx={{bgcolor: ((store.currentConvo && (pair._id == store.currentConvo._id)) ? 'yellow' : 'background.paper')}}
-                    key={pair._id}
-                    idNamePair={pair}
-                    selected={false}
-                />
-            ))
-        }
-        </List>;
+        convoCards =
+            <List sx={{ width: '100%', left: '0%', bgcolor: 'background.paper' }}>
+                {
+                    store.convoPairs.map((pair) => (
+                        <ContactCard
+                            sx={{ bgcolor: ((store.currentConvo && (pair._id == store.currentConvo._id)) ? 'yellow' : 'background.paper') }}
+                            key={pair._id}
+                            idNamePair={pair}
+                            selected={false}
+                        />
+                    ))
+                }
+            </List>;
     }
 
     let inspect = '';
-    if(store.currentConvo){
+    if (store.currentConvo) {
         //inspect = <div>CONVERSATION WITH {store.currentConvo.name}</div>
         inspect =
-        <List sx={{ width: '100%', left: '0%', bgcolor: '#fff' }}>
-        {
-            store.currentConvo.copy.msgs.map((msg) => (
-                <MessageCard
-                    sx={{bgcolor: 'background.paper'}}
-                    text={msg.text}
-                    dir={(msg.dir == store.currentConvo.copy.dir)}
-                />
-            ))
-        }
-        </List>;
+            <List sx={{ width: '100%', left: '0%', bgcolor: '#fff' }}>
+                {
+                    store.currentConvo.copy.msgs.map((msg) => (
+                        <MessageCard
+                            sx={{ bgcolor: 'background.paper' }}
+                            text={msg.text}
+                            dir={(msg.dir == store.currentConvo.copy.dir)}
+                        />
+                    ))
+                }
+            </List>;
     }
     const handleMessageSent = (event) => {
-        if(event.key == 'Enter'){
+        if (event.key == 'Enter') {
             console.log("ENTER PRESSED");
             console.log(event.target.value);
             console.log(store.currentConvo);
             store.sendMessage(event.target.value);
             store.currentConvo.copy.msgs.push(
-                {text: event.target.value, dir: store.currentConvo.copy.dir}
+                { text: event.target.value, dir: store.currentConvo.copy.dir }
             )
             event.target.value = "";
             inspect =
-            <List sx={{ width: '100%', left: '0%', bgcolor: '#fff' }}>
-            {
-                store.currentConvo.copy.msgs.map((msg) => (
-                    <MessageCard
-                        sx={{bgcolor: 'background.paper'}}
-                        text={msg.text}
-                        dir={(msg.dir == store.currentConvo.copy.dir)}
-                    />
-                ))
-            }
-            </List>;
+                <List sx={{ width: '100%', left: '0%', bgcolor: '#fff' }}>
+                    {
+                        store.currentConvo.copy.msgs.map((msg) => (
+                            <MessageCard
+                                sx={{ bgcolor: 'background.paper' }}
+                                text={msg.text}
+                                dir={(msg.dir == store.currentConvo.copy.dir)}
+                            />
+                        ))
+                    }
+                </List>;
             setSomeVar(!someVar);
             // sendMessage(auth, store.currentConvo._id, event.target.value);
             /*
@@ -123,28 +124,28 @@ const MessageScreen = () => {
         <div id="playlist-selector">
             <div id="contact-selector-list">
                 <div id="messageHeader">
-                    <Box sx={{ height: 'fit-content', display: 'flex', justifyContent: 'space-between'}}>
-                        <TextField label="Add Contact" sx={{width: '80%'}} onChange={handleChangeContact} onKeyPress={handleSub}></TextField>
+                    <Box sx={{ height: 'fit-content', display: 'flex', justifyContent: 'space-between' }}>
+                        <TextField label="Add Contact" sx={{ width: '80%' }} onChange={handleChangeContact} onKeyPress={handleSub}></TextField>
                         <Fab
-                            sx={{alignItems: 'right'}}
+                            sx={{ alignItems: 'right' }}
                             size='medium'
                             color='primary'
                             aria-label="add"
                             id="addContactButton"
                             onClick={handleNewContact}
-                        > <AddIcon/> </Fab>
+                        > <AddIcon /> </Fab>
                     </Box>
                 </div>
                 {convoCards}
                 {modalJSX}
             </div>
             <div id="contact-inspector">
-                <Box id="messageList" sx={{p : 1, height: '90%', width: '100%', color: 'red', bgColor: 'red'}}>
+                <Box id="messageList" sx={{ p: 1, height: '90%', width: '100%', color: 'red', bgColor: 'red' }}>
                     {inspect}
                 </Box>
-                {store.currentConvo ? 
-                    <TextField sx={{width:'100%'}} label="Message" onKeyDown={handleMessageSent}></TextField> 
-                : 
+                {store.currentConvo ?
+                    <TextField sx={{ width: '100%' }} label="Message" onKeyDown={handleMessageSent} InputProps={{ endAdornment: <InputAdornment position='end'><IconButton onClick={handleMessageSent}><SendIcon color='primary' /></IconButton></InputAdornment> }}></TextField>
+                    :
                     <></>}
             </div>
         </div>)
