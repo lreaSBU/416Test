@@ -14,6 +14,7 @@ const MapSchema = new Schema(
         camY: {type: Number, required: true},
         camZ: {type: Number, required: true},
         viewLevel: {type: Number, required: true, default: 0},
+        LOD_RATIO: {type: Number, required: true, default: 3},
         sesh: {type: Number, required: true, default: 0}
     },
     { timestamps: true },

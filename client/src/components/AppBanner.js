@@ -152,7 +152,7 @@ export default function AppBanner() {
 
     return (
         (auth.loggedIn) ?
-            <Box sx={{ flexGrow: 1 }}>
+            <Box sx={{ flexGrow: 1, height: '9%', overflow: 'hidden'}}>
                 <AppBar position="static" sx={{ bgcolor: 'primary.complement' }}>
                     <Toolbar>
                         <Box id='appBannerLogo' color={'primary.main'}><PublicIcon sx={{fontSize: 'xx-large'}}></PublicIcon>Map Central</Box>

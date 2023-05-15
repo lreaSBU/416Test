@@ -226,7 +226,7 @@ const ProfileScreen = () => {
                     </div>
 
                     <Box sx={{ justifyContent: 'center', alignItems: 'center', height: 'fit-content' }}>
-                        <Typography variant='h5'>Settings</Typography>
+                        <Typography variant='h5'>Profile</Typography>
                         <List>
                             <ListItem>
                                 <ListItemText>First name: {auth.getAccountDetails().firstName}</ListItemText>

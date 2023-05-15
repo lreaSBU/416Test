@@ -75,11 +75,18 @@ const EditScreen = () => {
     const propList = useRef(null);
     const camXTxt = useRef(null), camYTxt = useRef(null), camZTxt = useRef(null);
     const layerTxt = useRef(null), groupTxt = useRef(null), modeTxt = useRef(null);
+    
     const selectRefer = useRef(null);
     const addRefer = useRef(null);
     const removeRefer = useRef(null);
     const moveRefer = useRef(null);
     const boxRefer = useRef(null);
+    const mergeRefer = useRef(null);
+    const splitRefer = useRef(null);
+    const drawRefer = useRef(null);
+    const cutRefer = useRef(null);
+    const consRefer = useRef(null);
+
     const graphicsButt = useRef(null);
     const colTxt = useRef(null);
     const colTyp1 = useRef(null), colTyp2 = useRef(null), colTyp3 = useRef(null);
@@ -120,7 +127,12 @@ const EditScreen = () => {
             addRefer.current,
             removeRefer.current,
             moveRefer.current,
-            boxRefer.current
+            boxRefer.current,
+            splitRefer.current,
+            drawRefer.current,
+            cutRefer.current,
+            consRefer.current,
+            mergeRefer.current
         ];
         var graphButt = graphicsButt.current;
         var colText = colTxt.current;
@@ -243,12 +255,13 @@ const EditScreen = () => {
             if(VERSION != store.edit.sesh) return;
             smx = e.offsetX;
             smy = e.offsetY;
-            if((mcl = e.buttons == 1)){
+            if((mcl = (e.buttons == 1))){
                 switch(tool){
                     case 0: //cam
                         if(aTime) animCancel();
                         camX += (e.offsetX - mx)/camZ;
                         camY += (e.offsetY - my)/camZ;
+                        //canv.style.cursor = 'grabbing'
                     break; case 1: //move
                         movoff.x += (e.offsetX - mx)/camZ;
                         movoff.y += (e.offsetY - my)/camZ;
@@ -270,22 +283,24 @@ const EditScreen = () => {
                 Poly.Draw();
             }else if(e.buttons == 0 && mode){
                 var d, md = 100000000000000, mp = null, ref = new Point(e.offsetX, e.offsetY);
-                ref.makeGlobal();
                 if(mode){
-                    for(var e of mode.elems) for(var p of e.points) if((d = ref.dist(p)) < md){
+                    ref.makeGlobal();
+                    for(let p of mode.elems) for(let pp of p.points) if((d = ref.dist(pp)) < md){
                         md = d;
-                        mp = p;
+                        mp = pp;
                     }
                     Poly.Draw();
                     if(mp != null) drawDot(mp, true);
                     mel = mp;
-                }/*else if(tool == 3){
-                    ctx.strokeStyle = '#fbbd0c';
-                    ctx.beginPath();
-                    ctx.moveTo(movoff.x, movoff.y);
-                    ctx.lineTo(ref.x, ref.y);
-                    ctx.stroke();
-                }*/
+                }
+            }
+            if(!e.buttons && tool == 3 && addPoints.length){
+                Poly.Draw();
+                ctx.strokeStyle = '#fbbd0c';
+                ctx.beginPath();
+                ctx.moveTo(loc(true, addPoints[addPoints.length-1].x), loc(false, addPoints[addPoints.length-1].y));
+                ctx.lineTo(e.offsetX, e.offsetY);
+                ctx.stroke();
             }
             mx = smx; my = smy;
         }
@@ -306,8 +321,9 @@ const EditScreen = () => {
         }
         const defStyle = 'fontSize:"32pt";color: #444',
         selStyle = 'fontSize:"32pt";color: #fbbd0c';
-        function swapTool(t){
-            if(tool == t) return; //avoid overlapping inits
+        function swapTool(t, override = false){
+            if(!override && tool == t) return; //avoid overlapping inits
+            if(tool > 0 && t > 0) return; //avoid swapping directly between tools
             for(let tool of toolRefs) tool.style = defStyle;
             tool = t;
             switch(tool){
@@ -320,24 +336,31 @@ const EditScreen = () => {
                         setVal(1, sels[sels.length-1].mean.y);
                     }
                     toolRefs[0].style = selStyle;
-                break; case 1: //reset movoff
+                    canv.style.cursor = 'default'
+                break; case 1: //init move
                     movoff.set(0, 0);
                     toolRefs[3].style = selStyle;
+                    canv.style.cursor = 'move'
                 break; case 2: //init box select
                     movoff.set(mx, my);
                     toolRefs[4].style = selStyle;
+                    canv.style.cursor = 'crosshair'
                 break; case 3: //init add trace
                     //addPoints.push(new Point(mx, my));
                     movoff.set(mx, my);
                     console.log("ADDSTART");
-                    //toolRefs[5].style = selStyle; //DONT KNOW YET...
+                    toolRefs[6].style = selStyle;
+                    canv.style.cursor = 'copy'
                 break; case 4:
                     cutRef = null;
                     console.log('CUTSTART'); //idk if u have to do anything here actually
+                    toolRefs[7].style = selStyle;
+                    canv.style.cursor = 'crosshair'    
                 break;
             }
         }
         function insert_tool(){
+            if(!canSel()) return;
             tps.bookMark();
             if(mode && mels.length == 2){
                 let ps = [];
@@ -379,10 +402,11 @@ const EditScreen = () => {
             }
             return ret;
         }
-        function remove_tool(){
+        function remove_tool(whole = false){
+            if(!canSel()) return;
             tps.bookMark();
             if(mode && mels.length > 0){
-                if(keys.Alt){ //delete the entire Poly
+                if(whole){ //delete the entire Poly
                     console.log('ATTEMPTING POLY DELETION');
                     if(mode.elems.length == 1) return handleWarning('Cannot remove all Polys of a Subregion');
                     let par = findParent(mels[0], mode);
@@ -411,7 +435,8 @@ const EditScreen = () => {
             }
             tps.unMark();
         }
-        function canSel(){
+        function canSel(tm = 0){
+            if(tool != tm) return false;
             return (mode && mels.length > 0) || (!mode && sels.length > 0);
         }
         var aTime = 0, tarX, tarY, tarZ;
@@ -425,7 +450,7 @@ const EditScreen = () => {
             if(aTime != 0){
                 camX += (tarX-camX)/50;
                 camY += (tarY-camY)/50;
-                camZ += (tarZ-camZ)/1000;
+                camZ += (tarZ-camZ)/50;
                 aTime--;
                 Poly.Draw();
                 setVal(0, camX);
@@ -477,22 +502,25 @@ const EditScreen = () => {
             let changeFlag = !tool;
             if(changeFlag) switch(e.key){
                 case ' ': swapMode(); break;
-                case 'a': if(addPoints.length == 0) swapTool(3); break;
+                case 'p': if(addPoints.length == 0) swapTool(3); break;
                 case 'b': swapTool(2); break;
                 case 'g': if(canSel()) swapTool(1); break;
                 case 'x': if(canSel()) remove_tool(); break;
+                case 'X': if(canSel()) remove_tool(true); break;
                 case 'i': if(canSel()) insert_tool(); break;
-                case 'p':
+                case 'o':
                     if(mode){
                         console.log('P-PRINT{');
                         for(let m of mode.elems) console.log(m);
                         console.log('}');
-                    }
+                    }else if(sels.length) console.log('G-PRINT', sels[sels.length-1]);
+                break;case 'O':
+                    for(let g of store.edit.l[viewLevel]) console.log(g);
                 break;
                 case 'f': Poly.Draw(true); changeFlag = false; break;
-                case 'm': merge_tool(); break;
-                case 'l': lift_tool(); break;
-                case 'c': con_tool(); break;
+                case 'm': if(canSel()) merge_tool(); break;
+                case 'l': if(canSel()) lift_tool(); break;
+                case 'c': if(canSel()) con_tool(); break;
                 case 'k': swapTool(4); break;
                 case 'y': if(keys.Control && tps.hasTransactionToRedo()) tps.doMulti(); break;
                 case 'z': if(keys.Control && tps.hasTransactionToUndo()) tps.undoMulti(); break;
@@ -501,7 +529,7 @@ const EditScreen = () => {
                 case 'ArrowUp': viewChange(true); break;
                 case 'ArrowDown': viewChange(false); break;
                 default: changeFlag = false; break;
-            }else if(tool == 3 && (e.key == 'a' || e.key == ' ' || e.key == 'Enter')){
+            }else if(tool == 3 && (e.key == 'p' || e.key == ' ' || e.key == 'Enter')){
                 addWrap();
                 swapTool(0);
                 changeFlag = true;
@@ -597,7 +625,7 @@ const EditScreen = () => {
         }
         function selPoint(){
             for(var g of store.edit.l[viewLevel]) for(var p of g.elems)
-                if(checkInside(p.points, mp)) return g;
+                if(p.points.length > 2 && checkInside(p.points, mp)) return g;
             return null;
         }
         const specPropRef = ["**colorFill", "**borderFill", "**textFill"];
@@ -739,7 +767,7 @@ const EditScreen = () => {
                                 }
                             }
                         }
-                    }else if(keys.Alt){ //whole poly
+                    }else if(keys['a'] || keys['A']){ //whole poly
                         let par = findParent(mel, mode);
                         console.log(par, mode.elems.length);
                         for(let p of mode.elems[par.p].points) if(!p.h){
@@ -1040,10 +1068,12 @@ const EditScreen = () => {
                     GN++;
                 }
                 //console.log(store.edit.l);
+                animCam(true);
                 Poly.Draw();
             };
-            await reader.readAsText(file); 
+            await reader.readAsText(file);
         }
+        var geoFlag;
         async function readFile(f){
             var fl = f.name.split(".");
             viewLevel = fileLevel = parseInt(fl[0].split("_adm")[1]);
@@ -1056,14 +1086,18 @@ const EditScreen = () => {
             switch(fl[fl.length-1]){
                 case "shp": await readShapeFile(f); break;
                 case "dbf": await readDBaseFile(f); break;
-                case "json": await readGeoFile(f); break;
+                case "json":
+                    geoFlag = true;
+                    await readGeoFile(f);
+                break;
             }
         }
         fileIn.onchange = async function(){
+            geoFlag = false;
             for(var f of this.files) await readFile(f);
             colSave.length = 0;
             //console.log(viewLevel, store.edit.l[viewLevel].length);
-            animCam(true);
+            if(!geoFlag) animCam(true);
         }
         propHolder.onchange = function(){
             Poly.Draw();
@@ -1138,7 +1172,12 @@ const EditScreen = () => {
             addRefer.current,
             removeRefer.current,
             moveRefer.current,
-            boxRefer.current
+            boxRefer.current,
+            splitRefer.current,
+            drawRefer.current,
+            cutRefer.current,
+            consRefer.current,
+            mergeRefer.current
         ];
         */
         toolRefs[0].onclick = function(){
@@ -1159,6 +1198,27 @@ const EditScreen = () => {
         }
         toolRefs[4].onclick = function(){
             swapTool(2);
+            Poly.Draw();
+        }
+        toolRefs[5].onclick = function(){ //split (lift)
+            if(canSel()) lift_tool();
+            Poly.Draw();
+        }
+        toolRefs[6].onclick = function(){ //draw
+            if(addPoints.length != 0) return;
+            swapTool(3);
+            Poly.Draw();
+        }
+        toolRefs[7].onclick = function(){ //cut
+            swapTool(4);
+            Poly.Draw();
+        }
+        toolRefs[8].onclick = function(){ //consolidate
+            if(canSel()) con_tool();
+            Poly.Draw();
+        }
+        toolRefs[9].onclick = function(){ //merge
+            if(canSel()) merge_tool();
             Poly.Draw();
         }
         colTypes[0].onclick = function(){
@@ -1217,7 +1277,7 @@ const EditScreen = () => {
             return ret;
         }
         var fx, fy, pLast = new Point(0, 0), dx, dy;
-        var LOD_RATIO = 5, LOD_SKIP, LOD_STEP, LOD_REF, finSum, li, ni, ci;
+        var LOD_RATIO = 3, LOD_SKIP, LOD_STEP, LOD_REF, finSum, li, ni, ci;
         var defCol, fillCol, mark, Acc = false;
         var dots = [], remp, remi, gi, mri;
         const subColRefs = ['#aba99f', '#000', '#000', ''];
@@ -1242,10 +1302,10 @@ const EditScreen = () => {
                             if(store.edit.graphics && l.props['**textFill'] != null) ctx.fillStyle = l.props['**textFill'];
                             else ctx.fillStyle = l.h ? "#fbbd0c" : '#000';
                             if(!mode){
-                                if(l.props['name'] != undefined)
-                                    ctx.fillText(l.props['name'], Point.Gen.x, Point.Gen.y);
-                                else if(l.props['NAME_'+p] != undefined)
+                                if(l.props['NAME_'+p] != undefined)
                                     ctx.fillText(l.props['NAME_'+p], Point.Gen.x, Point.Gen.y);
+                                else if(l.props['name'] != undefined)
+                                    ctx.fillText(l.props['name'], Point.Gen.x, Point.Gen.y);
                             }
                         }
                     }
@@ -1544,21 +1604,8 @@ const EditScreen = () => {
             for(let p of reg.elems) ret.elems.push(p.copy());
             return ret;
         }
-        /*function merge_tool(){
-            let tom = [];
-            for(let s of sels){
-                s.h = false;
-                tom.push(s);
-            }
-            while(tom.length > 1){
-                sels.length = 0;
-                sels.push(tom.pop());
-                sels.push(tom.pop());
-                tom.push(mergeRegions());
-            }
-            sels.length = 0;
-        }*/
         function merge_tool(){
+            if(!canSel()) return;
             if(mode) return;
             if(sels.length != 2) return handleWarning('Must be selecting only two SubRegions at a time');
             console.log(sels[0]);
@@ -1675,6 +1722,7 @@ const EditScreen = () => {
             return count & 1;
         }
         function cut_tool(a, b){
+            if(tool != 4 || !mode) return;
             console.log('ATTEMPT CUT BETWEEN:', a, b);
             let aPar = findParent(a, mode),
             bPar = findParent(b, mode);
@@ -1715,6 +1763,7 @@ const EditScreen = () => {
             for(let i = 0; i < mode.elems.length; i++) mode.elems[i].id = i; //sanitize
         }
         function lift_tool(){
+            if(!canSel()) return;
             if(!mode || !mels.length) return;
             let pc = [];
             for(let _ of mode.elems) pc.push(0);
@@ -1739,10 +1788,10 @@ const EditScreen = () => {
             }
             tps.unMark();
             if(lc == 0) return handleWarning('Must select entire Polys to split from current SubRegion');
-            
         }
         var conType = true, effectSHP = true;
         function con_tool(){
+            if(!canSel()) return;
             if(!mode || !mels.length) return;
             let ref = new Point(0, 0), save;
             if(!conType){
@@ -1803,7 +1852,9 @@ const EditScreen = () => {
             camY = store.edit.camY;
             camZ = store.edit.camZ;
             viewLevel = store.edit.viewLevel;
+            lodSlide.value = LOD_RATIO = store.edit.LOD_RATIO;
             setVal(3, viewLevel+1);
+            swapTool(0, true);
             //console.log('CLEANED:', store.edit.l);
             Poly.Draw();
         }
@@ -1812,7 +1863,7 @@ const EditScreen = () => {
 
         return () => { //cleanup the event listeners!!!
             console.warn('cleaning!!!!!!!!!!!!!!!!!!!!!!!');
-            store.sendImmediateTransac(7, -1, -1, -1, null, [camX, camY, camZ, viewLevel]);
+            store.sendImmediateTransac(7, -1, -1, -1, null, [camX, camY, camZ, viewLevel, LOD_RATIO]);
             window.removeEventListener("keydown", keydown);
             window.removeEventListener("keyup", keyup);
             canv.removeEventListener("mousedown", mousedown);
@@ -1826,66 +1877,66 @@ const EditScreen = () => {
     return (
         <div id='editParent'>
             <div id = "leftPar" className='editShelf'>
-                <Box id='toolTray' className='traySect' sx={{bgcolor: '#999', borderRadius: 3}}>
+                <Box id='toolTray' className='traySect' sx={{bgcolor: '#999', borderRadius: 3, maxHeight: '30%', overflow: 'auto'}}>
                     <Tooltip title='Select (left click)'>
-                        <IconButton ref={selectRefer} aria-label='select'>
-                            <MouseIcon style={{fontSize:'32pt'}} />
+                        <IconButton size='medium' ref={selectRefer} aria-label='select'>
+                            <MouseIcon style={{fontSize:32}} />
                         </IconButton>
                     </Tooltip>
                     <Tooltip title='Insert Point (i)'>
-                        <IconButton ref={addRefer} aria-label='add'>
-                            <AddIcon style={{fontSize:'32pt'}} />
+                        <IconButton size='medium' ref={addRefer} aria-label='add'>
+                            <AddIcon style={{fontSize:32}} />
                         </IconButton>
                     </Tooltip>
                     <Tooltip title='Remove (x)'>
-                        <IconButton ref={removeRefer} aria-label='remove'>
-                            <ClearIcon style={{fontSize:'32pt'}} />
+                        <IconButton size='medium' ref={removeRefer} aria-label='remove'>
+                            <ClearIcon style={{fontSize:32}} />
                         </IconButton>
                     </Tooltip>
                     <Tooltip title='Drag (g)'>
-                        <IconButton ref={moveRefer} aria-label='move'>
-                            <PanToolIcon style={{fontSize:'32pt'}} />
+                        <IconButton size='medium' ref={moveRefer} aria-label='move'>
+                            <PanToolIcon style={{fontSize:32}} />
                         </IconButton>
                     </Tooltip>
                     <Tooltip title='Box Select (b)'>
-                        <IconButton ref={boxRefer} aria-label='box select'>
-                            <HighlightAltIcon style={{fontSize:'32pt'}} />
+                        <IconButton size='medium' ref={boxRefer} aria-label='box select'>
+                            <HighlightAltIcon style={{fontSize:32}} />
                         </IconButton>
                     </Tooltip>
                     <Tooltip title='Merge (m)'>
-                        <IconButton aria-label='merge'>
-                            <CallMergeIcon style={{fontSize:'32pt'}} />
+                        <IconButton size='medium' ref={mergeRefer} aria-label='merge'>
+                            <CallMergeIcon style={{fontSize:32}} />
                         </IconButton>
                     </Tooltip>
                     <Tooltip title='Split (l)'>
-                        <IconButton aria-label='split'>
-                            <CallSplitIcon style={{fontSize:'32pt'}} />
+                        <IconButton size='medium' ref={splitRefer} aria-label='split'>
+                            <CallSplitIcon style={{fontSize:32}} />
                         </IconButton>
                     </Tooltip>
                     <Tooltip title='Properties Menu'>
-                        <IconButton aria-label='properties'>
-                            <MenuIcon ref={propContainer} style={{fontSize:'32pt'}} />
+                        <IconButton size='medium' aria-label='properties'>
+                            <MenuIcon ref={propContainer} style={{fontSize:32}} />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title='Poly Draw (a)'>
-                        <IconButton aria-label='draw'> 
-                            <PolylineIcon style={{fontSize:'32pt'}} />
+                    <Tooltip title='Poly Draw (p)'>
+                        <IconButton size='medium' ref={drawRefer} aria-label='draw'> 
+                            <PolylineIcon style={{fontSize:32}} />
                         </IconButton>
                     </Tooltip>
                     <Tooltip title='Cut (k)'>
-                        <IconButton aria-label='cut'>
-                            <ContentCutIcon style={{fontSize:'32pt'}} />
+                        <IconButton size='medium' ref={cutRefer} aria-label='cut'>
+                            <ContentCutIcon style={{fontSize:32}} />
                         </IconButton>
                     </Tooltip>
                     <Tooltip title='Consolidate (c)'>
-                        <IconButton aria-label='equate'>
-                            <HubIcon style={{fontSize:'32pt'}} />
+                        <IconButton size='medium' ref={consRefer} aria-label='equate'>
+                            <HubIcon style={{fontSize:32}} />
                         </IconButton>
                     </Tooltip>
                     <Tooltip title='File Upload'>
-                        <IconButton variant="contained" component="label" aria-label='upload'>
+                        <IconButton size='medium' variant="contained" component="label" aria-label='upload'>
                             <input ref={fileContainer} type="file" id="fileIn" name="ShapeUpload" multiple hidden></input>
-                            <FileUploadIcon  style={{fontSize:'32pt'}} />
+                            <FileUploadIcon  style={{fontSize:32}} />
                         </IconButton>
                     </Tooltip>
                 </Box>
@@ -1952,7 +2003,7 @@ const EditScreen = () => {
                 </Box>
                 <Box id='optSliders' className='traySect'>
                     <Box className='sliderLabel'>
-                        <Box>LOD Bias:</Box>
+                        <Box sx={{paddingLeft: '5%', marginLeft: '5%'}}>LOD Bias:</Box>
                         <Slider
                             aria-label="LOD Bias"
                             defaultValue={3}
@@ -1960,12 +2011,12 @@ const EditScreen = () => {
                             min={0}
                             step={.01}
                             valueLabelDisplay="auto"
-                            sx={{width: '80%', left: '5%'}}
+                            sx={{width: '80%', paddingLeft: '5%', marginLeft: '5%'}}
                             ref={lodSlider}
                         />
                     </Box>
                     <Box className='sliderLabel'>
-                        <Box>Text Size:</Box>
+                        <Box sx={{paddingLeft: '5%', marginLeft: '5%'}}>Text Size:</Box>
                         <Slider
                             aria-label="Text Size"
                             defaultValue={1}
@@ -1973,7 +2024,7 @@ const EditScreen = () => {
                             min={1}
                             step={1}
                             valueLabelDisplay="auto"
-                            sx={{width: '80%', left: '5%'}}
+                            sx={{width: '80%', paddingLeft: '5%', marginLeft: '5%'}}
                             ref={textSlider}
                         />
                         
@@ -1981,14 +2032,14 @@ const EditScreen = () => {
                 </Box>
                 <Box id='miscTools' className='traySect'>
                     <IconButton ref={centerCamera} aria-label='Center Camera'>
-                        <CameraIndoorIcon sx={{color: '#5EB120'}} style={{fontSize:'32pt'}} />
+                        <CameraIndoorIcon sx={{color: '#5EB120'}} style={{fontSize:32}} />
                     </IconButton>
                     <a id="dlMule" ref={downloadMule} download='testFile'></a>
                     <IconButton ref={downloadButton} aria-label='Export Map'>
-                        <DownloadIcon sx={{color: '#5EB120'}} style={{fontSize:'32pt'}} />
+                        <DownloadIcon sx={{color: '#5EB120'}} style={{fontSize:32}} />
                     </IconButton>
                 </Box>
-                <Box id='miscSwitches' className='traySect'>
+                <Box id='miscSwitches' className='traySect' sx={{width: '100%', overflow: 'auto'}}>
                     <FormGroup>
                         <FormControlLabel control={<Switch ref={shpToggle} defaultChecked />} label="Effect Shared Points" />
                         <FormControlLabel control={<Switch ref={centerToggle} defaultChecked />} label="Center Consolidation" />
@@ -2000,42 +2051,37 @@ const EditScreen = () => {
             </Box>
             <div id = "rightPar" className='editShelf'>
                 <Box sx={{maxHeight: '5%', display: 'flex'}}>
-                    <Fab
-                        size='medium'
-                        color='primary'
-                        aria-label="GraphicsToggle"
-                        id="graphicsModeButton"
-                        ref={graphicsButt}
-                    > {store.edit && store.edit.graphics ? "Edit Mode" : "Graphics Mode"} </Fab>
+                    <FormGroup sx={{paddingLeft: '5%', justifyContent: 'center'}}>
+                        <FormControlLabel control={<Switch ref={graphicsButt} />} label={store.edit && store.edit.graphics ? "Graphics Mode" : "Edit Mode"} />
+                    </FormGroup>
                 </Box>
                 <Box sx={{maxHeight: '10%', overflow: 'auto'}}>
                     <Collapse in={(warning != null)}>
                         <Typography sx={{color: '#fbbd0c', bgcolor: '#997a00'}} variant='h6'>{warning}</Typography>
                     </Collapse>
                 </Box>
-                <Box id='inspector' className='traySect' sx={{bgcolor: '#999', borderRadius: 1}}>
-                    <TextField ref={camXTxt} variant="filled" disabled value="0" label="X"/>
-                    <TextField ref={camYTxt} variant="filled" disabled value="0" label="Y"/>
-                    <TextField ref={camZTxt} variant="filled" disabled value="1" label="Scale"/>
+                <Box id='inspector' className='traySect' sx={{bgcolor: '#999', borderRadius: 1, maxHeight:'30%', overflow: 'auto'}}>
+                    <TextField ref={camXTxt} variant="filled" disabled size="small" maxHeight='33%' value="0" label="X"/>
+                    <TextField ref={camYTxt} variant="filled" disabled size="small" maxHeight='33%' value="0" label="Y"/>
+                    <TextField ref={camZTxt} variant="filled" disabled size="small" maxHeight='33%' value="1" label="Scale"/>
                 </Box>
-                <Box sx={{height:'5%'}}></Box>
-                <Box id='inspector2' className='traySect' sx={{bgcolor: '#999', borderRadius: 1}}>
-                    <TextField ref={modeTxt} variant="filled" disabled label="Mode" value="Object"/>
-                    <TextField ref={layerTxt} variant="filled" disabled label="Layer #" value="1"/>
-                    <TextField ref={groupTxt} variant="filled" disabled label="Subregion #" value="-"/>
+                <Box id='inspector2' className='traySect' sx={{bgcolor: '#999', borderRadius: 1, maxHeight:'30%', overflow: 'auto'}}>
+                    <TextField ref={modeTxt} variant="filled" disabled size="small" maxHeight='33%' label="Mode" value="Object"/>
+                    <TextField ref={layerTxt} variant="filled" disabled size="small" maxHeight='33%' label="Layer #" value="1"/>
+                    <TextField ref={groupTxt} variant="filled" disabled size="small" maxHeight='33%' label="Subregion #" value="-"/>
                 </Box>
-                <Box sx={{maxHeight:'30%'}}>
-                    <Collapse in={(store.edit && store.edit.graphics)}>
+                <Box sx={{maxHeight:'40%', maxWidth: '100%', overflow: 'auto', paddingTop: '10%'}}>
+                    <Collapse in={(store.edit && store.edit.graphics)} sx={{display: 'flex', flexDirection: 'column'}}>
                         <HexColorPicker color={hexCol} onChange={setHexCol} />
-                        <TextField sx={{bgcolor: '#999', borderRadius: 1}} ref={colTxt} variant="filled" label="Color" onChange={(e) => {setHexCol(e.target.value)}} value={hexCol}/>
+                        <TextField sx={{bgcolor: '#999', width: '100%', borderRadius: 1}} ref={colTxt} variant="filled" label="Color" onChange={(e) => {setHexCol(e.target.value)}} value={hexCol}/>
                         <IconButton ref={colTyp1} aria-label='FillColor'>
-                            <TextureIcon style={{fontSize:'32pt'}} />
+                            <TextureIcon style={{fontSize:32}} />
                         </IconButton>
                         <IconButton ref={colTyp2} aria-label='BorderColor'>
-                            <BorderStyleIcon style={{fontSize:'32pt'}} />
+                            <BorderStyleIcon style={{fontSize:32}} />
                         </IconButton>
                         <IconButton ref={colTyp3} aria-label='TextColor'>
-                            <FormatColorTextIcon style={{fontSize:'32pt'}} />
+                            <FormatColorTextIcon style={{fontSize:32}} />
                         </IconButton>
                     </Collapse>
                 </Box>

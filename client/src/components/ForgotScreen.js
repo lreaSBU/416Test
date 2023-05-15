@@ -23,6 +23,7 @@ export default function ForgotScreen() {
     const [passwordsMatch, setPasswordsMatch] = useState(true);
     const [email, setEmail] = useState('');
     const [updatedPassword, setUpdatedPassword] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     const handleSubmit = (event) => {
         event.preventDefault();

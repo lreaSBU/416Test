@@ -82,6 +82,7 @@ startData = async (req, res) => {
             camY: map.camY,
             camZ: map.camZ,
             viewLevel: map.viewLevel,
+            LOD_RATIO: map.LOD_RATIO,
             raw: true,
             sesh: map.sesh
         });
@@ -181,10 +182,12 @@ async function doEdit(queue, bod, tinc){
             if(bod.newData[1] != undefined) map.camY = bod.newData[1];
             if(bod.newData[2] != undefined) map.camZ = bod.newData[2];
             if(bod.newData[3] != undefined) map.viewLevel = bod.newData[3];
+            if(bod.newData[4] != undefined) map.LOD_RATIO = bod.newData[4];
             map.markModified("camX");
             map.markModified("camY");
             map.markModified("camZ");
             map.markModified("viewLevel");
+            map.markModified("LOD_RATIO");
             queue.close = true;
         break; case 8: //remove SubRegion
             console.log("DELETING SUBREGION:", bod.layer, bod.subregion, bod.poly, bod.oldData, bod.newData);    

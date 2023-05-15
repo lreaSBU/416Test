@@ -135,8 +135,9 @@ function GlobalStoreContextProvider(props) {
             editingName: act
         });
     }
-    store.changeMapName = function (id, nn) {
-        store.updateMapById(id, { name: nn });
+    store.changeMapName = async function (id, nn) {
+        await store.updateMapById(id, {name: nn});
+        await store.setCurrentMap(id);
     }
 
     store.changePublished = function (id, pb) {

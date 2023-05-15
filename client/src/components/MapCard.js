@@ -39,6 +39,7 @@ function MapCard(props) {
 
     function handleEditor(e, id) {
         store.goToEditor(id);
+        e.stopPropagation();
     }
 
     function handleLoadList(event, id) {
@@ -169,10 +170,12 @@ function MapCard(props) {
             />
     }
 
+    let Sel = store.currentMap && store.currentMap._id == idNamePair._id;
+
     return (
 
-        <Card className='map-card' style={{ height: 'fit-content' }}>
-            <CardActionArea onClick={(event) => { handleLoadList(event, idNamePair._id) }}>
+        <Card className='map-card' onClick={(event) => { handleLoadList(event, idNamePair._id) }} style={{ height: 'fit-content'}} sx={{borderColor: (Sel ? '#5EB120' : '#000'), borderWidth: (Sel ? 3 : 1)}}>
+            <CardActionArea >
                 <CardMedia
                         component='img'
                         src={placeholderimg}

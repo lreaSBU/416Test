@@ -87,6 +87,7 @@ getMapById = async (req, res) => {
     let owner = await User.findById(map.owner);
     if(owner == null) return res.status(401).json({success: false});
     let ret = {
+        _id: map._id,
         name: map.name,
         createdAt: map.createdAt,
         updatedAt: map.updatedAt,
@@ -113,25 +114,26 @@ getMapPairs = async (req, res) => {
         let users = await User.find({firstName: {$regex : fk, $options: 'i'}, lastName: {$regex : lk, $options: 'i'}});
         if(users == null) return res.status(502).json({ success: false, idNamePairs: [] });
         for(let user of users) for(let m of user.maps){
-            m = await Map.findById(m);
-            if(!m.published) continue;
-            maps.push(m);
+            let mg = await Map.findById(m);
+            if(!mg || !mg.published) continue;
+            maps.push(mg);
         }
     }
     if(maps == null) return res.status(401).json({success: false});
     let ret = [];
-    console.log('RETTING PAIRS:', maps);
     for(let map of maps){
+        let _owner = await User.findById(map.owner);
         ret.push({
             _id: map._id,
             name: map.name,
             copy: {
                 age: map.age,
-                owner: map.owner.name,
+                owner: (_owner.firstName + ' ' + _owner.lastName),
                 published: map.published
             }
         });
     }
+    console.log('RETTING PAIRS:', ret);
     return res.status(200).json({ success: true, idNamePairs: ret });
 }
 // Displays the maps that the user requested
