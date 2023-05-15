@@ -212,9 +212,16 @@ function GlobalStoreContextProvider(props) {
 
     store.createConvo = async function (id) {
         console.log("5");
-        const response = await api.makeConvo(id);
-        console.log(response);
-        if (response.success) store.loadConvoPairs(); //it worked, now get the pairs again
+        try{
+            const response = await api.makeConvo(id);
+            console.log(response);
+            if (response.data.success) await store.loadConvoPairs(); //it worked, now get the pairs again
+            console.log(response.data.success);
+            return response.data.success;
+        }catch(e){
+            console.log("response.data.success");
+            return false;
+        }
     }
 
     store.loadConvoPairs = async function (p = {}) {

@@ -29,6 +29,7 @@ const MessageScreen = () => {
     const [someVar, setSomeVar] = useState(null);
     const [contactID, setContactID] = useState("");
     const messagesEndRef = useRef(null)
+    const [contactFail, setContactFail] = useState(false);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -53,8 +54,10 @@ const MessageScreen = () => {
     function handleChangeContact(e) {
         setContactID(e.target.value);
     }
-    function handleNewContact(e) {
-        store.createConvo(contactID);
+    async function handleNewContact(e) {
+        let worked = await store.createConvo(contactID);
+        console.log('-->', worked)
+        if(!worked) setContactFail(!worked);
     }
 
     let convoCards = "";
@@ -141,6 +144,7 @@ const MessageScreen = () => {
                             onClick={handleNewContact}
                         > <AddIcon /> </Fab>
                     </Box>
+                    <Typography variant='h5' hidden={!contactFail} sx={{color: 'red'}}>Invalid Contact</Typography>
                 </div>
                 {convoCards}
                 {modalJSX}

@@ -46,7 +46,6 @@ function ContactCard(props) {
     if (store.isListNameEditActive) {
         cardStatus = true;
     }
-    console.log('BLOCK:', idNamePair.copy.block);
     let ldl = '';
     let cardElement =
         <ListItem

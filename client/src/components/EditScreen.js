@@ -72,7 +72,7 @@ const EditScreen = () => {
     const myContainer = useRef(null);
     const fileContainer = useRef(null);
     const propContainer = useRef(null);
-    const propList = useRef(null);
+    const propList = useRef(null), legList = useRef(null);
     const camXTxt = useRef(null), camYTxt = useRef(null), camZTxt = useRef(null);
     const layerTxt = useRef(null), groupTxt = useRef(null), modeTxt = useRef(null);
     
@@ -90,6 +90,7 @@ const EditScreen = () => {
     const graphicsButt = useRef(null);
     const colTxt = useRef(null);
     const colTyp1 = useRef(null), colTyp2 = useRef(null), colTyp3 = useRef(null);
+    const legAdd = useRef(null);
     const lodSlider = useRef(null), textSlider = useRef(null);
     const centerCamera = useRef(null);
     const downloadButton = useRef(null), downloadMule = useRef(null);
@@ -107,6 +108,18 @@ const EditScreen = () => {
         }, 10000);
     }
 
+    function hexRange(n){
+        return (n >= 48 && n <= 57) || (n >= 97 && n <= 102);
+    }
+    function isHex(v){
+        if(!v) return false;
+        v = String(v);
+        if(!v.length) return false;
+        if(v[0] != '#' || v.length != 7) return false;
+        for(let i = 1; i < 7; i++) if(!hexRange(v.charCodeAt(i))) return false;
+        return true;
+    }
+
     useEffect((e) => {if(store.edit && store.edit.raw){
         let VERSION = JSON.stringify(store.edit.sesh);
         
@@ -116,6 +129,7 @@ const EditScreen = () => {
         var fileIn = fileContainer.current;
         var propButt = propContainer.current;
         var propHolder = propList.current;
+        var legHolder = legList.current;
         var camXText = camXTxt.current.children[1].children[0],
         camYText = camYTxt.current.children[1].children[0],
         camZText = camZTxt.current.children[1].children[0];
@@ -141,6 +155,7 @@ const EditScreen = () => {
             colTyp2.current,
             colTyp3.current
         ];
+        var legendAdd = legAdd.current;
         var lodSlide = lodSlider.current.children[2].children[0],
         textSlide = textSlider.current.children[2].children[0];
         var centerCam = centerCamera.current;
@@ -1102,6 +1117,9 @@ const EditScreen = () => {
         propHolder.onchange = function(){
             Poly.Draw();
         }
+        legHolder.onchange = function(){
+            Poly.Draw();
+        }
         propButt.onclick = function(){
             store.edit.prop = undefined;
             store.reduceEdit();
@@ -2060,15 +2078,55 @@ const EditScreen = () => {
                         <Typography sx={{color: '#fbbd0c', bgcolor: '#997a00'}} variant='h6'>{warning}</Typography>
                     </Collapse>
                 </Box>
-                <Box id='inspector' className='traySect' sx={{bgcolor: '#999', borderRadius: 1, maxHeight:'30%', overflow: 'auto'}}>
-                    <TextField ref={camXTxt} variant="filled" disabled size="small" maxHeight='33%' value="0" label="X"/>
-                    <TextField ref={camYTxt} variant="filled" disabled size="small" maxHeight='33%' value="0" label="Y"/>
-                    <TextField ref={camZTxt} variant="filled" disabled size="small" maxHeight='33%' value="1" label="Scale"/>
-                </Box>
-                <Box id='inspector2' className='traySect' sx={{bgcolor: '#999', borderRadius: 1, maxHeight:'30%', overflow: 'auto'}}>
-                    <TextField ref={modeTxt} variant="filled" disabled size="small" maxHeight='33%' label="Mode" value="Object"/>
-                    <TextField ref={layerTxt} variant="filled" disabled size="small" maxHeight='33%' label="Layer #" value="1"/>
-                    <TextField ref={groupTxt} variant="filled" disabled size="small" maxHeight='33%' label="Subregion #" value="-"/>
+                <Box id='midRightCont' sx={{maxHeight:'50%', overflow: 'auto'}}>
+                    <Box id='inspectCont' hidden={store.edit.graphics > 0}>
+                        <Box id='inspector' className='traySect' sx={{bgcolor: '#999', borderRadius: 1, maxHeight:'50%', overflow: 'auto'}}>
+                            <TextField ref={camXTxt} variant="filled" disabled size="small" maxHeight='33%' value="0" label="X"/>
+                            <TextField ref={camYTxt} variant="filled" disabled size="small" maxHeight='33%' value="0" label="Y"/>
+                            <TextField ref={camZTxt} variant="filled" disabled size="small" maxHeight='33%' value="1" label="Scale"/>
+                        </Box>
+                        <Box id='inspector2' className='traySect' sx={{bgcolor: '#999', borderRadius: 1, maxHeight:'50%', overflow: 'auto'}}>
+                            <TextField ref={modeTxt} variant="filled" disabled size="small" maxHeight='33%' label="Mode" value="Object"/>
+                            <TextField ref={layerTxt} variant="filled" disabled size="small" maxHeight='33%' label="Layer #" value="1"/>
+                            <TextField ref={groupTxt} variant="filled" disabled size="small" maxHeight='33%' label="Subregion #" value="-"/>
+                        </Box>
+                    </Box>
+                    <Box id='legendList' ref={legList} hidden={!store.edit.graphics} >
+                        <List sx={{width: '100%', left: '0%'}}>
+                        {
+                            Object.keys(store.edit.gd).map((key) => (!isHex(key) ? <></> :
+                                <Box sx={{display: 'flex', flexDirection: 'row'}} key={key}>
+                                    <Box id={'ccol'+key} sx={{flex: 1}}><Box id={'col'+key} sx={{backgroundColor: key, width: '90%', height: '90%', justifyContent: 'center', marginLeft: '5%', marginTop: '30%', borderRadius: 1}} onClick={() => {setHexCol(key)}}></Box></Box>
+                                    <TextField sx={{flex: 8, marginTop: 1}} defaultValue={(store.edit.gd[key] ? store.edit.gd[key] : '')}
+                                        onKeyDown={(e) => {
+                                            if((e.ctrlKey || e.metaKey) && (e.key == 'z' || e.key == 'y')){
+                                                e.preventDefault();
+                                                return false;
+                                            }
+                                            store.edit.focus = true;
+                                            if(e.key == 'Enter'){
+                                                store.edit.focus = false;
+                                                let nt = new ChangeProperty_Transaction(store, -1, -1, -1, key, e.target.value);
+                                                nt.doTransaction();
+                                                legList.current.onchange(null); //force recycle
+                                                store.reduceEdit();
+                                            }
+                                        }}
+                                    />
+                                    <IconButton sx={{flex: 1, color: 'red'}} aria-label='remove'
+                                        onClick={(e) => {
+                                            let nt = new ChangeProperty_Transaction(store, -1, -1, -1, key, undefined);
+                                            nt.doTransaction();
+                                            store.reduceEdit();
+                                        }}
+                                    >
+                                        <ClearIcon style={{fontSize:'16pt'}} />
+                                    </IconButton>
+                                </Box>
+                            ))
+                        }
+                        </List>
+                    </Box>
                 </Box>
                 <Box sx={{maxHeight:'40%', maxWidth: '100%', overflow: 'auto', paddingTop: '10%'}}>
                     <Collapse in={(store.edit && store.edit.graphics)} sx={{display: 'flex', flexDirection: 'column'}}>
@@ -2082,6 +2140,17 @@ const EditScreen = () => {
                         </IconButton>
                         <IconButton ref={colTyp3} aria-label='TextColor'>
                             <FormatColorTextIcon style={{fontSize:32}} />
+                        </IconButton>
+                        <IconButton ref={legAdd} sx={{color: '#5EB120'}} aria-label='Legend Insert' onClick={(e) => {
+                            if(store.edit.gd[hexCol] != undefined) handleWarning('Legend entry with that color already exists');
+                            else{
+                                let nt = new ChangeProperty_Transaction(store, -1, -1, -1, hexCol, '');
+                                nt.doTransaction();
+                                legList.current.onchange(null); //force recycle
+                                store.reduceEdit();
+                            }
+                        }}>
+                            <AddIcon style={{fontSize:32}} />
                         </IconButton>
                     </Collapse>
                 </Box>

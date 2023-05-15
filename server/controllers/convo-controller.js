@@ -8,15 +8,20 @@ createConvo = async (req, res) => {
     await User.findById(req.userId, async (err, user) => {
         const convos = user.convos;
         for(let c of convos){
-            c = await Convo.findById(c);
-            let user1 = await User.findById(c.user1);
-            let user2 = await User.findById(c.user2);
+            let gc = await Convo.findById(c);
+            let user1 = await User.findById(gc.user1);
+            let user2 = await User.findById(gc.user2);
             if(user1._id == req.body.contactId || user2._id == req.body.contactId){
                 console.log("CONVERSATION FOR THIS CONTACT ALREADY EXISTS");
                 return res.status(500).json({ success: false })
             }
         }
-        let otherUser = await User.findById(req.body.contactId);
+        let otherUser = null;
+        try{
+            otherUser = await User.findById(req.body.contactId);
+        }catch(e){
+            return res.status(400).json({ success: false });
+        }
         if(!otherUser) return res.status(400).json({ success: false });
         const newConvo = new Convo();
         newConvo.user1 = req.userId;
