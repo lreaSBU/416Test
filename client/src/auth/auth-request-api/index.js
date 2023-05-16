@@ -34,11 +34,12 @@ export const requestRecovery = (email) => {
         email: email
     })
 }
-export const verifyCode = (email, code, password) => {
+export const verifyCode = (email, code, password, password2) => {
     return api.post(`/verify/`, {
         email: email,
         code: code,
-        password: password
+        password: password,
+        password2: password2
     })
 }
 

@@ -335,7 +335,8 @@ const EditScreen = () => {
             }
         }
         const defStyle = 'fontSize:"32pt";color: #444',
-        selStyle = 'fontSize:"32pt";color: #fbbd0c';
+        selStyle = 'fontSize:"32pt";color: #fbbd0c',
+        colDefStyle = 'fontSize:"32pt";color: #000';
         function swapTool(t, override = false){
             if(!override && tool == t) return; //avoid overlapping inits
             if(tool > 0 && t > 0) return; //avoid swapping directly between tools
@@ -537,8 +538,8 @@ const EditScreen = () => {
                 case 'l': if(canSel()) lift_tool(); break;
                 case 'c': if(canSel()) con_tool(); break;
                 case 'k': swapTool(4); break;
-                case 'y': if(keys.Control && tps.hasTransactionToRedo()) tps.doMulti(); break;
-                case 'z': if(keys.Control && tps.hasTransactionToUndo()) tps.undoMulti(); break;
+                case 'y': if(!tool && keys.Control && tps.hasTransactionToRedo()) tps.doMulti(); break;
+                case 'z': if(!tool && keys.Control && tps.hasTransactionToUndo()) tps.undoMulti(); break;
                 //case 'Y': if(mode && keys.Control && tps.hasTransactionToRedo()) tps.doTransaction(); break;
                 //case 'Z': if(mode && keys.Control && tps.hasTransactionToUndo()) tps.undoTransaction(); break;
                 case 'ArrowUp': viewChange(true); break;
@@ -1121,6 +1122,7 @@ const EditScreen = () => {
             Poly.Draw();
         }
         propButt.onclick = function(){
+            if(store.edit && store.edit.graphics) return;
             store.edit.prop = undefined;
             store.reduceEdit();
             if(sels.length > 0){
@@ -1137,7 +1139,11 @@ const EditScreen = () => {
         }
         graphButt.onclick = function(){
             if(store.edit.graphics > 0) store.edit.graphics = 0;
-            else store.edit.graphics = 1;
+            else{
+                store.edit.graphics = 1;
+                for(let ct of colTypes) ct.style = colDefStyle;
+                colTypes[0].style = selStyle;
+            }
             if(mode) swapMode();
             deSel();
             tps.clearAllTransactions();
@@ -1241,12 +1247,18 @@ const EditScreen = () => {
         }
         colTypes[0].onclick = function(){
             store.edit.graphics = 1;
+            for(let ct of colTypes) ct.style = colDefStyle;
+            colTypes[0].style = selStyle;
         }
         colTypes[1].onclick = function(){
             store.edit.graphics = 2;
+            for(let ct of colTypes) ct.style = colDefStyle;
+            colTypes[1].style = selStyle;
         }
         colTypes[2].onclick = function(){
             store.edit.graphics = 3;
+            for(let ct of colTypes) ct.style = colDefStyle;
+            colTypes[2].style = selStyle;
         }
         var hBox;
         function drawBox(p){
@@ -2079,7 +2091,7 @@ const EditScreen = () => {
                     </Collapse>
                 </Box>
                 <Box id='midRightCont' sx={{maxHeight:'50%', overflow: 'auto'}}>
-                    <Box id='inspectCont' hidden={store.edit.graphics > 0}>
+                    <Box id='inspectCont' hidden={!store.edit || (store.edit.graphics > 0)}>
                         <Box id='inspector' className='traySect' sx={{bgcolor: '#999', borderRadius: 1, maxHeight:'50%', overflow: 'auto'}}>
                             <TextField ref={camXTxt} variant="filled" disabled size="small" maxHeight='33%' value="0" label="X"/>
                             <TextField ref={camYTxt} variant="filled" disabled size="small" maxHeight='33%' value="0" label="Y"/>
@@ -2091,9 +2103,9 @@ const EditScreen = () => {
                             <TextField ref={groupTxt} variant="filled" disabled size="small" maxHeight='33%' label="Subregion #" value="-"/>
                         </Box>
                     </Box>
-                    <Box id='legendList' ref={legList} hidden={!store.edit.graphics} >
+                    <Box id='legendList' ref={legList} hidden={!store.edit || !store.edit.graphics}>
                         <List sx={{width: '100%', left: '0%'}}>
-                        {
+                        {   !store.edit ? [] :
                             Object.keys(store.edit.gd).map((key) => (!isHex(key) ? <></> :
                                 <Box sx={{display: 'flex', flexDirection: 'row'}} key={key}>
                                     <Box id={'ccol'+key} sx={{flex: 1}}><Box id={'col'+key} sx={{backgroundColor: key, width: '90%', height: '90%', justifyContent: 'center', marginLeft: '5%', marginTop: '30%', borderRadius: 1}} onClick={() => {setHexCol(key)}}></Box></Box>
@@ -2128,7 +2140,7 @@ const EditScreen = () => {
                         </List>
                     </Box>
                 </Box>
-                <Box sx={{maxHeight:'40%', maxWidth: '100%', overflow: 'auto', paddingTop: '10%'}}>
+                <Box sx={{maxHeight:'40%', maxWidth: '100%', overflow: 'auto', paddingTop: '10%', borderTop: 4, borderColor: '#00ff00'}}>
                     <Collapse in={(store.edit && store.edit.graphics)} sx={{display: 'flex', flexDirection: 'column'}}>
                         <HexColorPicker color={hexCol} onChange={setHexCol} />
                         <TextField sx={{bgcolor: '#999', width: '100%', borderRadius: 1}} ref={colTxt} variant="filled" label="Color" onChange={(e) => {setHexCol(e.target.value)}} value={hexCol}/>

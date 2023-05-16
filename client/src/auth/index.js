@@ -141,6 +141,13 @@ function AuthContextProvider(props) {
         }
     }
 
+    auth.makeError = function(e){
+        authReducer({
+            type: AuthActionType.REPORT_ERROR,
+            payload: { error: String(e) }
+        });
+    }
+
     auth.logoutUser = async function() {
         const response = await api.logoutUser();
         if (response.status === 200) {
@@ -183,6 +190,7 @@ function AuthContextProvider(props) {
                         error: response.data.message
                     }
                 })
+                return true;
             }
         }catch(errorMsg){
             console.log(errorMsg);
@@ -193,11 +201,12 @@ function AuthContextProvider(props) {
                 }
             })
         }
+        return false;
     }
 
-    auth.verifyCode = async function(email, code, password){
+    auth.verifyCode = async function(email, code, password, password2){
         try{
-            const response = await api.verifyCode(email, code, password);
+            const response = await api.verifyCode(email, code, password, password2);
             if (response.status === 200) {
                 authReducer({
                     type: AuthActionType.REPORT_ERROR,
@@ -205,6 +214,7 @@ function AuthContextProvider(props) {
                         error: response.data.message
                     }
                 })
+                return true;
             }
         }catch(errorMsg){
             console.log(errorMsg);
@@ -215,6 +225,7 @@ function AuthContextProvider(props) {
                 }
             })
         }
+        return false;
     }
 
 

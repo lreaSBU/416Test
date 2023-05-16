@@ -109,6 +109,13 @@ requestRecovery = async (req, res) => {
                 .status(400)
                 .json({ errorMessage: "Please enter email." });
         }
+        if (!validEmail(email)) {
+            return res
+                .status(400)
+                .json({
+                    errorMessage: "Please enter a valid email address."
+                });
+        }
         const existingUser = await User.findOne({ email: email });
         console.log("existingUser: " + existingUser);
         if (!existingUser) {
@@ -172,14 +179,28 @@ requestRecovery = async (req, res) => {
 verifyCode = async (req, res) => {
     console.log("verifyCode");
     try {
-        const { email, code, password } = req.body;
+        const { email, code, password, password2 } = req.body;
         console.log("email: " + email);
         console.log("code: " + code);
         console.log("password: " + password);
-        if (!code || !password) {
+        if (!code || !password || !password2) {
             return res
                 .status(400)
                 .json({ errorMessage: "Please enter all required fields." });
+        }
+        if(password !== password2){
+            return res
+                .status(400)
+                .json({
+                    errorMessage: "Please enter the same password twice."
+                })
+        }
+        if (!validPassword(password)) {
+            return res
+                .status(400)
+                .json({
+                    errorMessage: "Password must be at least 8 characters long and contain a special character!"
+                });
         }
         // make sure the code entered matches the one in the database and if so, update the password
         const existingUser = await User.findOne({ email: email });
@@ -224,6 +245,27 @@ verifyCode = async (req, res) => {
     }
 }
 
+const domRef = ['com', 'edu', 'org'];
+function validEmail(s){
+    s = String(s);
+    let p = false, l;
+    if(!s.length) return false;
+    if(s.split(' ').length > 1) return false;
+    if((l = s.split('@')).length != 2) return false;
+    if(l[0][l[0].length-1] == '.') return false;
+    s = l[1];
+    for(let d of domRef)
+        if((l = s.split('.' + d)).length == 2
+            && l[0].length && !l[1].length) p = true;
+    return p;
+}
+const specRef = ('!@#$%^&*()_-~=+.,/?').split('');
+function validPassword(s){
+    if((typeof s) != 'string') return false;
+    if(s.length < 8) return false;
+    for(let c of specRef) if(s.indexOf(c) != -1) return true;
+    return false;
+}
 
 registerUser = async (req, res) => {
     try {
@@ -234,12 +276,19 @@ registerUser = async (req, res) => {
                 .status(400)
                 .json({ errorMessage: "Please enter all required fields." });
         }
-        console.log("all fields provided");
-        if (password.length < 8) {
+        if (!validEmail(email)) {
             return res
                 .status(400)
                 .json({
-                    errorMessage: "Please enter a password of at least 8 characters."
+                    errorMessage: "Please enter a valid email address."
+                });
+        }
+        console.log("all fields provided");
+        if (!validPassword(password)) {
+            return res
+                .status(400)
+                .json({
+                    errorMessage: "Password must be at least 8 characters long and contain a special character!"
                 });
         }
         console.log("password long enough");
