@@ -8,31 +8,16 @@ import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
 import Grid from '@mui/material/Grid';
-import Link from '@mui/material/Link';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { GlobalStoreContext } from '../store'
 import ErrorModal from './ErrorModal';
 import LoginScreen from './LoginScreen';
 
 export default function ForgotScreen() {
-    const { store } = useContext(GlobalStoreContext);
     const { auth } = useContext(AuthContext);
-    const [askEmail, setAskEmail] = useState(true);
-    const [passwordsMatch, setPasswordsMatch] = useState(true);
     const [email, setEmail] = useState('');
-    const [updatedPassword, setUpdatedPassword] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
-
-    const handleSubmit = (event) => {
-        event.preventDefault();
-        const formData = new FormData(event.currentTarget);
-        auth.registerUser(
-            formData.get('email'),
-            store
-        );
-    };
+    const [step, setStep] = useState(0);
 
     const handleCodeSubmit = async (event) => {
         event.preventDefault();
@@ -40,219 +25,121 @@ export default function ForgotScreen() {
         let password = formData.get('newPass');
         let password2 = formData.get('rePass');
         if (password !== password2) {
-            setPasswordsMatch(false);
+            setStep(0); setStep(1); //just force a refresh
+            auth.makeError('Passwords do not match!');
             return;
         }
-        await auth.verifyCode(
+        let resp = await auth.verifyCode(
             email,
             formData.get('code'),
-            formData.get('newPass'),
-            store
+            password,
+            password2
         );
-        // take user to login screen component
-        setUpdatedPassword(true);
-
+        if(resp) setStep(2); //go to login page
     };
 
     const handleEmailSubmit = async (event) => {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
-        await auth.requestRecovery(
-            formData.get('email'),
-            store
+        let resp = await auth.requestRecovery(
+            formData.get('email')
         );
-        setEmail(formData.get('email'));
-        setAskEmail(false);
-
+        if(resp){
+            setEmail(formData.get('email'));
+            setStep(1);
+        }
     };
-    
-    if (updatedPassword) {
-        return (
-            <LoginScreen></LoginScreen>
-        )
-    }
 
-    if (askEmail) {
-        return (
-            <Container component="main" maxWidth="xs">
-                <ErrorModal></ErrorModal>
-                <CssBaseline />
-                <Box
-                    sx={{
-                        marginTop: 8,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                    }}
-                >
-                    <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
-                        <LockOutlinedIcon />
-                    </Avatar>
+    return step == 2 ? <LoginScreen />
+    : ( <Container component="main" maxWidth="xs">
+            <ErrorModal></ErrorModal>
+            <CssBaseline />
+            <Box
+                sx={{
+                    marginTop: 8,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                }}
+            >
+                <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
+                    <LockOutlinedIcon />
+                </Avatar>
+                {step ? 
                     <Typography component="h1" variant="h5">
-                    Enter your email to reset your password
+                        Verification code sent
                     </Typography>
-                    <Box component="form" noValidate onSubmit={handleEmailSubmit} sx={{ mt: 3 }}>
-                        <Grid container spacing={2}>
-                            <Grid item xs={12}>
-                                <TextField
-                                    required
-                                    fullWidth
-                                    id="email"
-                                    label="Email"
-                                    name="email"
-                                    autoComplete="email"
-                                />
-                            </Grid>
-                        </Grid>
-
-                        <Button
-                            type="submit"
-                            fullWidth
-                            variant="contained"
-                            sx={{ mt: 3, mb: 2 }}
-                        >
-                            Continue
-                        </Button>
-                    </Box>
-                </Box>
-            </Container>
-        );
-    }
-    if(!passwordsMatch){
-        return (
-            <Container component="main" maxWidth="xs">
-                <ErrorModal></ErrorModal>
-                <CssBaseline />
-                <Box
-                    sx={{
-                        marginTop: 8,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                    }}
-                >
-                    <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
-                        <LockOutlinedIcon />
-                    </Avatar>
+                :
                     <Typography component="h1" variant="h5">
-                    Passwords do not match. Try again.
+                        Enter email address
                     </Typography>
-                    <Box component="form" noValidate onSubmit={handleCodeSubmit} sx={{ mt: 3 }}>
-                        <Grid container spacing={2}>
-                            <Grid item xs={12}>
-                                <TextField
-                                    required
-                                    fullWidth
-                                    id="code"
-                                    label="Verification Code"
-                                    name="code"
-                                    autoComplete="code"
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField
-                                    required
-                                    fullWidth
-                                    name="newPass"
-                                    label="New Password"
-                                    type="password"
-                                    id="newPass"
-                                    autoComplete="new-password"
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField
-                                    required
-                                    fullWidth
-                                    name="rePass"
-                                    label="Re-enter Password"
-                                    type="password"
-                                    id="rePass"
-                                    autoComplete="new-password"
-                                />
-                            </Grid>
+                }
+                <Box component="form" noValidate onSubmit={(e) => {
+                    switch(step){
+                        case 0: handleEmailSubmit(e); break;
+                        case 1: handleCodeSubmit(e); break;
+                    }}} sx={{ mt: 3 }}>
+                    <Grid container spacing={2}>
+                        <Grid hidden={!!step} item xs={12}>
+                            <TextField
+                                sx={{marginTop: 1}}
+                                required
+                                fullWidth
+                                id='email'
+                                label="Email Address"
+                                name='email'
+                            />
                         </Grid>
-                        <Button
-                            type="submit"
-                            fullWidth
-                            variant="contained"
-                            sx={{ mt: 3, mb: 2 }}
-                        >
-                            Continue
-                        </Button>
-                    </Box>
-                </Box>
-            </Container>
-        );
-    }
+                    </Grid>
+                    <Grid container spacing={2}>
+                        <Grid hidden={!step} item xs={12}>
+                            <TextField
+                                sx={{marginTop: 1}}
+                                required
+                                fullWidth
+                                id="code"
+                                label="Verification Code"
+                                name="code"
+                            />
+                        </Grid>
+                    </Grid>
+                    <Grid container spacing={2}>
+                        <Grid hidden={!step} item xs={12}>
+                            <TextField
+                                sx={{marginTop: 1}}
+                                hidden={!step}
+                                required
+                                fullWidth
+                                id="newPass"
+                                label="New Password"
+                                name="newPass"
+                                type="password"
+                            />
+                        </Grid>
+                    </Grid>
+                    <Grid container spacing={2}>
+                        <Grid hidden={!step} item xs={12}>
+                            <TextField
+                                sx={{marginTop: 1}}
+                                hidden={!step}
+                                required
+                                fullWidth
+                                id="rePass"
+                                label="Re-enter Password"
+                                name="rePass"
+                                type="password"
+                            />
+                        </Grid>
+                    </Grid>
 
-    return (
-            <Container component="main" maxWidth="xs">
-                <ErrorModal></ErrorModal>
-                <CssBaseline />
-                <Box
-                    sx={{
-                        marginTop: 8,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                    }}
-                >
-                    <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
-                        <LockOutlinedIcon />
-                    </Avatar>
-                    <Typography component="h1" variant="h5">
-                    We sent a verification code to your email. Enter the code, a new password, and re-enter the password to continue.
-                    </Typography>
-                    <Box component="form" noValidate onSubmit={handleCodeSubmit} sx={{ mt: 3 }}>
-                        <Grid container spacing={2}>
-                            <Grid item xs={12}>
-                                <TextField
-                                    required
-                                    fullWidth
-                                    id="code"
-                                    label="Verification Code"
-                                    name="code"
-                                    autoComplete="code"
-                                />
-                            </Grid>
-                        </Grid>
-                        <Grid container spacing={2}>
-                            <Grid item xs={12}>
-                                <TextField
-                                    required
-                                    fullWidth
-                                    id="newPass"
-                                    label="New Password"
-                                    name="newPass"
-                                    autoComplete="newPass"
-                                />
-                            </Grid>
-                        </Grid>
-                        <Grid container spacing={2}>
-                            <Grid item xs={12}>
-                                <TextField
-                                    required
-                                    fullWidth
-                                    id="rePass"
-                                    label="Re-enter Password"
-                                    name="rePass"
-                                    autoComplete="rePass"
-                                />
-                            </Grid>
-                        </Grid>
-
-                        <Button
-                            type="submit"
-                            fullWidth
-                            variant="contained"
-                            sx={{ mt: 3, mb: 2 }}
-                        >
-                            Continue
-                        </Button>
-                    </Box>
+                    <Button
+                        type="submit"
+                        fullWidth
+                        variant="contained"
+                        sx={{ mt: 10, mb: 2}}
+                    > Continue </Button>
                 </Box>
-                <Copyright sx={{ mt: 5 }} />
-            </Container>
-    );
+            </Box>
+            <Copyright sx={{ mt: 5 }} />
+        </Container>);
 }
