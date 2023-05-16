@@ -5,6 +5,10 @@ const Message = require('../models/message-model');
 
 createConvo = async (req, res) => {
     console.log('making new Convo');
+    if(req.userId == req.body.contactId){
+        console.log("CANNOT MAKE CONVO WITH YOURSELF!!!");
+        return res.status(500).json({ success: false })
+    }
     await User.findById(req.userId, async (err, user) => {
         const convos = user.convos;
         for(let c of convos){
