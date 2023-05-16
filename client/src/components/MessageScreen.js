@@ -144,7 +144,7 @@ const MessageScreen = () => {
                             onClick={handleNewContact}
                         > <AddIcon /> </Fab>
                     </Box>
-                    <Typography variant='h5' hidden={!contactFail} sx={{color: 'red'}}>Invalid Contact</Typography>
+                    <Typography variant='h5' hidden={!contactFail} sx={{color: 'red'}}>Invalid New Contact</Typography>
                 </div>
                 {convoCards}
                 {modalJSX}

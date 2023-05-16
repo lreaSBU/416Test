@@ -75,7 +75,11 @@ deleteMap = async (req, res) => {
             layer.remove();
         }
         let user = await User.findById(map.owner);
-        if(user != null) user.maps.splice(user.maps.indexOf(map._id), 1);
+        if(user != null){
+            user.maps.splice(user.maps.indexOf(map._id), 1);
+            user.markModified('maps');
+            await user.save();
+        }
         map.remove();
         return res.status(200).json({success: true});
     });
